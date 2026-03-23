@@ -1,54 +1,24 @@
 import { useState, useEffect } from 'react'
 import { Calendar, Users, Clock, MapPin } from 'lucide-react'
-import { supabase } from '../services/supabaseClient'
+import { edgeFunctions } from '../services/edgeFunctions'
 import './Dashboard.css'
 
-const PLACEHOLDER_EVENTS = [
-  {
-    id: 1,
-    title: '永續生活讀書會',
-    description: '一起閱讀《我們可以選擇的未來》並分享心得。',
-    date: '2026-04-05',
-    time: '19:00',
-    location: 'Discord 語音頻道',
-    attendees: 18,
-  },
-  {
-    id: 2,
-    title: '零廢棄工作坊',
-    description: '學習日常生活中的零廢棄實踐方法。',
-    date: '2026-04-12',
-    time: '14:00',
-    location: 'Discord 語音頻道',
-    attendees: 24,
-  },
-  {
-    id: 3,
-    title: '社群月會',
-    description: '回顧本月活動、討論下月規劃、歡迎新成員。',
-    date: '2026-04-20',
-    time: '20:00',
-    location: 'Discord 語音頻道',
-    attendees: 35,
-  },
-]
-
 function Dashboard() {
-  const [events, setEvents] = useState(PLACEHOLDER_EVENTS)
-  const [loading, setLoading] = useState(false)
+  const [events, setEvents] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
 
   useEffect(() => {
     async function fetchEvents() {
-      setLoading(true)
-      const { data, error } = await supabase
-        .from('events')
-        .select('*')
-        .order('date', { ascending: true })
-
-      if (!error && data && data.length > 0) {
-        setEvents(data)
+      try {
+        const data = await edgeFunctions.getEvents()
+        setEvents(data ?? [])
+      } catch (err) {
+        console.error('Failed to fetch events:', err)
+        setError(err.message ?? '無法載入活動')
+      } finally {
+        setLoading(false)
       }
-      setLoading(false)
     }
 
     fetchEvents()
@@ -72,6 +42,14 @@ function Dashboard() {
                   <div className="skeleton skeleton-text short" />
                 </div>
               ))}
+            </div>
+          ) : error ? (
+            <div className="card" style={{ textAlign: 'center', padding: '2rem' }}>
+              <p style={{ color: 'var(--text-muted)' }}>{error}</p>
+            </div>
+          ) : events.length === 0 ? (
+            <div className="card" style={{ textAlign: 'center', padding: '2rem' }}>
+              <p style={{ color: 'var(--text-muted)' }}>目前沒有活動</p>
             </div>
           ) : (
             <div className="grid-3">

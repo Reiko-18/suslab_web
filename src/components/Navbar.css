@@ -52,6 +52,12 @@
   background: rgba(5, 150, 105, 0.1);
 }
 
+.navbar-admin-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
 .navbar-cta {
   margin-left: 8px;
   padding: 8px 20px;

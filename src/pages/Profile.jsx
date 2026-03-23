@@ -1,28 +1,43 @@
+import { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
-import { Navigate } from 'react-router-dom'
-import { LogOut, Shield, Calendar, Mail } from 'lucide-react'
+import { edgeFunctions } from '../services/edgeFunctions'
+import { LogOut, Shield, Calendar, Mail, Award } from 'lucide-react'
 import './Profile.css'
 
+const ROLE_LABELS = {
+  admin: '管理員',
+  moderator: '版主',
+  member: '成員',
+}
+
 export default function Profile() {
-  const { user, loading, signOut } = useAuth()
+  const { user, role, loading, signOut } = useAuth()
+  const [profileData, setProfileData] = useState(null)
+
+  useEffect(() => {
+    if (user) {
+      edgeFunctions.getProfile()
+        .then(setProfileData)
+        .catch((err) => console.error('Failed to fetch profile:', err))
+    }
+  }, [user])
 
   if (loading) {
     return (
       <div className="page" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
-        <p style={{ color: 'var(--text-muted)' }}>載入中...</p>
+        <div className="loading-spinner" />
       </div>
     )
   }
 
-  if (!user) {
-    return <Navigate to="/" replace />
-  }
+  if (!user) return null
 
   const meta = user.user_metadata || {}
   const avatar = meta.avatar_url
   const displayName = meta.full_name || meta.user_name || meta.name || '社群成員'
   const username = meta.user_name || meta.preferred_username
-  const email = meta.email || user.email
+  const email = profileData?.email ?? meta.email ?? user.email
+  const displayRole = profileData?.role ?? role
   const createdAt = new Date(user.created_at).toLocaleDateString('zh-TW', {
     year: 'numeric',
     month: 'long',
@@ -54,6 +69,10 @@ export default function Profile() {
             </div>
 
             <div className="profile-details">
+              <div className="profile-detail-item">
+                <Award size={18} />
+                <span>角色：{ROLE_LABELS[displayRole] ?? displayRole}</span>
+              </div>
               {email && (
                 <div className="profile-detail-item">
                   <Mail size={18} />

@@ -1,17 +1,17 @@
 import { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { Leaf, Menu, X, LogIn } from 'lucide-react'
+import { Leaf, Menu, X, LogIn, Settings } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import './Navbar.css'
 
 function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false)
   const location = useLocation()
-  const { user, loading, signInWithDiscord } = useAuth()
+  const { user, loading, hasRole, signInWithDiscord } = useAuth()
 
   const links = [
-    { to: '/', label: '首頁' },
-    { to: '/dashboard', label: '活動紀錄' },
+    { to: '/', label: '首頁', public: true },
+    { to: '/dashboard', label: '活動紀錄', public: false },
   ]
 
   const meta = user?.user_metadata || {}
@@ -27,16 +27,30 @@ function Navbar() {
         </Link>
 
         <div className={`navbar-links ${menuOpen ? 'open' : ''}`}>
-          {links.map((link) => (
+          {links.map((link) => {
+            if (!link.public && !user) return null
+            return (
+              <Link
+                key={link.to}
+                to={link.to}
+                className={`navbar-link ${location.pathname === link.to ? 'active' : ''}`}
+                onClick={() => setMenuOpen(false)}
+              >
+                {link.label}
+              </Link>
+            )
+          })}
+
+          {user && hasRole('admin') && (
             <Link
-              key={link.to}
-              to={link.to}
-              className={`navbar-link ${location.pathname === link.to ? 'active' : ''}`}
+              to="/admin"
+              className={`navbar-link navbar-admin-link ${location.pathname === '/admin' ? 'active' : ''}`}
               onClick={() => setMenuOpen(false)}
             >
-              {link.label}
+              <Settings size={14} />
+              管理後台
             </Link>
-          ))}
+          )}
 
           {!loading && (
             user ? (
