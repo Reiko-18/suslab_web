@@ -249,7 +249,7 @@ Deno.serve(async (req: Request) => {
     )
 
     // Get all auth users for metadata join
-    const { data: { users }, error: usersError } = await serviceClient.auth.admin.listUsers()
+    const { data: { users }, error: usersError } = await serviceClient.auth.admin.listUsers({ perPage: 1000 })
     if (usersError) return errorResponse(usersError.message, 500)
 
     const userMap = new Map(
@@ -392,7 +392,7 @@ Deno.serve(async (req: Request) => {
         display_name: (user.user_metadata?.full_name ?? user.user_metadata?.user_name ?? user.user_metadata?.name ?? 'User') as string,
         avatar_url: (user.user_metadata?.avatar_url as string) ?? null,
         role: roleData?.role ?? role,
-        created_at: user.user_metadata?.created_at ?? null,
+        created_at: user.created_at ?? null,
         role_since: roleData?.updated_at ?? null,
         bio: profile.bio,
         skill_tags: profile.skill_tags,
@@ -535,7 +535,7 @@ Deno.serve(async (req: Request) => {
       // Get author metadata
       const authorMap = new Map<string, { display_name: string; avatar_url: string | null }>()
       if (authorIds.length > 0) {
-        const { data: { users }, error: usersError } = await serviceClient.auth.admin.listUsers()
+        const { data: { users }, error: usersError } = await serviceClient.auth.admin.listUsers({ perPage: 1000 })
         if (!usersError && users) {
           for (const u of users) {
             if (authorIds.includes(u.id)) {
@@ -671,7 +671,7 @@ Deno.serve(async (req: Request) => {
       const authorMap = new Map<string, { display_name: string; avatar_url: string | null }>()
 
       if (authorIds.length > 0) {
-        const { data: { users }, error: usersError } = await serviceClient.auth.admin.listUsers()
+        const { data: { users }, error: usersError } = await serviceClient.auth.admin.listUsers({ perPage: 1000 })
         if (!usersError && users) {
           for (const u of users) {
             if (authorIds.includes(u.id)) {
@@ -1630,7 +1630,7 @@ import EditIcon from '@mui/icons-material/Edit'
 import DeleteIcon from '@mui/icons-material/Delete'
 import PushPinIcon from '@mui/icons-material/PushPin'
 
-export default function AnnouncementCard({ announcement, onEdit, onDelete, canManage }) {
+export default function AnnouncementCard({ announcement, onEdit, onDelete, canManage, canDelete }) {
   const { t, i18n } = useTranslation()
 
   const timeAgo = new Date(announcement.created_at).toLocaleDateString(i18n.language, {
@@ -1681,14 +1681,18 @@ export default function AnnouncementCard({ announcement, onEdit, onDelete, canMa
               </Typography>
             </Stack>
           </Box>
-          {canManage && (
+          {(canManage || canDelete) && (
             <Stack direction="row" spacing={0.5} sx={{ ml: 1, flexShrink: 0 }}>
-              <IconButton size="small" onClick={() => onEdit(announcement)} title={t('announcements.edit')}>
-                <EditIcon fontSize="small" />
-              </IconButton>
-              <IconButton size="small" onClick={() => onDelete(announcement)} title={t('announcements.delete')}>
-                <DeleteIcon fontSize="small" />
-              </IconButton>
+              {canManage && (
+                <IconButton size="small" onClick={() => onEdit(announcement)} title={t('announcements.edit')}>
+                  <EditIcon fontSize="small" />
+                </IconButton>
+              )}
+              {canDelete && (
+                <IconButton size="small" onClick={() => onDelete(announcement)} title={t('announcements.delete')}>
+                  <DeleteIcon fontSize="small" />
+                </IconButton>
+              )}
             </Stack>
           )}
         </Box>
@@ -1788,7 +1792,7 @@ export default function AnnouncementDialog({ open, onClose, announcement, onSave
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose} disabled={saving}>
-          {t('common.cancel') ?? 'Cancel'}
+          {t('common.cancel')}
         </Button>
         <Button
           variant="contained"
@@ -2133,7 +2137,7 @@ export default function Profile() {
 
   useEffect(() => {
     if (user) {
-      edgeFunctions.getProfile().then(setProfileData).catch(console.error)
+      edgeFunctions.getOwnProfile().then(setProfileData).catch(console.error)
     }
   }, [user])
 
@@ -2315,6 +2319,7 @@ export default function Announcements() {
               onEdit={handleEdit}
               onDelete={(a) => setDeleteTarget(a)}
               canManage={canManage}
+              canDelete={canDelete}
             />
           ))}
         </Stack>
@@ -2348,7 +2353,7 @@ export default function Announcements() {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDeleteTarget(null)}>
-            {t('common.cancel') ?? 'Cancel'}
+            {t('common.cancel')}
           </Button>
           <Button color="error" variant="contained" onClick={handleDeleteConfirm}>
             {t('announcements.delete')}
