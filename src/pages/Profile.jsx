@@ -18,6 +18,7 @@ import VerifiedIcon from '@mui/icons-material/Verified'
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth'
 import EmailIcon from '@mui/icons-material/Email'
 import ShieldIcon from '@mui/icons-material/Shield'
+import ProfileEditor from '../components/ProfileEditor'
 
 export default function Profile() {
   const { t, i18n } = useTranslation()
@@ -26,7 +27,7 @@ export default function Profile() {
 
   useEffect(() => {
     if (user) {
-      edgeFunctions.getProfile().then(setProfileData).catch(console.error)
+      edgeFunctions.getOwnProfile().then(setProfileData).catch(console.error)
     }
   }, [user])
 
@@ -45,7 +46,7 @@ export default function Profile() {
   const createdAt = new Date(user.created_at).toLocaleDateString(i18n.language, { year: 'numeric', month: 'long', day: 'numeric' })
 
   return (
-    <Container maxWidth="sm" sx={{ py: 4 }}>
+    <Container maxWidth="md" sx={{ py: 4 }}>
       <Card>
         <Box sx={{ background: (theme) => `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`, p: 4, textAlign: 'center' }}>
           <Avatar src={avatar} sx={{ width: 80, height: 80, mx: 'auto', mb: 1, border: '3px solid white', fontSize: 32 }}>
@@ -79,6 +80,8 @@ export default function Profile() {
           </Button>
         </CardContent>
       </Card>
+
+      <ProfileEditor />
     </Container>
   )
 }
