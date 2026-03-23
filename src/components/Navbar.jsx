@@ -1,16 +1,22 @@
 import { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { Leaf, Menu, X } from 'lucide-react'
+import { Leaf, Menu, X, LogIn } from 'lucide-react'
+import { useAuth } from '../context/AuthContext'
 import './Navbar.css'
 
 function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false)
   const location = useLocation()
+  const { user, loading, signInWithDiscord } = useAuth()
 
   const links = [
     { to: '/', label: '首頁' },
     { to: '/dashboard', label: '活動紀錄' },
   ]
+
+  const meta = user?.user_metadata || {}
+  const avatar = meta.avatar_url
+  const displayName = meta.full_name || meta.user_name || '會員'
 
   return (
     <nav className="navbar">
@@ -31,9 +37,30 @@ function Navbar() {
               {link.label}
             </Link>
           ))}
-          <Link to="/dashboard" className="btn btn-primary navbar-cta" onClick={() => setMenuOpen(false)}>
-            加入社群
-          </Link>
+
+          {!loading && (
+            user ? (
+              <Link
+                to="/profile"
+                className="navbar-user"
+                onClick={() => setMenuOpen(false)}
+              >
+                {avatar ? (
+                  <img src={avatar} alt={displayName} className="navbar-avatar" />
+                ) : (
+                  <div className="navbar-avatar navbar-avatar-placeholder">
+                    {displayName.charAt(0).toUpperCase()}
+                  </div>
+                )}
+                <span className="navbar-username">{displayName}</span>
+              </Link>
+            ) : (
+              <button onClick={signInWithDiscord} className="btn btn-primary navbar-cta">
+                <LogIn size={16} />
+                Discord 登入
+              </button>
+            )
+          )}
         </div>
 
         <button

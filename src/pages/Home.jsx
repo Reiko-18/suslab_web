@@ -1,7 +1,11 @@
-import { Users, Calendar, BookOpen, ArrowRight, Sparkles, MessageCircle, Trophy } from 'lucide-react'
+import { Users, Calendar, BookOpen, ArrowRight, Sparkles, MessageCircle, Trophy, LogIn } from 'lucide-react'
+import { useAuth } from '../context/AuthContext'
+import { Link } from 'react-router-dom'
 import './Home.css'
 
 function Home() {
+  const { user, loading, signInWithDiscord } = useAuth()
+
   return (
     <div className="page">
       {/* Hero */}
@@ -16,10 +20,19 @@ function Home() {
             一個關注永續發展的 Discord 社群，在這裡分享知識、參與活動、結交志同道合的夥伴。
           </p>
           <div className="hero-actions">
-            <a href="https://discord.gg/" target="_blank" rel="noopener noreferrer" className="btn btn-primary">
-              加入 Discord
-              <ArrowRight size={18} />
-            </a>
+            {!loading && (
+              user ? (
+                <Link to="/profile" className="btn btn-primary">
+                  我的會員頁面
+                  <ArrowRight size={18} />
+                </Link>
+              ) : (
+                <button onClick={signInWithDiscord} className="btn btn-primary">
+                  <LogIn size={18} />
+                  Discord 登入加入社群
+                </button>
+              )
+            )}
             <a href="#about" className="btn btn-secondary">
               了解更多
             </a>
@@ -101,10 +114,19 @@ function Home() {
           <div className="cta-card">
             <h2>準備好加入了嗎？</h2>
             <p>成為 SusLab 的一份子，一起為永續未來努力。</p>
-            <a href="https://discord.gg/" target="_blank" rel="noopener noreferrer" className="btn btn-accent">
-              立即加入 Discord
-              <ArrowRight size={18} />
-            </a>
+            {!loading && (
+              user ? (
+                <Link to="/profile" className="btn btn-accent">
+                  查看會員資料
+                  <ArrowRight size={18} />
+                </Link>
+              ) : (
+                <button onClick={signInWithDiscord} className="btn btn-accent">
+                  <LogIn size={18} />
+                  透過 Discord 登入
+                </button>
+              )
+            )}
           </div>
         </div>
       </section>

@@ -56,6 +56,50 @@
   margin-left: 8px;
   padding: 8px 20px;
   font-size: 0.875rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.navbar-user {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 8px;
+  padding: 4px 12px 4px 4px;
+  border-radius: 999px;
+  background: rgba(5, 150, 105, 0.08);
+  transition: background var(--transition);
+  color: var(--text);
+  text-decoration: none;
+}
+
+.navbar-user:hover {
+  background: rgba(5, 150, 105, 0.15);
+  color: var(--text);
+}
+
+.navbar-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--primary-light);
+}
+
+.navbar-avatar-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--primary);
+  color: white;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.navbar-username {
+  font-size: 0.875rem;
+  font-weight: 500;
 }
 
 .navbar-toggle {
