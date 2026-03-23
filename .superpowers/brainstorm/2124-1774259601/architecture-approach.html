@@ -1,0 +1,83 @@
+<h2>Sub-project 1: Infrastructure + UI Rebuild</h2>
+<p class="subtitle">Choose the architecture approach for the MUI 3.x migration</p>
+
+<div class="options">
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>MUI + Emotion (Official Stack) — Recommended</h3>
+      <p>Install <code>@mui/material</code> with Emotion CSS-in-JS. Full Material Design 3 component library with built-in theming, Dynamic Color via <code>@material/material-color-utilities</code>, light/dark mode toggle, and responsive breakpoints.</p>
+      <div class="pros-cons">
+        <div class="pros">
+          <h4>Pros</h4>
+          <ul>
+            <li>Largest React component library, well-documented</li>
+            <li>Built-in theme system with Dynamic Color support</li>
+            <li>Active community, frequent updates</li>
+            <li>i18n-friendly — all text is customizable</li>
+          </ul>
+        </div>
+        <div class="cons">
+          <h4>Cons</h4>
+          <ul>
+            <li>Bundle size ~80KB gzipped for core</li>
+            <li>Emotion runtime CSS-in-JS adds overhead</li>
+            <li>MUI v6 still transitioning to full MD3 parity</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>MUI + Pigment CSS (Zero-Runtime)</h3>
+      <p>Use MUI with the newer Pigment CSS engine — zero-runtime CSS extraction at build time. Better performance but newer and less battle-tested.</p>
+      <div class="pros-cons">
+        <div class="pros">
+          <h4>Pros</h4>
+          <ul>
+            <li>No runtime CSS overhead — faster page loads</li>
+            <li>Same MUI components and API</li>
+            <li>Better for SSR/SSG if needed later</li>
+          </ul>
+        </div>
+        <div class="cons">
+          <h4>Cons</h4>
+          <ul>
+            <li>Still experimental in MUI v6</li>
+            <li>Dynamic theming (runtime color changes) harder</li>
+            <li>Less community support for issues</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Material Web Components + Custom React Wrappers</h3>
+      <p>Use Google's official <code>@material/web</code> Web Components (true MD3) with thin React wrappers. Closest to the MD3 spec but requires more custom work.</p>
+      <div class="pros-cons">
+        <div class="pros">
+          <h4>Pros</h4>
+          <ul>
+            <li>True Material Design 3 — Google's own implementation</li>
+            <li>Framework-agnostic, future-proof</li>
+            <li>Smaller bundle per component</li>
+          </ul>
+        </div>
+        <div class="cons">
+          <h4>Cons</h4>
+          <ul>
+            <li>Web Components + React integration has friction</li>
+            <li>Smaller ecosystem, fewer ready-made components</li>
+            <li>Must build many patterns from scratch (data tables, complex forms)</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
