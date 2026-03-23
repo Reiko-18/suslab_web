@@ -1,103 +1,84 @@
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '../context/AuthContext'
 import { edgeFunctions } from '../services/edgeFunctions'
-import { LogOut, Shield, Calendar, Mail, Award } from 'lucide-react'
-import './Profile.css'
-
-const ROLE_LABELS = {
-  admin: '管理員',
-  moderator: '版主',
-  member: '成員',
-}
+import Container from '@mui/material/Container'
+import Card from '@mui/material/Card'
+import CardContent from '@mui/material/CardContent'
+import Avatar from '@mui/material/Avatar'
+import Typography from '@mui/material/Typography'
+import Button from '@mui/material/Button'
+import Stack from '@mui/material/Stack'
+import Chip from '@mui/material/Chip'
+import Divider from '@mui/material/Divider'
+import Box from '@mui/material/Box'
+import CircularProgress from '@mui/material/CircularProgress'
+import LogoutIcon from '@mui/icons-material/Logout'
+import VerifiedIcon from '@mui/icons-material/Verified'
+import CalendarMonthIcon from '@mui/icons-material/CalendarMonth'
+import EmailIcon from '@mui/icons-material/Email'
+import ShieldIcon from '@mui/icons-material/Shield'
 
 export default function Profile() {
+  const { t, i18n } = useTranslation()
   const { user, role, loading, signOut } = useAuth()
   const [profileData, setProfileData] = useState(null)
 
   useEffect(() => {
     if (user) {
-      edgeFunctions.getProfile()
-        .then(setProfileData)
-        .catch((err) => console.error('Failed to fetch profile:', err))
+      edgeFunctions.getProfile().then(setProfileData).catch(console.error)
     }
   }, [user])
 
   if (loading) {
-    return (
-      <div className="page" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
-        <div className="loading-spinner" />
-      </div>
-    )
+    return <Box sx={{ display: 'flex', justifyContent: 'center', py: 10 }}><CircularProgress /></Box>
   }
 
   if (!user) return null
 
   const meta = user.user_metadata || {}
   const avatar = meta.avatar_url
-  const displayName = meta.full_name || meta.user_name || meta.name || '社群成員'
+  const displayName = meta.full_name || meta.user_name || meta.name || 'User'
   const username = meta.user_name || meta.preferred_username
   const email = profileData?.email ?? meta.email ?? user.email
   const displayRole = profileData?.role ?? role
-  const createdAt = new Date(user.created_at).toLocaleDateString('zh-TW', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  })
+  const createdAt = new Date(user.created_at).toLocaleDateString(i18n.language, { year: 'numeric', month: 'long', day: 'numeric' })
 
   return (
-    <div className="page">
-      <section className="section">
-        <div className="container">
-          <div className="profile-card">
-            <div className="profile-header">
-              <div className="profile-avatar-wrapper">
-                {avatar ? (
-                  <img src={avatar} alt={displayName} className="profile-avatar" />
-                ) : (
-                  <div className="profile-avatar profile-avatar-placeholder">
-                    {displayName.charAt(0).toUpperCase()}
-                  </div>
-                )}
-                <div className="profile-badge">
-                  <Shield size={14} />
-                </div>
-              </div>
-              <div className="profile-info">
-                <h1 className="profile-name">{displayName}</h1>
-                {username && <p className="profile-username">@{username}</p>}
-              </div>
-            </div>
-
-            <div className="profile-details">
-              <div className="profile-detail-item">
-                <Award size={18} />
-                <span>角色：{ROLE_LABELS[displayRole] ?? displayRole}</span>
-              </div>
-              {email && (
-                <div className="profile-detail-item">
-                  <Mail size={18} />
-                  <span>{email}</span>
-                </div>
-              )}
-              <div className="profile-detail-item">
-                <Calendar size={18} />
-                <span>加入日期：{createdAt}</span>
-              </div>
-              <div className="profile-detail-item">
-                <Shield size={18} />
-                <span>透過 Discord 驗證</span>
-              </div>
-            </div>
-
-            <div className="profile-actions">
-              <button onClick={signOut} className="btn btn-danger">
-                <LogOut size={18} />
-                登出
-              </button>
-            </div>
-          </div>
-        </div>
-      </section>
-    </div>
+    <Container maxWidth="sm" sx={{ py: 4 }}>
+      <Card>
+        <Box sx={{ background: (theme) => `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`, p: 4, textAlign: 'center' }}>
+          <Avatar src={avatar} sx={{ width: 80, height: 80, mx: 'auto', mb: 1, border: '3px solid white', fontSize: 32 }}>
+            {displayName[0]?.toUpperCase()}
+          </Avatar>
+          <Typography variant="h5" sx={{ color: 'white', fontWeight: 700 }}>{displayName}</Typography>
+          {username && <Typography sx={{ color: 'rgba(255,255,255,0.8)' }}>@{username}</Typography>}
+        </Box>
+        <CardContent sx={{ p: 3 }}>
+          <Stack spacing={2}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              <ShieldIcon color="primary" />
+              <Typography>{t('profile.role')}</Typography>
+              <Chip label={t(`profile.roles.${displayRole}`) || displayRole} size="small" color="primary" sx={{ ml: 'auto' }} />
+            </Box>
+            <Divider />
+            {email && (
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                <EmailIcon color="action" /><Typography>{email}</Typography>
+              </Box>
+            )}
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              <CalendarMonthIcon color="action" /><Typography>{t('profile.joinDate')}: {createdAt}</Typography>
+            </Box>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              <VerifiedIcon color="action" /><Typography>{t('profile.verifiedVia')}</Typography>
+            </Box>
+          </Stack>
+          <Button variant="outlined" color="error" startIcon={<LogoutIcon />} fullWidth sx={{ mt: 3 }} onClick={signOut}>
+            {t('profile.logout')}
+          </Button>
+        </CardContent>
+      </Card>
+    </Container>
   )
 }

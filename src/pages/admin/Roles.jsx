@@ -3,11 +3,11 @@ import Container from '@mui/material/Container'
 import Typography from '@mui/material/Typography'
 import Card from '@mui/material/Card'
 
-export default function Home() {
+export default function Roles() {
   const { t } = useTranslation()
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Typography variant="h4" gutterBottom sx={{ fontWeight: 700 }}>{t('nav.home')}</Typography>
+      <Typography variant="h4" gutterBottom sx={{ fontWeight: 700 }}>{t('nav.admin.roles')}</Typography>
       <Card sx={{ p: 4, textAlign: 'center' }}>
         <Typography color="text.secondary">{t('common.comingSoon')}</Typography>
       </Card>
