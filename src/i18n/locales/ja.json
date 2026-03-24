@@ -67,6 +67,7 @@
   "home.quickNav": "クイックナビゲーション",
   "home.badges": "バッジ",
   "home.earned": "獲得済み",
+  "home.noBadges": "まだバッジはありません — 参加し続けよう！",
   "profile.role": "ロール",
   "profile.joinDate": "参加日",
   "profile.verifiedVia": "Discord認証済み",
