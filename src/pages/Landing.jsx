@@ -39,7 +39,7 @@ export default function Landing() {
   const { user, loading, signInWithDiscord } = useAuth()
 
   // Temporary debug — remove after fixing auth
-  const debugInfo = `loading=${loading}, user=${user ? user.email : 'null'}, hash=${window.location.hash ? 'yes' : 'no'}, search=${window.location.search ? 'yes' : 'no'}, url=${window.location.href}`
+  const debugInfo = `loading=${loading}, user=${user ? user.email : 'null'}, hash=${window.location.hash ? 'yes' : 'no'}, search=${window.location.search ? 'yes' : 'no'}, INITIAL=${window.__INITIAL_URL__}, NOW=${window.location.href}`
 
   if (!loading && user) return <Navigate to="/home" replace />
 
