@@ -1,5 +1,7 @@
 -- ================================================================
--- SUSLAB WEB — Complete Supabase Setup Script
+-- SUSLAB WEB — Complete Supabase Setup Script (IDEMPOTENT)
+-- Safe to run multiple times. Drops triggers/policies before
+-- recreating them so it won't fail on "already exists".
 -- Run this ENTIRE script in the Supabase SQL Editor (one shot)
 -- ================================================================
 -- Order: 001 → 001b → 002 → 003 → 004 → 005 → 006 → 007 → 008 → 009 → 010
@@ -27,6 +29,7 @@ begin
 end;
 $$;
 
+drop trigger if exists on_user_roles_updated on public.user_roles;
 create trigger on_user_roles_updated
   before update on public.user_roles
   for each row execute procedure public.handle_updated_at();
@@ -43,6 +46,7 @@ begin
 end;
 $$;
 
+drop trigger if exists on_auth_user_created_role on auth.users;
 create trigger on_auth_user_created_role
   after insert on auth.users
   for each row execute procedure public.handle_new_user_role();
@@ -104,6 +108,7 @@ create table if not exists public.events (
   updated_at timestamptz not null default now()
 );
 
+drop trigger if exists on_events_updated on public.events;
 create trigger on_events_updated
   before update on public.events
   for each row execute procedure public.handle_updated_at();
@@ -117,11 +122,13 @@ create index if not exists idx_events_date on public.events (date asc);
 
 alter table public.events enable row level security;
 
+drop policy if exists "events_select_authenticated" on public.events;
 create policy "events_select_authenticated"
 on public.events for select
 to authenticated
 using (true);
 
+drop policy if exists "events_insert_moderator" on public.events;
 create policy "events_insert_moderator"
 on public.events for insert
 to authenticated
@@ -129,6 +136,7 @@ with check (
   (auth.jwt() -> 'app_metadata' ->> 'role') in ('moderator', 'admin')
 );
 
+drop policy if exists "events_update_moderator" on public.events;
 create policy "events_update_moderator"
 on public.events for update
 to authenticated
@@ -139,6 +147,7 @@ with check (
   (auth.jwt() -> 'app_metadata' ->> 'role') in ('moderator', 'admin')
 );
 
+drop policy if exists "events_delete_admin" on public.events;
 create policy "events_delete_admin"
 on public.events for delete
 to authenticated
@@ -148,6 +157,7 @@ using (
 
 alter table public.user_roles enable row level security;
 
+drop policy if exists "user_roles_select_own_or_admin" on public.user_roles;
 create policy "user_roles_select_own_or_admin"
 on public.user_roles for select
 to authenticated
@@ -156,6 +166,7 @@ using (
   or (auth.jwt() -> 'app_metadata' ->> 'role') = 'admin'
 );
 
+drop policy if exists "user_roles_update_admin" on public.user_roles;
 create policy "user_roles_update_admin"
 on public.user_roles for update
 to authenticated
@@ -166,6 +177,7 @@ with check (
   (auth.jwt() -> 'app_metadata' ->> 'role') = 'admin'
 );
 
+drop policy if exists "user_roles_delete_admin" on public.user_roles;
 create policy "user_roles_delete_admin"
 on public.user_roles for delete
 to authenticated
@@ -188,6 +200,7 @@ create table if not exists public.member_profiles (
   updated_at timestamptz not null default now()
 );
 
+drop trigger if exists on_member_profiles_updated on public.member_profiles;
 create trigger on_member_profiles_updated
   before update on public.member_profiles
   for each row execute procedure public.handle_updated_at();
@@ -204,6 +217,7 @@ begin
 end;
 $$;
 
+drop trigger if exists on_auth_user_created_profile on auth.users;
 create trigger on_auth_user_created_profile
   after insert on auth.users
   for each row execute procedure public.handle_new_user_profile();
@@ -215,17 +229,20 @@ on conflict (user_id) do nothing;
 
 alter table public.member_profiles enable row level security;
 
+drop policy if exists "member_profiles_select_authenticated" on public.member_profiles;
 create policy "member_profiles_select_authenticated"
 on public.member_profiles for select
 to authenticated
 using (true);
 
+drop policy if exists "member_profiles_update_own" on public.member_profiles;
 create policy "member_profiles_update_own"
 on public.member_profiles for update
 to authenticated
 using (user_id = auth.uid())
 with check (user_id = auth.uid());
 
+drop policy if exists "member_profiles_delete_admin" on public.member_profiles;
 create policy "member_profiles_delete_admin"
 on public.member_profiles for delete
 to authenticated
@@ -251,16 +268,19 @@ on public.profile_comments (profile_user_id, created_at asc);
 
 alter table public.profile_comments enable row level security;
 
+drop policy if exists "profile_comments_select_authenticated" on public.profile_comments;
 create policy "profile_comments_select_authenticated"
 on public.profile_comments for select
 to authenticated
 using (true);
 
+drop policy if exists "profile_comments_insert_authenticated" on public.profile_comments;
 create policy "profile_comments_insert_authenticated"
 on public.profile_comments for insert
 to authenticated
 with check (author_id = auth.uid());
 
+drop policy if exists "profile_comments_delete_owner_or_admin" on public.profile_comments;
 create policy "profile_comments_delete_owner_or_admin"
 on public.profile_comments for delete
 to authenticated
@@ -286,6 +306,7 @@ create table if not exists public.announcements (
   updated_at timestamptz not null default now()
 );
 
+drop trigger if exists on_announcements_updated on public.announcements;
 create trigger on_announcements_updated
   before update on public.announcements
   for each row execute procedure public.handle_updated_at();
@@ -295,11 +316,13 @@ on public.announcements (pinned desc, created_at desc);
 
 alter table public.announcements enable row level security;
 
+drop policy if exists "announcements_select_authenticated" on public.announcements;
 create policy "announcements_select_authenticated"
 on public.announcements for select
 to authenticated
 using (true);
 
+drop policy if exists "announcements_insert_moderator" on public.announcements;
 create policy "announcements_insert_moderator"
 on public.announcements for insert
 to authenticated
@@ -307,6 +330,7 @@ with check (
   (auth.jwt() -> 'app_metadata' ->> 'role') in ('moderator', 'admin')
 );
 
+drop policy if exists "announcements_update_moderator" on public.announcements;
 create policy "announcements_update_moderator"
 on public.announcements for update
 to authenticated
@@ -317,6 +341,7 @@ with check (
   (auth.jwt() -> 'app_metadata' ->> 'role') in ('moderator', 'admin')
 );
 
+drop policy if exists "announcements_delete_admin" on public.announcements;
 create policy "announcements_delete_admin"
 on public.announcements for delete
 to authenticated
@@ -340,12 +365,14 @@ create table if not exists public.todos (
   updated_at timestamptz not null default now()
 );
 
+drop trigger if exists on_todos_updated on public.todos;
 create trigger on_todos_updated
   before update on public.todos
   for each row execute procedure public.handle_updated_at();
 
 alter table public.todos enable row level security;
 
+drop policy if exists "todos_select_own_or_public" on public.todos;
 create policy "todos_select_own_or_public"
 on public.todos for select
 to authenticated
@@ -353,11 +380,13 @@ using (
   user_id = auth.uid() or is_public = true
 );
 
+drop policy if exists "todos_insert_own" on public.todos;
 create policy "todos_insert_own"
 on public.todos for insert
 to authenticated
 with check (user_id = auth.uid());
 
+drop policy if exists "todos_update_creator_or_assignee" on public.todos;
 create policy "todos_update_creator_or_assignee"
 on public.todos for update
 to authenticated
@@ -368,6 +397,7 @@ with check (
   user_id = auth.uid() or assigned_to = auth.uid()
 );
 
+drop policy if exists "todos_delete_creator" on public.todos;
 create policy "todos_delete_creator"
 on public.todos for delete
 to authenticated
@@ -391,22 +421,26 @@ create table if not exists public.game_invites (
 
 alter table public.game_invites enable row level security;
 
+drop policy if exists "game_invites_select_authenticated" on public.game_invites;
 create policy "game_invites_select_authenticated"
 on public.game_invites for select
 to authenticated
 using (true);
 
+drop policy if exists "game_invites_insert_own" on public.game_invites;
 create policy "game_invites_insert_own"
 on public.game_invites for insert
 to authenticated
 with check (host_id = auth.uid());
 
+drop policy if exists "game_invites_update_host" on public.game_invites;
 create policy "game_invites_update_host"
 on public.game_invites for update
 to authenticated
 using (host_id = auth.uid())
 with check (host_id = auth.uid());
 
+drop policy if exists "game_invites_delete_host_or_admin" on public.game_invites;
 create policy "game_invites_delete_host_or_admin"
 on public.game_invites for delete
 to authenticated
@@ -424,16 +458,19 @@ create table if not exists public.game_invite_participants (
 
 alter table public.game_invite_participants enable row level security;
 
+drop policy if exists "game_invite_participants_select_authenticated" on public.game_invite_participants;
 create policy "game_invite_participants_select_authenticated"
 on public.game_invite_participants for select
 to authenticated
 using (true);
 
+drop policy if exists "game_invite_participants_insert_own" on public.game_invite_participants;
 create policy "game_invite_participants_insert_own"
 on public.game_invite_participants for insert
 to authenticated
 with check (user_id = auth.uid());
 
+drop policy if exists "game_invite_participants_delete_own" on public.game_invite_participants;
 create policy "game_invite_participants_delete_own"
 on public.game_invite_participants for delete
 to authenticated
@@ -449,11 +486,13 @@ create table if not exists public.game_scores (
 
 alter table public.game_scores enable row level security;
 
+drop policy if exists "game_scores_select_authenticated" on public.game_scores;
 create policy "game_scores_select_authenticated"
 on public.game_scores for select
 to authenticated
 using (true);
 
+drop policy if exists "game_scores_insert_own" on public.game_scores;
 create policy "game_scores_insert_own"
 on public.game_scores for insert
 to authenticated
@@ -477,16 +516,19 @@ create table if not exists public.feedbacks (
 
 alter table public.feedbacks enable row level security;
 
+drop policy if exists "feedbacks_select_authenticated" on public.feedbacks;
 create policy "feedbacks_select_authenticated"
 on public.feedbacks for select
 to authenticated
 using (true);
 
+drop policy if exists "feedbacks_insert_own" on public.feedbacks;
 create policy "feedbacks_insert_own"
 on public.feedbacks for insert
 to authenticated
 with check (author_id = auth.uid());
 
+drop policy if exists "feedbacks_update_moderator" on public.feedbacks;
 create policy "feedbacks_update_moderator"
 on public.feedbacks for update
 to authenticated
@@ -497,6 +539,7 @@ with check (
   (auth.jwt() -> 'app_metadata' ->> 'role') in ('moderator', 'admin')
 );
 
+drop policy if exists "feedbacks_delete_author_or_admin" on public.feedbacks;
 create policy "feedbacks_delete_author_or_admin"
 on public.feedbacks for delete
 to authenticated
@@ -513,16 +556,19 @@ create table if not exists public.feedback_votes (
 
 alter table public.feedback_votes enable row level security;
 
+drop policy if exists "feedback_votes_select_authenticated" on public.feedback_votes;
 create policy "feedback_votes_select_authenticated"
 on public.feedback_votes for select
 to authenticated
 using (true);
 
+drop policy if exists "feedback_votes_insert_own" on public.feedback_votes;
 create policy "feedback_votes_insert_own"
 on public.feedback_votes for insert
 to authenticated
 with check (user_id = auth.uid());
 
+drop policy if exists "feedback_votes_delete_own" on public.feedback_votes;
 create policy "feedback_votes_delete_own"
 on public.feedback_votes for delete
 to authenticated
@@ -542,16 +588,19 @@ create table if not exists public.event_registrations (
 
 alter table public.event_registrations enable row level security;
 
+drop policy if exists "event_registrations_select_authenticated" on public.event_registrations;
 create policy "event_registrations_select_authenticated"
 on public.event_registrations for select
 to authenticated
 using (true);
 
+drop policy if exists "event_registrations_insert_own" on public.event_registrations;
 create policy "event_registrations_insert_own"
 on public.event_registrations for insert
 to authenticated
 with check (user_id = auth.uid());
 
+drop policy if exists "event_registrations_delete_own_or_admin" on public.event_registrations;
 create policy "event_registrations_delete_own_or_admin"
 on public.event_registrations for delete
 to authenticated
@@ -573,6 +622,7 @@ create table if not exists public.user_levels (
   updated_at timestamptz not null default now()
 );
 
+drop trigger if exists on_user_levels_updated on public.user_levels;
 create trigger on_user_levels_updated
   before update on public.user_levels
   for each row execute procedure public.handle_updated_at();
@@ -589,6 +639,7 @@ begin
 end;
 $$;
 
+drop trigger if exists on_auth_user_created_levels on auth.users;
 create trigger on_auth_user_created_levels
   after insert on auth.users
   for each row execute procedure public.handle_new_user_levels();
@@ -600,6 +651,7 @@ on conflict (user_id) do nothing;
 
 alter table public.user_levels enable row level security;
 
+drop policy if exists "user_levels_select_authenticated" on public.user_levels;
 create policy "user_levels_select_authenticated"
 on public.user_levels for select
 to authenticated
@@ -627,5 +679,6 @@ $$;
 
 -- ================================================================
 -- DONE! All tables, triggers, functions, indexes, RLS, and
--- backfills have been created.
+-- backfills have been created. This script is idempotent —
+-- safe to run multiple times.
 -- ================================================================
