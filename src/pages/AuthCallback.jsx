@@ -9,58 +9,77 @@ import Typography from '@mui/material/Typography'
 export default function AuthCallback() {
   const navigate = useNavigate()
   const { t } = useTranslation()
-  const [error, setError] = useState(null)
+  const [status, setStatus] = useState('Processing login...')
 
   useEffect(() => {
     let cancelled = false
 
     async function handleCallback() {
       try {
-        // 1. Check for PKCE flow (?code=...)
-        const params = new URLSearchParams(window.location.search)
-        const code = params.get('code')
+        const url = window.location.href
+        const hasCode = url.includes('code=')
+        const hasToken = url.includes('access_token')
 
-        if (code) {
-          const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
-          if (exchangeError) {
-            if (!cancelled) setError(exchangeError.message)
-            return
-          }
-          if (!cancelled) navigate('/home', { replace: true })
+        if (!cancelled) setStatus(`URL detected: code=${hasCode}, token=${hasToken}`)
+
+        // Wait a moment for Supabase to auto-process the URL
+        await new Promise((r) => setTimeout(r, 1000))
+
+        const { data: { session }, error } = await supabase.auth.getSession()
+
+        if (error) {
+          if (!cancelled) setStatus(`Session error: ${error.message}`)
+          setTimeout(() => navigate('/', { replace: true }), 3000)
           return
         }
 
-        // 2. Check for implicit flow (#access_token=...)
-        const hash = window.location.hash
-        if (hash && hash.includes('access_token')) {
-          // Supabase client auto-detects hash on getSession
-          // Give it a moment to process
-          await new Promise((r) => setTimeout(r, 500))
-          const { data: { session } } = await supabase.auth.getSession()
-          if (session && !cancelled) {
-            navigate('/home', { replace: true })
-            return
+        if (session) {
+          if (!cancelled) setStatus(`Login successful! Redirecting... (user: ${session.user.email})`)
+          setTimeout(() => navigate('/home', { replace: true }), 500)
+          return
+        }
+
+        // No session yet — try exchangeCodeForSession if code is present
+        if (hasCode) {
+          const params = new URLSearchParams(window.location.search)
+          const code = params.get('code')
+          if (code) {
+            if (!cancelled) setStatus('Exchanging code for session...')
+            const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
+            if (exchangeError) {
+              if (!cancelled) setStatus(`Code exchange failed: ${exchangeError.message}`)
+              setTimeout(() => navigate('/', { replace: true }), 3000)
+              return
+            }
+            const { data: { session: newSession } } = await supabase.auth.getSession()
+            if (newSession && !cancelled) {
+              setStatus(`Login successful! Redirecting...`)
+              setTimeout(() => navigate('/home', { replace: true }), 500)
+              return
+            }
           }
         }
 
-        // 3. Fallback: poll getSession a few times
-        for (let i = 0; i < 10; i++) {
-          await new Promise((r) => setTimeout(r, 1000))
-          if (cancelled) return
-          const { data: { session } } = await supabase.auth.getSession()
-          if (session) {
-            navigate('/home', { replace: true })
-            return
+        // Fallback: listen for auth state change
+        if (!cancelled) setStatus('Waiting for auth state change...')
+        const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
+          if (event === 'SIGNED_IN' && session && !cancelled) {
+            listener.subscription.unsubscribe()
+            setStatus('Login successful! Redirecting...')
+            setTimeout(() => navigate('/home', { replace: true }), 500)
           }
-        }
+        })
 
-        // 4. Nothing worked — go back to landing
-        if (!cancelled) {
-          setError('Login timeout. Please try again.')
-          setTimeout(() => navigate('/', { replace: true }), 2000)
-        }
+        // Timeout after 15s
+        setTimeout(() => {
+          if (!cancelled) {
+            listener.subscription.unsubscribe()
+            setStatus('Login timeout. Redirecting to home...')
+            setTimeout(() => navigate('/', { replace: true }), 2000)
+          }
+        }, 15000)
       } catch (err) {
-        if (!cancelled) setError(err.message ?? 'Unknown error')
+        if (!cancelled) setStatus(`Error: ${err.message ?? JSON.stringify(err)}`)
       }
     }
 
@@ -71,10 +90,9 @@ export default function AuthCallback() {
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', gap: 2 }}>
       <CircularProgress />
-      {error
-        ? <Typography color="error">{error}</Typography>
-        : <Typography color="text.secondary">{t('common.loading')}</Typography>
-      }
+      <Typography color="text.secondary" sx={{ maxWidth: 500, textAlign: 'center', wordBreak: 'break-all' }}>
+        {status}
+      </Typography>
     </Box>
   )
 }
