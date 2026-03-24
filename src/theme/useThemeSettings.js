@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react'
 
 const MODE_KEY = 'suslab-theme-mode'
 const SEED_KEY = 'suslab-theme-seed'
-const DEFAULT_SEED = '#6750A4'
+const DEFAULT_SEED = '#7C9070'
 
 function getStored(key, fallback) {
   try {
