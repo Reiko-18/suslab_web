@@ -20,6 +20,7 @@ import ConfirmationNumberIcon from '@mui/icons-material/ConfirmationNumber'
 import RateReviewIcon from '@mui/icons-material/RateReview'
 import SettingsIcon from '@mui/icons-material/Settings'
 import ShieldIcon from '@mui/icons-material/Shield'
+import DashboardIcon from '@mui/icons-material/Dashboard'
 
 const USER_NAV = [
   { key: 'nav.home', path: '/home', icon: HomeIcon },
@@ -32,6 +33,7 @@ const USER_NAV = [
 ]
 
 const ADMIN_NAV = [
+  { key: 'nav.admin.overview', path: '/admin', icon: DashboardIcon },
   { key: 'nav.admin.roles', path: '/admin/roles', icon: ShieldIcon },
   { key: 'nav.admin.users', path: '/admin/users', icon: ManageAccountsIcon },
   { key: 'nav.admin.tickets', path: '/admin/tickets', icon: ConfirmationNumberIcon },

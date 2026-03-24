@@ -12,6 +12,7 @@ import Todos from './pages/Todos'
 import Announcements from './pages/Announcements'
 import Games from './pages/Games'
 import Feedback from './pages/Feedback'
+import Overview from './pages/admin/Overview'
 import Roles from './pages/admin/Roles'
 import AdminUsers from './pages/admin/Users'
 import Tickets from './pages/admin/Tickets'
@@ -41,6 +42,7 @@ export default function App() {
 
           {/* Admin routes (moderator+) */}
           <Route element={<ProtectedRoute minimumRole="moderator" />}>
+            <Route path="/admin" element={<Overview />} />
             <Route path="/admin/roles" element={<Roles />} />
             <Route path="/admin/users" element={<AdminUsers />} />
             <Route path="/admin/tickets" element={<Tickets />} />
