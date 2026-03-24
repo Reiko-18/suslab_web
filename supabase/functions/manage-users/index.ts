@@ -71,6 +71,11 @@ Deno.serve(async (req: Request) => {
 
       if (error) return errorResponse(error.message, 500)
 
+      // Sync role into auth.users raw_app_meta_data so JWT includes it
+      await sc.auth.admin.updateUserById(user_id, {
+        app_metadata: { role: newRole },
+      })
+
       // Get target user name for audit
       const { data: { user: targetUser } } = await sc.auth.admin.getUserById(user_id)
       const targetName = (targetUser?.user_metadata?.full_name ?? targetUser?.user_metadata?.user_name ?? 'Unknown') as string
