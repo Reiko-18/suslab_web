@@ -38,10 +38,17 @@ export default function Landing() {
   const { t } = useTranslation()
   const { user, loading, signInWithDiscord } = useAuth()
 
+  // Temporary debug — remove after fixing auth
+  const debugInfo = `loading=${loading}, user=${user ? user.email : 'null'}, hash=${window.location.hash ? 'yes' : 'no'}, search=${window.location.search ? 'yes' : 'no'}, url=${window.location.href}`
+
   if (!loading && user) return <Navigate to="/home" replace />
 
   return (
     <Box>
+      {/* Temporary debug banner */}
+      <Box sx={{ bgcolor: 'warning.main', color: 'warning.contrastText', p: 1, fontSize: 12, wordBreak: 'break-all' }}>
+        DEBUG: {debugInfo}
+      </Box>
       {/* Hero */}
       <Box sx={{
         py: { xs: 8, md: 14 }, textAlign: 'center',
