@@ -16,18 +16,16 @@ export function AuthProvider({ children }) {
   }
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    // Use onAuthStateChange as the single source of truth.
+    // The INITIAL_SESSION event fires AFTER URL hash processing completes,
+    // so it correctly picks up tokens from OAuth implicit flow redirects.
+    const { data } = supabase.auth.onAuthStateChange((event, session) => {
       setSession(session)
       setUser(session?.user ?? null)
       setRole(session?.user ? extractRole(session.user) : null)
-      setLoading(false)
-    })
-
-    const { data } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session)
-      setUser(session?.user ?? null)
-      setRole(session?.user ? extractRole(session.user) : null)
-      setLoading(false)
+      if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN' || event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED') {
+        setLoading(false)
+      }
     })
 
     return () => data.subscription.unsubscribe()
