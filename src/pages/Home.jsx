@@ -74,7 +74,7 @@ export default function Home() {
   const xpProgress = xpNext > 0 ? Math.min((xp / xpNext) * 100, 100) : 0
 
   return (
-    <Box sx={{ p: { xs: 2, md: 4 }, maxWidth: 1200 }}>
+    <Box sx={{ p: { xs: 2, md: 4 }, width: '100%', boxSizing: 'border-box' }}>
       {/* Header */}
       <Box sx={{ mb: 3 }}>
         <Typography sx={{ fontSize: 13, fontWeight: 500, color: '#8E8E93' }}>
@@ -86,7 +86,7 @@ export default function Home() {
       </Box>
 
       {/* Stats Row */}
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr 1fr', md: 'repeat(4, 1fr)' }, gap: 2, mb: 3 }}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', lg: 'repeat(4, 1fr)' }, gap: 2, mb: 3 }}>
         {STAT_CARDS.map(({ key, label, icon: Icon, iconColor, badgeBg, badgeColor, change }) => (
           <Card key={key} sx={{ p: 2.5, borderRadius: 4, boxShadow: '0 4px 30px #00000006' }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}>
@@ -150,10 +150,10 @@ export default function Home() {
               {level?.badges?.length ?? 0} {t('home.earned')}
             </Typography>
           </Box>
-          <Box sx={{ display: 'flex', gap: 1.5 }}>
+          <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
             {BADGES.map(({ icon: BadgeIcon, bg, color }, i) => (
               <Box key={i} sx={{
-                width: 48, height: 48, borderRadius: 3, bgcolor: bg,
+                width: 48, height: 48, minWidth: 48, borderRadius: 3, bgcolor: bg,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
               }}>
                 <BadgeIcon sx={{ fontSize: 24, color }} />
