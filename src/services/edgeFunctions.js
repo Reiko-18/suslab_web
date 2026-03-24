@@ -127,6 +127,82 @@ export const edgeFunctions = {
     role,
   }),
 
+  // Admin - User Actions
+  banUser: (userId, reason) => invoke('manage-users', {
+    action: 'ban',
+    user_id: userId,
+    reason,
+  }),
+
+  unbanUser: (userId) => invoke('manage-users', {
+    action: 'unban',
+    user_id: userId,
+  }),
+
+  kickUser: (userId, reason) => invoke('manage-users', {
+    action: 'kick',
+    user_id: userId,
+    reason,
+  }),
+
+  timeoutUser: (userId, durationMinutes, reason) => invoke('manage-users', {
+    action: 'timeout',
+    user_id: userId,
+    duration_minutes: durationMinutes,
+    reason,
+  }),
+
+  getAuditLog: ({ page, pageSize, actionFilter, targetType } = {}) =>
+    invoke('manage-users', {
+      action: 'audit-log',
+      page,
+      pageSize,
+      action_filter: actionFilter,
+      target_type: targetType,
+    }),
+
+  // Admin - Roles
+  listRoles: () => invoke('manage-roles', { action: 'list' }),
+
+  createRole: ({ name, color, permissions, position }) =>
+    invoke('manage-roles', { action: 'create', name, color, permissions, position }),
+
+  updateRole: (id, { name, color, permissions, position }) =>
+    invoke('manage-roles', { action: 'update', id, name, color, permissions, position }),
+
+  deleteRole: (id) => invoke('manage-roles', { action: 'delete', id }),
+
+  // Admin - Tickets
+  listTickets: ({ page, pageSize, status } = {}) =>
+    invoke('manage-tickets', { action: 'list', page, pageSize, status }),
+
+  createTicket: ({ title, content, category, priority }) =>
+    invoke('manage-tickets', { action: 'create', title, content, category, priority }),
+
+  updateTicket: (id, { status, priority, assigned_to }) =>
+    invoke('manage-tickets', { action: 'update', id, status, priority, assigned_to }),
+
+  deleteTicket: (id) => invoke('manage-tickets', { action: 'delete', id }),
+
+  replyTicket: (ticketId, content) =>
+    invoke('manage-tickets', { action: 'reply', ticket_id: ticketId, content }),
+
+  getTicketReplies: (ticketId) =>
+    invoke('manage-tickets', { action: 'replies', ticket_id: ticketId }),
+
+  // Admin - Overview
+  getAdminOverview: () => invoke('admin-overview', {}),
+
+  // Admin - Settings
+  listSettings: () => invoke('admin-settings', { action: 'list' }),
+
+  getSetting: (key) => invoke('admin-settings', { action: 'get', key }),
+
+  updateSetting: (key, value) => invoke('admin-settings', { action: 'update', key, value }),
+
+  batchUpdateSettings: (settings) =>
+    invoke('admin-settings', { action: 'batch-update', settings }),
+
   // Todos
   listTodos: ({ page, pageSize } = {}) =>
     invoke('manage-todos', { action: 'list', page, pageSize }),
