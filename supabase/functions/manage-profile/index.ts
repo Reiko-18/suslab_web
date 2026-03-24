@@ -41,6 +41,7 @@ Deno.serve(async (req: Request) => {
         skill_tags: profile.skill_tags,
         social_links: profile.social_links,
         visibility: profile.visibility,
+        discord_flags: profile.discord_flags ?? 0,
       })
     }
 
@@ -118,7 +119,42 @@ Deno.serve(async (req: Request) => {
       return jsonResponse(data)
     }
 
-    return errorResponse('Invalid action. Use: get, update', 400)
+    if (action === 'sync-discord') {
+      // Client passes the Discord provider_token obtained at login
+      const { provider_token } = body
+      if (!provider_token) return errorResponse('Missing provider_token', 400)
+
+      // Call Discord API to get full user profile including public_flags
+      const discordRes = await fetch('https://discord.com/api/v10/users/@me', {
+        headers: { Authorization: `Bearer ${provider_token}` },
+      })
+
+      if (!discordRes.ok) {
+        return errorResponse(`Discord API error: ${discordRes.status}`, 502)
+      }
+
+      const discordUser = await discordRes.json()
+      const publicFlags = discordUser.public_flags ?? 0
+      const premiumType = discordUser.premium_type ?? 0
+      const avatar = discordUser.avatar ?? ''
+
+      // Store flags in member_profiles
+      const { error: updateErr } = await supabaseClient
+        .from('member_profiles')
+        .update({ discord_flags: publicFlags })
+        .eq('user_id', user.id)
+
+      if (updateErr) return errorResponse(updateErr.message, 500)
+
+      return jsonResponse({
+        public_flags: publicFlags,
+        premium_type: premiumType,
+        avatar,
+        synced: true,
+      })
+    }
+
+    return errorResponse('Invalid action. Use: get, update, sync-discord', 400)
   } catch (err: unknown) {
     const e = err as { message?: string; status?: number }
     return errorResponse(e.message ?? 'Internal server error', e.status ?? 500)

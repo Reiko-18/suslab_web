@@ -1,5 +1,6 @@
-import { createContext, useContext, useEffect, useState } from 'react'
+import { createContext, useContext, useEffect, useState, useRef } from 'react'
 import { supabase } from '../services/supabaseClient'
+import { edgeFunctions } from '../services/edgeFunctions'
 
 const AuthContext = createContext(null)
 
@@ -22,12 +23,17 @@ export function AuthProvider({ children }) {
     // Single source of truth: onAuthStateChange handles INITIAL_SESSION
     // (which fires AFTER implicit flow hash processing completes),
     // SIGNED_IN, SIGNED_OUT, TOKEN_REFRESHED, etc.
-    const { data } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data } = supabase.auth.onAuthStateChange((event, session) => {
       clearTimeout(timeout)
       setSession(session)
       setUser(session?.user ?? null)
       setRole(session?.user ? extractRole(session.user) : null)
       setLoading(false)
+
+      // On fresh login, sync Discord profile (provider_token is only available at login)
+      if (event === 'SIGNED_IN' && session?.provider_token) {
+        edgeFunctions.syncDiscordProfile(session.provider_token).catch(() => {})
+      }
     })
 
     return () => {

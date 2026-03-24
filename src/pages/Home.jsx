@@ -60,25 +60,9 @@ const DISCORD_BADGES = [
 // Nitro badge is not in public_flags — detect via premium_type or avatar animation
 const NITRO_BADGE = { name: 'Nitro', icon: WorkspacePremiumIcon, bg: '#F47FFF15', color: '#F47FFF' }
 
-function getDiscordBadges(user) {
-  const meta = user?.user_metadata || {}
-  const identity = user?.identities?.find((id) => id.provider === 'discord')
-  const identityData = identity?.identity_data || {}
-
-  // public_flags can be in user_metadata or identity_data
-  const flags = meta.public_flags ?? identityData.public_flags ?? 0
-
-  const badges = DISCORD_BADGES.filter(({ bit }) => (flags & (1 << bit)) !== 0)
-
-  // Check for Nitro (premium_type > 0, or animated avatar hash starts with 'a_')
-  const premiumType = meta.premium_type ?? identityData.premium_type ?? 0
-  const avatar = meta.avatar ?? identityData.avatar ?? ''
-  const hasNitro = premiumType > 0 || avatar.startsWith('a_')
-  if (hasNitro) {
-    badges.unshift(NITRO_BADGE)
-  }
-
-  return badges
+function getDiscordBadges(discordFlags) {
+  const flags = discordFlags ?? 0
+  return DISCORD_BADGES.filter(({ bit }) => (flags & (1 << bit)) !== 0)
 }
 
 export default function Home() {
@@ -87,6 +71,7 @@ export default function Home() {
   const navigate = useNavigate()
   const [stats, setStats] = useState(null)
   const [level, setLevel] = useState(null)
+  const [profile, setProfile] = useState(null)
   const [announcements, setAnnouncements] = useState([])
   const [loadingStats, setLoadingStats] = useState(true)
   const [loadingAnn, setLoadingAnn] = useState(true)
@@ -94,7 +79,7 @@ export default function Home() {
   const meta = user?.user_metadata || {}
   const displayName = meta.full_name || meta.user_name || meta.name || 'User'
 
-  const discordBadges = useMemo(() => getDiscordBadges(user), [user])
+  const discordBadges = useMemo(() => getDiscordBadges(profile?.discord_flags), [profile])
 
   useEffect(() => {
     edgeFunctions.getStats()
@@ -109,6 +94,10 @@ export default function Home() {
 
     edgeFunctions.getMyLevel()
       .then(setLevel)
+      .catch(() => {})
+
+    edgeFunctions.getOwnProfile()
+      .then(setProfile)
       .catch(() => {})
   }, [])
 

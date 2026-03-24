@@ -48,6 +48,7 @@ export const edgeFunctions = {
 
   // Profile (new — full profile with editing fields)
   getOwnProfile: () => invoke('manage-profile', { action: 'get' }),
+  syncDiscordProfile: (providerToken) => invoke('manage-profile', { action: 'sync-discord', provider_token: providerToken }),
 
   updateProfile: ({ bio, skill_tags, social_links, visibility }) =>
     invoke('manage-profile', {
