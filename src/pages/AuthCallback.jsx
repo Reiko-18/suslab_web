@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../services/supabaseClient'
@@ -9,38 +9,72 @@ import Typography from '@mui/material/Typography'
 export default function AuthCallback() {
   const navigate = useNavigate()
   const { t } = useTranslation()
+  const [error, setError] = useState(null)
 
   useEffect(() => {
-    // Supabase auto-detects the token from the URL hash on implicit flow.
-    // We just need to wait for the session to be established.
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        navigate('/home', { replace: true })
-      } else {
-        // If no session yet, listen for auth state change
-        const { data } = supabase.auth.onAuthStateChange((event) => {
-          if (event === 'SIGNED_IN') {
-            data.subscription.unsubscribe()
-            navigate('/home', { replace: true })
+    let cancelled = false
+
+    async function handleCallback() {
+      try {
+        // 1. Check for PKCE flow (?code=...)
+        const params = new URLSearchParams(window.location.search)
+        const code = params.get('code')
+
+        if (code) {
+          const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
+          if (exchangeError) {
+            if (!cancelled) setError(exchangeError.message)
+            return
           }
-        })
-        // Cleanup after 10s timeout to avoid infinite loading
-        const timeout = setTimeout(() => {
-          data.subscription.unsubscribe()
-          navigate('/', { replace: true })
-        }, 10000)
-        return () => {
-          clearTimeout(timeout)
-          data.subscription.unsubscribe()
+          if (!cancelled) navigate('/home', { replace: true })
+          return
         }
+
+        // 2. Check for implicit flow (#access_token=...)
+        const hash = window.location.hash
+        if (hash && hash.includes('access_token')) {
+          // Supabase client auto-detects hash on getSession
+          // Give it a moment to process
+          await new Promise((r) => setTimeout(r, 500))
+          const { data: { session } } = await supabase.auth.getSession()
+          if (session && !cancelled) {
+            navigate('/home', { replace: true })
+            return
+          }
+        }
+
+        // 3. Fallback: poll getSession a few times
+        for (let i = 0; i < 10; i++) {
+          await new Promise((r) => setTimeout(r, 1000))
+          if (cancelled) return
+          const { data: { session } } = await supabase.auth.getSession()
+          if (session) {
+            navigate('/home', { replace: true })
+            return
+          }
+        }
+
+        // 4. Nothing worked — go back to landing
+        if (!cancelled) {
+          setError('Login timeout. Please try again.')
+          setTimeout(() => navigate('/', { replace: true }), 2000)
+        }
+      } catch (err) {
+        if (!cancelled) setError(err.message ?? 'Unknown error')
       }
-    })
+    }
+
+    handleCallback()
+    return () => { cancelled = true }
   }, [navigate])
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', gap: 2 }}>
       <CircularProgress />
-      <Typography color="text.secondary">{t('common.loading')}</Typography>
+      {error
+        ? <Typography color="error">{error}</Typography>
+        : <Typography color="text.secondary">{t('common.loading')}</Typography>
+      }
     </Box>
   )
 }
