@@ -16,19 +16,24 @@ export function AuthProvider({ children }) {
   }
 
   useEffect(() => {
-    // Use onAuthStateChange as the single source of truth.
-    // The INITIAL_SESSION event fires AFTER URL hash processing completes,
-    // so it correctly picks up tokens from OAuth implicit flow redirects.
-    const { data } = supabase.auth.onAuthStateChange((event, session) => {
+    // Safety timeout — if Supabase never responds, unblock the UI
+    const timeout = setTimeout(() => setLoading(false), 5000)
+
+    // Single source of truth: onAuthStateChange handles INITIAL_SESSION
+    // (which fires AFTER implicit flow hash processing completes),
+    // SIGNED_IN, SIGNED_OUT, TOKEN_REFRESHED, etc.
+    const { data } = supabase.auth.onAuthStateChange((_event, session) => {
+      clearTimeout(timeout)
       setSession(session)
       setUser(session?.user ?? null)
       setRole(session?.user ? extractRole(session.user) : null)
-      if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN' || event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED') {
-        setLoading(false)
-      }
+      setLoading(false)
     })
 
-    return () => data.subscription.unsubscribe()
+    return () => {
+      clearTimeout(timeout)
+      data.subscription.unsubscribe()
+    }
   }, [])
 
   const hasRole = (minimumRole) => {
