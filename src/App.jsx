@@ -25,6 +25,7 @@ export default function App() {
       {/* Public routes */}
       <Route element={<PublicLayout />}>
         <Route path="/" element={<Landing />} />
+        <Route path="/index.html" element={<Landing />} />
         <Route path="/auth/callback" element={<AuthCallback />} />
       </Route>
 
