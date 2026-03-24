@@ -1,5 +1,5 @@
 // src/components/admin/AuditLogTable.jsx
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { edgeFunctions } from '../../services/edgeFunctions'
 import Table from '@mui/material/Table'
@@ -41,7 +41,7 @@ export default function AuditLogTable({ compact = false, initialData = null }) {
   const [actionFilter, setActionFilter] = useState('')
   const [page, setPage] = useState(1)
 
-  const fetchLogs = async (p = 1, filter = '') => {
+  const fetchLogs = useCallback(async (p = 1, filter = '') => {
     setLoading(true)
     try {
       const data = await edgeFunctions.getAuditLog({
@@ -55,13 +55,13 @@ export default function AuditLogTable({ compact = false, initialData = null }) {
     } finally {
       setLoading(false)
     }
-  }
+  }, [compact])
 
   useEffect(() => {
     if (!initialData) {
       fetchLogs(page, actionFilter)
     }
-  }, [page, actionFilter])
+  }, [page, actionFilter, initialData, fetchLogs])
 
   if (loading) {
     return <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}><CircularProgress /></Box>

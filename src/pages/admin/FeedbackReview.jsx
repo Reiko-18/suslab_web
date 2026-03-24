@@ -39,16 +39,14 @@ export default function FeedbackReview() {
 
   const isAdmin = hasRole('admin')
 
-  const fetchFeedbacks = (category) => {
-    setLoading(true)
-    edgeFunctions.listFeedbacks({ category: category === 'all' ? undefined : category })
-      .then((data) => setFeedbacks(data?.feedbacks ?? []))
-      .catch((err) => setError(err.message))
-      .finally(() => setLoading(false))
-  }
-
   useEffect(() => {
-    fetchFeedbacks(CATEGORY_TABS[categoryTab])
+    let cancelled = false
+    const category = CATEGORY_TABS[categoryTab]
+    const controller = new AbortController()
+    edgeFunctions.listFeedbacks({ category: category === 'all' ? undefined : category })
+      .then((data) => { if (!cancelled) { setFeedbacks(data?.feedbacks ?? []); setLoading(false) } })
+      .catch((err) => { if (!cancelled) { setError(err.message); setLoading(false) } })
+    return () => { cancelled = true; controller.abort() }
   }, [categoryTab])
 
   const handleStatusChange = async (id, newStatus) => {

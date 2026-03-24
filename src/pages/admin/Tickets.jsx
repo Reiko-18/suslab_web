@@ -43,16 +43,14 @@ export default function Tickets() {
 
   const isAdmin = hasRole('admin')
 
-  const fetchTickets = (status) => {
-    setLoading(true)
-    edgeFunctions.listTickets({ status: status === 'all' ? undefined : status })
-      .then((data) => setTickets(data ?? []))
-      .catch((err) => setError(err.message))
-      .finally(() => setLoading(false))
-  }
-
   useEffect(() => {
-    fetchTickets(STATUS_TABS[statusFilter])
+    let cancelled = false
+    const status = STATUS_TABS[statusFilter]
+    const controller = new AbortController()
+    edgeFunctions.listTickets({ status: status === 'all' ? undefined : status })
+      .then((data) => { if (!cancelled) { setTickets(data ?? []); setLoading(false) } })
+      .catch((err) => { if (!cancelled) { setError(err.message); setLoading(false) } })
+    return () => { cancelled = true; controller.abort() }
   }, [statusFilter])
 
   const handleCreate = async (ticketData) => {
