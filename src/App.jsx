@@ -1,4 +1,4 @@
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route, Navigate } from 'react-router-dom'
 import AppLayout from './layouts/AppLayout'
 import PublicLayout from './layouts/PublicLayout'
 import ProtectedRoute from './components/ProtectedRoute'
@@ -51,6 +51,9 @@ export default function App() {
           </Route>
         </Route>
       </Route>
+
+      {/* Catch-all: redirect unknown paths to landing */}
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   )
 }
