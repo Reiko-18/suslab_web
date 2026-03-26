@@ -28,7 +28,7 @@ Deno.serve(async (req: Request) => {
       const { data: { users }, error: usersError } = await sc.auth.admin.listUsers()
       if (usersError) return errorResponse(usersError.message, 500)
 
-      const { data: roles, error: rolesError } = await supabaseClient
+      const { data: roles, error: rolesError } = await sc
         .from('user_roles')
         .select('user_id, role, updated_at')
 
