@@ -60,52 +60,75 @@ export default function Members() {
   }
 
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Typography variant="h4" gutterBottom sx={{ fontWeight: 700 }}>
-        {t('members.title')}
-      </Typography>
+    <Container maxWidth="lg" sx={{ py: { xs: 3, md: 5 } }}>
+      {/* Header */}
+      <Box sx={{ mb: 4, textAlign: 'center' }}>
+        <Typography
+          variant="h4"
+          sx={{
+            fontWeight: 800, color: 'text.primary', mb: 1,
+            fontSize: { xs: 28, md: 34 },
+          }}
+        >
+          {t('members.title')}
+        </Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+          {members.length > 0 && !loading
+            ? `${members.length} ${members.length === 1 ? 'member' : 'members'}`
+            : ''}
+        </Typography>
 
-      {/* Search */}
-      <TextField
-        fullWidth
-        placeholder={t('members.search')}
-        value={search}
-        onChange={handleSearchChange}
-        sx={{ mb: 3 }}
-        slotProps={{
-          input: {
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon />
-              </InputAdornment>
-            ),
-          },
-        }}
-      />
+        {/* Search */}
+        <TextField
+          placeholder={t('members.search')}
+          value={search}
+          onChange={handleSearchChange}
+          sx={{
+            maxWidth: 420, width: '100%',
+            '& .MuiOutlinedInput-root': {
+              borderRadius: 3,
+              bgcolor: 'action.hover',
+              '& fieldset': { borderColor: 'transparent' },
+              '&:hover fieldset': { borderColor: 'divider' },
+              '&.Mui-focused fieldset': { borderColor: 'primary.main' },
+            },
+          }}
+          slotProps={{
+            input: {
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon sx={{ color: 'text.secondary' }} />
+                </InputAdornment>
+              ),
+            },
+          }}
+        />
+      </Box>
 
       {/* Member Grid */}
       {loading ? (
-        <Grid container spacing={2}>
-          {[1, 2, 3, 4, 5, 6].map((i) => (
-            <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={i}>
-              <Card>
-                <CardContent sx={{ textAlign: 'center' }}>
-                  <Skeleton variant="circular" width={64} height={64} sx={{ mx: 'auto', mb: 1 }} />
+        <Grid container spacing={2.5}>
+          {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+            <Grid size={{ xs: 6, sm: 4, md: 3 }} key={i}>
+              <Card sx={{ borderRadius: 4, boxShadow: 'none', border: '1px solid', borderColor: 'divider' }}>
+                <CardContent sx={{ textAlign: 'center', py: 3 }}>
+                  <Skeleton variant="circular" width={72} height={72} sx={{ mx: 'auto', mb: 1.5 }} />
                   <Skeleton variant="text" width="60%" sx={{ mx: 'auto' }} />
-                  <Skeleton variant="text" width="40%" sx={{ mx: 'auto' }} />
+                  <Skeleton variant="rounded" width="40%" height={24} sx={{ mx: 'auto', mt: 1, borderRadius: 2 }} />
                 </CardContent>
               </Card>
             </Grid>
           ))}
         </Grid>
       ) : members.length === 0 ? (
-        <Box sx={{ textAlign: 'center', py: 6 }}>
-          <Typography color="text.secondary">{t('members.noResults')}</Typography>
+        <Box sx={{ textAlign: 'center', py: 8 }}>
+          <Typography sx={{ fontSize: 48, mb: 1 }}>🔍</Typography>
+          <Typography color="text.secondary" sx={{ fontSize: 15 }}>{t('members.noResults')}</Typography>
         </Box>
       ) : (
-        <Grid container spacing={2}>
+        <Grid container spacing={2.5}>
           {members.map((member) => (
-            <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={member.user_id}>
+            <Grid size={{ xs: 6, sm: 4, md: 3 }} key={member.user_id}>
               <MemberCard member={member} onClick={() => handleCardClick(member)} />
             </Grid>
           ))}
