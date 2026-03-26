@@ -27,6 +27,7 @@ export default function NavDrawer({ open, onClose, variant = 'temporary' }) {
     if (variant === 'temporary') onClose()
   }
 
+  // eslint-disable-next-line no-unused-vars
   const renderItem = ({ key, path, icon: Icon }) => (
     <ListItemButton
       key={path}

@@ -65,8 +65,8 @@ export default function AppLayout() {
       <BottomNavigation value={bottomIdx === -1 ? false : bottomIdx} showLabels
         sx={{ display: { xs: 'flex', md: 'none' }, position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 1200, borderTop: 1, borderColor: 'divider' }}
       >
-        {BOTTOM_NAV.map(({ path, icon: Icon, key }) => (
-          <BottomNavigationAction key={path} label={t(key)} icon={<Icon />} onClick={() => navigate(path)} />
+        {BOTTOM_NAV.map((item) => (
+          <BottomNavigationAction key={item.path} label={t(item.key)} icon={<item.icon />} onClick={() => navigate(item.path)} />
         ))}
       </BottomNavigation>
     </Box>

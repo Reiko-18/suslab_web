@@ -17,7 +17,7 @@ async function invoke(functionName, body = {}) {
 
     const message = parsed?.error ?? error.message ?? 'Unknown error'
     const status = error.context?.status ?? 500
-    throw { message, status }
+    throw Object.assign(new Error(message), { status })
   }
 
   return data

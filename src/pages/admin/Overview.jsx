@@ -49,14 +49,14 @@ export default function Overview() {
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
       <Grid container spacing={2} sx={{ mb: 4 }}>
-        {statCards.map(({ icon: Icon, label, value, color }) => (
-          <Grid size={{ xs: 6, md: 3 }} key={label}>
+        {statCards.map((card) => (
+          <Grid size={{ xs: 6, md: 3 }} key={card.label}>
             <Card variant="outlined">
               <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <Icon sx={{ fontSize: 40, color }} />
+                <card.icon sx={{ fontSize: 40, color: card.color }} />
                 <Box>
-                  <Typography variant="h4" sx={{ fontWeight: 700 }}>{value}</Typography>
-                  <Typography variant="body2" color="text.secondary">{label}</Typography>
+                  <Typography variant="h4" sx={{ fontWeight: 700 }}>{card.value}</Typography>
+                  <Typography variant="body2" color="text.secondary">{card.label}</Typography>
                 </Box>
               </CardContent>
             </Card>

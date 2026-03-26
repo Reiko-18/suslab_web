@@ -56,7 +56,7 @@ export async function verifyAuth(req: Request, minimumRole: string): Promise<Aut
   const requiredLevel = ROLE_LEVELS[minimumRole] ?? 0
 
   if (userLevel < requiredLevel) {
-    throw { message: `權限不足。需要: ${minimumRole}，目前: ${role}`, status: 403 }
+    throw { message: `Insufficient permissions. Required: ${minimumRole}, current: ${role}`, status: 403 }
   }
 
   // Create user-scoped client (RLS active)

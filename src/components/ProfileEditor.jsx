@@ -203,15 +203,15 @@ export default function ProfileEditor() {
           {t('profile.socialLinks')}
         </Typography>
         <Stack spacing={1.5} sx={{ mb: 2 }}>
-          {SOCIAL_FIELDS.map(({ key, icon: Icon, label }) => (
-            <Box key={key} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Icon color="action" sx={{ fontSize: 20 }} />
+          {SOCIAL_FIELDS.map((field) => (
+            <Box key={field.key} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <field.icon color="action" sx={{ fontSize: 20 }} />
               <TextField
                 size="small"
                 fullWidth
-                label={label}
-                value={socialLinks[key]}
-                onChange={(e) => handleSocialChange(key, e.target.value)}
+                label={field.label}
+                value={socialLinks[field.key]}
+                onChange={(e) => handleSocialChange(field.key, e.target.value)}
                 inputProps={{ maxLength: 200 }}
               />
             </Box>

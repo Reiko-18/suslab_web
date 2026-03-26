@@ -49,6 +49,7 @@ export default function NavRail({ onExpand }) {
   const navigate = useNavigate()
   const { hasRole } = useAuth()
 
+  // eslint-disable-next-line no-unused-vars
   const renderItem = ({ key, path, icon: Icon }) => {
     const active = location.pathname === path
     return (
@@ -75,7 +76,7 @@ export default function NavRail({ onExpand }) {
       py: 1, gap: 0.5, bgcolor: 'background.paper', borderRight: 1, borderColor: 'divider',
     }}>
       <Tooltip title="SusLab" placement="right">
-        <IconButton onClick={onExpand} sx={{ width: 48, height: 48, mb: 1 }}>
+        <IconButton onClick={onExpand} aria-label="Open navigation menu" sx={{ width: 48, height: 48, mb: 1 }}>
           <Avatar sx={{ bgcolor: 'primary.main', width: 36, height: 36, fontSize: 16, fontWeight: 700 }}>S</Avatar>
         </IconButton>
       </Tooltip>

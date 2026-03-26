@@ -204,6 +204,7 @@ export default function Games() {
 
           <Fab
             color="primary"
+            aria-label={t('games.invites.create')}
             sx={{ position: 'fixed', bottom: 24, right: 24 }}
             onClick={() => setShowCreateInvite(true)}
           >

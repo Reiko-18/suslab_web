@@ -2,6 +2,7 @@ import { createClient } from 'npm:@supabase/supabase-js@2'
 import { corsHeaders } from '../_shared/cors.ts'
 import { verifyAuth, errorResponse, jsonResponse } from '../_shared/auth.ts'
 import { addXp } from '../_shared/xp.ts'
+import { resolveUserDisplayNames } from '../_shared/users.ts'
 
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
@@ -42,9 +43,16 @@ Deno.serve(async (req: Request) => {
         return errorResponse('Moderator or admin role required', 403)
       }
 
-      const { id, ...updates } = body
-      delete updates.action
+      const { id, title, description, date, time, location, attendees } = body
       if (!id) return errorResponse('Missing event id', 400)
+
+      const updates: Record<string, unknown> = {}
+      if (title !== undefined) updates.title = title
+      if (description !== undefined) updates.description = description
+      if (date !== undefined) updates.date = date
+      if (time !== undefined) updates.time = time
+      if (location !== undefined) updates.location = location
+      if (attendees !== undefined) updates.attendees = attendees
 
       const { data, error } = await supabaseClient
         .from('events')
@@ -125,20 +133,7 @@ Deno.serve(async (req: Request) => {
 
       // Get display names + avatars
       const userIds = (registrations ?? []).map((r: Record<string, unknown>) => r.user_id as string)
-      const userMap = new Map<string, { display_name: string; avatar_url: string | null }>()
-      if (userIds.length > 0) {
-        const { data: { users }, error: usersError } = await serviceClient.auth.admin.listUsers({ perPage: 1000 })
-        if (!usersError && users) {
-          for (const u of users) {
-            if (userIds.includes(u.id)) {
-              userMap.set(u.id, {
-                display_name: (u.user_metadata?.full_name ?? u.user_metadata?.user_name ?? u.user_metadata?.name ?? u.email) as string,
-                avatar_url: (u.user_metadata?.avatar_url as string) ?? null,
-              })
-            }
-          }
-        }
-      }
+      const userMap = await resolveUserDisplayNames(serviceClient, userIds)
 
       const enriched = (registrations ?? []).map((r: Record<string, unknown>) => ({
         ...r,

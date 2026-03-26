@@ -139,6 +139,7 @@ export default function Feedback() {
 
       <Fab
         color="primary"
+        aria-label={t('feedback.create')}
         sx={{ position: 'fixed', bottom: 24, right: 24 }}
         onClick={() => setShowCreate(true)}
       >

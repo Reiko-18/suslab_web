@@ -125,9 +125,9 @@ export default function Announcements() {
       {canManage && (
         <Fab
           color="primary"
+          aria-label={t('announcements.create')}
           sx={{ position: 'fixed', bottom: 24, right: 24 }}
           onClick={handleCreate}
-          title={t('announcements.create')}
         >
           <AddIcon />
         </Fab>

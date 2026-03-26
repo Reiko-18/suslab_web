@@ -43,7 +43,7 @@ export default function Landing() {
             fontSize: 14, fontWeight: 500, color: '#6B7B6B',
             letterSpacing: 2, textTransform: 'uppercase', mb: 2,
           }}>
-            Welcome to
+            {t('landing.hero.welcomeTo')}
           </Typography>
           <Typography sx={{
             fontSize: { xs: 40, md: 52 }, fontWeight: 800, color: '#2D3B2D',
@@ -83,8 +83,8 @@ export default function Landing() {
           {t('landing.features.title')}
         </Typography>
         <Grid container spacing={2.5} justifyContent="center">
-          {FEATURES.map(({ key, icon: Icon, bg, color }) => (
-            <Grid key={key} size={{ xs: 6, sm: 4, md: 2 }}>
+          {FEATURES.map((feature) => (
+            <Grid key={feature.key} size={{ xs: 6, sm: 4, md: 2 }}>
               <Card sx={{
                 height: '100%', borderRadius: 5, border: '1px solid #E8EDE5',
                 boxShadow: 'none', transition: 'transform 0.2s',
@@ -92,17 +92,17 @@ export default function Landing() {
               }}>
                 <CardContent sx={{ textAlign: 'center', py: 3 }}>
                   <Box sx={{
-                    width: 44, height: 44, borderRadius: '50%', bgcolor: bg,
+                    width: 44, height: 44, borderRadius: '50%', bgcolor: feature.bg,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     mx: 'auto', mb: 1.5,
                   }}>
-                    <Icon sx={{ fontSize: 22, color }} />
+                    <feature.icon sx={{ fontSize: 22, color: feature.color }} />
                   </Box>
                   <Typography sx={{ fontSize: 14, fontWeight: 600, color: '#2D3B2D', mb: 0.5 }}>
-                    {t(`landing.features.${key}.title`)}
+                    {t(`landing.features.${feature.key}.title`)}
                   </Typography>
                   <Typography sx={{ fontSize: 12, color: '#6B7B6B', lineHeight: 1.5 }}>
-                    {t(`landing.features.${key}.desc`)}
+                    {t(`landing.features.${feature.key}.desc`)}
                   </Typography>
                 </CardContent>
               </Card>

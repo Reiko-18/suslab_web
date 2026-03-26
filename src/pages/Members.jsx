@@ -37,6 +37,7 @@ export default function Members() {
 
   useEffect(() => {
     loadMembers('')
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current) }
   }, [loadMembers])
 
   const handleSearchChange = (e) => {

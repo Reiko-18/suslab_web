@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useAuth } from '../context/AuthContext'
 import { edgeFunctions } from '../services/edgeFunctions'
 import Container from '@mui/material/Container'
 import Typography from '@mui/material/Typography'
@@ -29,7 +28,6 @@ import LeaderboardDialog from '../components/LeaderboardDialog'
 
 export default function Events() {
   const { t } = useTranslation()
-  const { user } = useAuth()
   const [events, setEvents] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -60,7 +58,7 @@ export default function Events() {
     try {
       const data = await edgeFunctions.getMyLevel()
       setLevelData(data)
-    } catch { /* ignore */ }
+    } catch (err) { console.error('Failed to load level:', err) }
   }, [])
 
   useEffect(() => { loadEvents() }, [loadEvents])
@@ -94,7 +92,7 @@ export default function Events() {
       try {
         const data = await edgeFunctions.getEventRegistrations(eventId)
         setRegistrants((prev) => ({ ...prev, [eventId]: data ?? [] }))
-      } catch { /* ignore */ }
+      } catch (err) { console.error('Failed to load registrations:', err) }
     }
   }
 

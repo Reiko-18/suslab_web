@@ -84,21 +84,21 @@ export default function Home() {
   useEffect(() => {
     edgeFunctions.getStats()
       .then(setStats)
-      .catch(() => {})
+      .catch((err) => console.error('Failed to load stats:', err))
       .finally(() => setLoadingStats(false))
 
     edgeFunctions.listAnnouncements({ page: 1, pageSize: 3 })
       .then((data) => setAnnouncements(data.announcements ?? []))
-      .catch(() => {})
+      .catch((err) => console.error('Failed to load announcements:', err))
       .finally(() => setLoadingAnn(false))
 
     edgeFunctions.getMyLevel()
       .then(setLevel)
-      .catch(() => {})
+      .catch((err) => console.error('Failed to load level:', err))
 
     edgeFunctions.getOwnProfile()
       .then(setProfile)
-      .catch(() => {})
+      .catch((err) => console.error('Failed to load profile:', err))
   }, [])
 
   const xp = level?.xp ?? 0
@@ -116,58 +116,58 @@ export default function Home() {
     <Box sx={{ p: { xs: 2, md: 4 }, width: '100%', boxSizing: 'border-box' }}>
       {/* Header */}
       <Box sx={{ mb: 3 }}>
-        <Typography sx={{ fontSize: 13, fontWeight: 500, color: '#8E8E93' }}>
+        <Typography sx={{ fontSize: 13, fontWeight: 500, color: 'text.secondary' }}>
           {t('home.welcomeBack')}
         </Typography>
-        <Typography sx={{ fontSize: 28, fontWeight: 500, color: '#2D2D2D', fontFamily: 'serif', letterSpacing: -1 }}>
+        <Typography sx={{ fontSize: 28, fontWeight: 500, color: 'text.primary', fontFamily: 'serif', letterSpacing: -1 }}>
           {displayName}
         </Typography>
       </Box>
 
       {/* Stats Row */}
       <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', lg: 'repeat(4, 1fr)' }, gap: 2, mb: 3 }}>
-        {STAT_CARDS.map(({ key, label, icon: Icon, iconColor, badgeBg, badgeColor, change }) => (
-          <Card key={key} sx={{ p: 2.5, borderRadius: 4, boxShadow: '0 4px 30px #00000006' }}>
+        {STAT_CARDS.map((card) => (
+          <Card key={card.key} sx={{ p: 2.5, borderRadius: 4, boxShadow: '0 4px 30px #00000006' }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}>
-              <Typography sx={{ fontSize: 12, fontWeight: 600, color: '#8E8E93' }}>
-                {t(label)}
+              <Typography sx={{ fontSize: 12, fontWeight: 600, color: 'text.secondary' }}>
+                {t(card.label)}
               </Typography>
-              <Icon sx={{ fontSize: 18, color: iconColor }} />
+              <card.icon sx={{ fontSize: 18, color: card.iconColor }} />
             </Box>
-            {loadingStats && key !== 'level' ? (
+            {loadingStats && card.key !== 'level' ? (
               <Skeleton variant="text" width={80} sx={{ fontSize: '2rem' }} />
-            ) : key === 'level' ? (
+            ) : card.key === 'level' ? (
               <>
-                <Typography sx={{ fontSize: 32, fontWeight: 500, color: '#2D2D2D', fontFamily: 'serif', letterSpacing: -1 }}>
-                  Lv. {lvl}
+                <Typography sx={{ fontSize: 32, fontWeight: 500, color: 'text.primary', fontFamily: 'serif', letterSpacing: -1 }}>
+                  {t('levels.level', { level: lvl })}
                 </Typography>
                 <Box sx={{ mt: 1 }}>
                   <LinearProgress
                     variant="determinate"
                     value={xpProgress}
                     sx={{
-                      height: 6, borderRadius: 3, bgcolor: '#F0EFEC',
+                      height: 6, borderRadius: 3, bgcolor: 'action.hover',
                       '& .MuiLinearProgress-bar': { bgcolor: '#9B8AA8', borderRadius: 3 },
                     }}
                   />
-                  <Typography sx={{ fontSize: 10, fontWeight: 500, color: '#8E8E93', mt: 0.5 }}>
-                    {xp} / {xpNext} XP
+                  <Typography sx={{ fontSize: 10, fontWeight: 500, color: 'text.secondary', mt: 0.5 }}>
+                    {t('levels.xp', { current: xp, next: xpNext })}
                   </Typography>
                 </Box>
               </>
             ) : (
               <>
-                <Typography sx={{ fontSize: 32, fontWeight: 500, color: '#2D2D2D', fontFamily: 'serif', letterSpacing: -1 }}>
-                  {key === 'messages' ? (stats?.memberCount ?? 0) : key === 'vcHours' ? '—' : (stats?.eventCount ?? 0)}
+                <Typography sx={{ fontSize: 32, fontWeight: 500, color: 'text.primary', fontFamily: 'serif', letterSpacing: -1 }}>
+                  {card.key === 'messages' ? (stats?.memberCount ?? 0) : card.key === 'vcHours' ? '—' : (stats?.eventCount ?? 0)}
                 </Typography>
-                {change && (
+                {card.change && (
                   <Box sx={{
                     display: 'inline-flex', alignItems: 'center', gap: 0.5,
-                    px: 1.2, py: 0.4, borderRadius: 1.5, bgcolor: badgeBg, mt: 0.5,
+                    px: 1.2, py: 0.4, borderRadius: 1.5, bgcolor: card.badgeBg, mt: 0.5,
                   }}>
-                    <TrendingUpIcon sx={{ fontSize: 12, color: badgeColor }} />
-                    <Typography sx={{ fontSize: 11, fontWeight: 500, color: badgeColor, fontFamily: 'monospace' }}>
-                      {change}
+                    <TrendingUpIcon sx={{ fontSize: 12, color: card.badgeColor }} />
+                    <Typography sx={{ fontSize: 11, fontWeight: 500, color: card.badgeColor, fontFamily: 'monospace' }}>
+                      {card.change}
                     </Typography>
                   </Box>
                 )}
@@ -182,28 +182,28 @@ export default function Home() {
         {/* Badges */}
         <Card sx={{ p: 2.5, borderRadius: 4, boxShadow: '0 4px 30px #00000006' }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-            <Typography sx={{ fontSize: 16, fontWeight: 500, color: '#2D2D2D', fontFamily: 'serif' }}>
+            <Typography sx={{ fontSize: 16, fontWeight: 500, color: 'text.primary', fontFamily: 'serif' }}>
               {t('home.badges')}
             </Typography>
-            <Typography sx={{ fontSize: 12, fontWeight: 500, color: '#8E8E93' }}>
+            <Typography sx={{ fontSize: 12, fontWeight: 500, color: 'text.secondary' }}>
               {allBadges.length} {t('home.earned')}
             </Typography>
           </Box>
           {allBadges.length === 0 ? (
-            <Typography sx={{ fontSize: 13, color: '#8E8E93', py: 1 }}>
+            <Typography sx={{ fontSize: 13, color: 'text.secondary', py: 1 }}>
               {t('home.noBadges')}
             </Typography>
           ) : (
             <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
-              {allBadges.map(({ name, icon: BadgeIcon, bg, color }, i) => (
-                <Tooltip key={i} title={name} arrow>
+              {allBadges.map((badge, i) => (
+                <Tooltip key={i} title={badge.name} arrow>
                   <Box sx={{
-                    width: 48, height: 48, minWidth: 48, borderRadius: 3, bgcolor: bg,
+                    width: 48, height: 48, minWidth: 48, borderRadius: 3, bgcolor: badge.bg,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     cursor: 'default', transition: 'transform 0.15s',
                     '&:hover': { transform: 'scale(1.1)' },
                   }}>
-                    <BadgeIcon sx={{ fontSize: 24, color }} />
+                    <badge.icon sx={{ fontSize: 24, color: badge.color }} />
                   </Box>
                 </Tooltip>
               ))}
@@ -214,10 +214,10 @@ export default function Home() {
         {/* Latest Announcements */}
         <Card sx={{ p: 2.5, borderRadius: 4, boxShadow: '0 4px 30px #00000006' }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-            <Typography sx={{ fontSize: 16, fontWeight: 500, color: '#2D2D2D', fontFamily: 'serif' }}>
+            <Typography sx={{ fontSize: 16, fontWeight: 500, color: 'text.primary', fontFamily: 'serif' }}>
               {t('home.latestAnnouncements')}
             </Typography>
-            <Button size="small" onClick={() => navigate('/announcements')} sx={{ fontSize: 12, color: '#8E8E93' }}>
+            <Button size="small" onClick={() => navigate('/announcements')} sx={{ fontSize: 12, color: 'text.secondary' }}>
               {t('home.viewAll')}
             </Button>
           </Box>
@@ -226,7 +226,7 @@ export default function Home() {
               {[1, 2, 3].map((i) => <Skeleton key={i} variant="text" height={36} />)}
             </Box>
           ) : announcements.length === 0 ? (
-            <Typography sx={{ fontSize: 13, color: '#8E8E93', py: 2 }}>
+            <Typography sx={{ fontSize: 13, color: 'text.secondary', py: 2 }}>
               {t('announcements.empty')}
             </Typography>
           ) : (
@@ -237,8 +237,8 @@ export default function Home() {
                     <ListItemText
                       primary={ann.title}
                       secondary={new Date(ann.created_at).toLocaleDateString(i18n.language, { month: 'short', day: 'numeric' })}
-                      primaryTypographyProps={{ fontSize: 13, fontWeight: 600, color: '#2D2D2D' }}
-                      secondaryTypographyProps={{ fontSize: 11, color: '#8E8E93' }}
+                      primaryTypographyProps={{ fontSize: 13, fontWeight: 600, color: 'text.primary' }}
+                      secondaryTypographyProps={{ fontSize: 11, color: 'text.secondary' }}
                     />
                   </ListItemButton>
                 </ListItem>

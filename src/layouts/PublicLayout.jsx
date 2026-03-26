@@ -23,7 +23,7 @@ export default function PublicLayout() {
           <Avatar sx={{ bgcolor: 'primary.main', width: 32, height: 32, fontSize: 14, fontWeight: 700, mr: 1 }}>S</Avatar>
           <Typography variant="h6" sx={{ flexGrow: 1, fontWeight: 700 }}>SusLab</Typography>
           <LanguageSelector />
-          <IconButton onClick={toggleMode} color="inherit">
+          <IconButton onClick={toggleMode} color="inherit" aria-label={mode === 'dark' ? t('theme.light') : t('theme.dark')}>
             {mode === 'dark' ? <LightModeIcon /> : <DarkModeIcon />}
           </IconButton>
           <ThemeColorPicker />

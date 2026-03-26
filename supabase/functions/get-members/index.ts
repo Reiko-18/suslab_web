@@ -1,6 +1,7 @@
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { corsHeaders } from '../_shared/cors.ts'
 import { verifyAuth, errorResponse, jsonResponse } from '../_shared/auth.ts'
+import { resolveUserDisplayNames } from '../_shared/users.ts'
 
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
@@ -22,22 +23,6 @@ Deno.serve(async (req: Request) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
     )
 
-    // Get all auth users for metadata join
-    const { data: { users }, error: usersError } = await serviceClient.auth.admin.listUsers({ perPage: 1000 })
-    if (usersError) return errorResponse(usersError.message, 500)
-
-    const userMap = new Map(
-      users.map((u: { id: string; email?: string; user_metadata?: Record<string, unknown>; created_at?: string }) => [
-        u.id,
-        {
-          email: u.email,
-          display_name: (u.user_metadata?.full_name ?? u.user_metadata?.user_name ?? u.user_metadata?.name ?? u.email) as string,
-          avatar_url: (u.user_metadata?.avatar_url as string) ?? null,
-          created_at: u.created_at,
-        },
-      ]),
-    )
-
     // Get roles
     const { data: roles, error: rolesError } = await serviceClient
       .from('user_roles')
@@ -54,17 +39,31 @@ Deno.serve(async (req: Request) => {
 
     if (profilesError) return errorResponse(profilesError.message, 500)
 
+    // Resolve display names and avatars via shared utility
+    const profileUserIds = (profiles ?? []).map((p: Record<string, unknown>) => p.user_id as string)
+    const userMap = await resolveUserDisplayNames(serviceClient, profileUserIds)
+
+    // For email and created_at we need the full auth user list
+    const { data: { users: authUsers } } = await serviceClient.auth.admin.listUsers({ perPage: 1000 })
+    const authExtraMap = new Map(
+      (authUsers ?? []).map((u: { id: string; email?: string; created_at?: string }) => [
+        u.id,
+        { email: u.email, created_at: u.created_at },
+      ]),
+    )
+
     // Combine profiles with user metadata
     let members = (profiles ?? []).map((p: Record<string, unknown>) => {
       const userId = p.user_id as string
       const userMeta = userMap.get(userId)
+      const authExtra = authExtraMap.get(userId)
       const visibility = (p.visibility ?? {}) as Record<string, boolean>
       const role = roleMap.get(userId) ?? 'member'
 
       const member: Record<string, unknown> = {
         user_id: userId,
         display_name: userMeta?.display_name ?? 'User',
-        created_at: userMeta?.created_at ?? null,
+        created_at: authExtra?.created_at ?? null,
         role,
       }
 
@@ -76,7 +75,7 @@ Deno.serve(async (req: Request) => {
         member.bio = p.bio
       }
       if (visibility.email !== false) {
-        member.email = userMeta?.email ?? null
+        member.email = authExtra?.email ?? null
       }
       if (visibility.skill_tags !== false) {
         member.skill_tags = p.skill_tags

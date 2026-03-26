@@ -1,6 +1,7 @@
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { corsHeaders } from '../_shared/cors.ts'
 import { verifyAuth, errorResponse, jsonResponse } from '../_shared/auth.ts'
+import { resolveUserDisplayNames } from '../_shared/users.ts'
 
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
@@ -35,21 +36,7 @@ Deno.serve(async (req: Request) => {
       )
 
       const authorIds = [...new Set((announcements ?? []).map((a: { author_id: string }) => a.author_id))]
-      const authorMap = new Map<string, { display_name: string; avatar_url: string | null }>()
-
-      if (authorIds.length > 0) {
-        const { data: { users }, error: usersError } = await serviceClient.auth.admin.listUsers({ perPage: 1000 })
-        if (!usersError && users) {
-          for (const u of users) {
-            if (authorIds.includes(u.id)) {
-              authorMap.set(u.id, {
-                display_name: (u.user_metadata?.full_name ?? u.user_metadata?.user_name ?? u.user_metadata?.name ?? u.email) as string,
-                avatar_url: (u.user_metadata?.avatar_url as string) ?? null,
-              })
-            }
-          }
-        }
-      }
+      const authorMap = await resolveUserDisplayNames(serviceClient, authorIds)
 
       const enriched = (announcements ?? []).map((a: Record<string, unknown>) => ({
         ...a,
