@@ -43,7 +43,7 @@ export default function PublicLayout() {
               textTransform: 'none', fontWeight: 600,
             }}
           >
-            {t('landing.hero.cta')}
+            Login
           </Button>
         </Toolbar>
       </AppBar>
