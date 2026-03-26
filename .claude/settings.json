@@ -1,15 +1,51 @@
 {
   "permissions": {
     "allow": [
-      "Bash",
-      "Read",
-      "Write",
-      "Edit",
+      "Read:*",
+      "Write:*",
+      "Edit:*",
+      "Glob:*",
+      "Grep:*",
+      "Bash:git:*",
+      "Bash:npm:*",
+      "Bash:npx:*",
+      "Bash:node:*",
+      "Bash:ls:*",
       "WebFetch",
-      "Grep",
-      "Glob",
-      "NotebookEdit",
-      "WebSearch"
+      "WebSearch",
+      "NotebookEdit"
+    ],
+    "deny": [
+      "Read:.env*",
+      "Bash:sudo:*",
+      "Bash:rm -rf:*",
+      "Write:.env*"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo 'Writing file — verify no secrets in content'",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo 'File edited successfully'",
+            "timeout": 5
+          }
+        ]
+      }
     ]
   }
 }
