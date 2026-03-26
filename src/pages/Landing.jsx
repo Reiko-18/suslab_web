@@ -72,9 +72,9 @@ export default function Landing() {
         }}>
           {t('landing.features.title')}
         </Typography>
-        <Grid container spacing={2.5} justifyContent="center">
+        <Grid container spacing={2.5}>
           {FEATURES.map((feature) => (
-            <Grid key={feature.key} size={{ xs: 6, sm: 4, md: 2 }}>
+            <Grid key={feature.key} size={{ xs: 6, sm: 4 }}>
               <Card sx={{
                 height: '100%', borderRadius: 5, border: '1px solid #E8EDE5',
                 boxShadow: 'none', transition: 'transform 0.2s',
