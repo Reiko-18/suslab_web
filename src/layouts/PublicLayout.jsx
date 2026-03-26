@@ -10,11 +10,15 @@ import ThemeColorPicker from '../components/ThemeColorPicker'
 import IconButton from '@mui/material/IconButton'
 import DarkModeIcon from '@mui/icons-material/DarkMode'
 import LightModeIcon from '@mui/icons-material/LightMode'
+import LoginIcon from '@mui/icons-material/Login'
+import Button from '@mui/material/Button'
 import { useThemeControls } from '../theme/ThemeProvider'
+import { useAuth } from '../context/AuthContext'
 
 export default function PublicLayout() {
   const { t } = useTranslation()
   const { mode, toggleMode } = useThemeControls()
+  const { signInWithDiscord } = useAuth()
 
   return (
     <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
@@ -27,6 +31,20 @@ export default function PublicLayout() {
             {mode === 'dark' ? <LightModeIcon /> : <DarkModeIcon />}
           </IconButton>
           <ThemeColorPicker />
+          <Button
+            variant="contained"
+            size="small"
+            startIcon={<LoginIcon />}
+            onClick={signInWithDiscord}
+            sx={{
+              ml: 1, borderRadius: 6,
+              bgcolor: '#4A7C59', color: '#fff',
+              '&:hover': { bgcolor: '#3D6B4B' },
+              textTransform: 'none', fontWeight: 600,
+            }}
+          >
+            {t('landing.hero.cta')}
+          </Button>
         </Toolbar>
       </AppBar>
       <Box sx={{ flex: 1 }}>

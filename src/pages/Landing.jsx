@@ -4,11 +4,9 @@ import { Navigate } from 'react-router-dom'
 import Box from '@mui/material/Box'
 import Container from '@mui/material/Container'
 import Typography from '@mui/material/Typography'
-import Button from '@mui/material/Button'
 import Grid from '@mui/material/Grid'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
-import LoginIcon from '@mui/icons-material/Login'
 import PeopleIcon from '@mui/icons-material/People'
 import EventIcon from '@mui/icons-material/Event'
 import SportsEsportsIcon from '@mui/icons-material/SportsEsports'
@@ -27,7 +25,7 @@ const FEATURES = [
 
 export default function Landing() {
   const { t } = useTranslation()
-  const { user, loading, signInWithDiscord } = useAuth()
+  const { user, loading } = useAuth()
 
   if (!loading && user) return <Navigate to="/home" replace />
 
@@ -57,20 +55,12 @@ export default function Landing() {
           }}>
             {t('landing.hero.subtitle')}
           </Typography>
-          <Button
-            variant="contained"
-            size="large"
-            startIcon={<LoginIcon />}
-            onClick={signInWithDiscord}
-            sx={{
-              px: 4, py: 1.5, fontSize: '1rem', borderRadius: 6,
-              bgcolor: '#4A7C59', color: '#fff',
-              '&:hover': { bgcolor: '#3D6B4B' },
-              boxShadow: '0 2px 20px #00000008',
-            }}
-          >
-            {t('landing.hero.cta')}
-          </Button>
+          <Typography sx={{
+            fontSize: { xs: 28, md: 36 }, fontWeight: 900, color: '#4A7C59',
+            letterSpacing: 6, mt: 2,
+          }}>
+            SUS LAB
+          </Typography>
         </Container>
       </Box>
 
@@ -124,19 +114,12 @@ export default function Landing() {
           <Typography sx={{ fontSize: 15, color: '#5A6B5A', lineHeight: 1.6, mb: 3, maxWidth: 440, mx: 'auto' }}>
             {t('landing.cta.desc')}
           </Typography>
-          <Button
-            variant="contained"
-            size="large"
-            startIcon={<LoginIcon />}
-            onClick={signInWithDiscord}
-            sx={{
-              px: 4, py: 1.5, borderRadius: 6,
-              bgcolor: '#4A7C59', color: '#fff',
-              '&:hover': { bgcolor: '#3D6B4B' },
-            }}
-          >
-            {t('landing.hero.cta')}
-          </Button>
+          <Typography sx={{
+            fontSize: { xs: 22, md: 28 }, fontWeight: 900, color: '#4A7C59',
+            letterSpacing: 6,
+          }}>
+            SUS LAB
+          </Typography>
         </Container>
       </Box>
 
