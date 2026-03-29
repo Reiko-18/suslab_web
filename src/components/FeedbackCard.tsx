@@ -7,12 +7,14 @@ import Box from '@mui/material/Box'
 import IconButton from '@mui/material/IconButton'
 import Avatar from '@mui/material/Avatar'
 import MenuItem from '@mui/material/MenuItem'
-import Select from '@mui/material/Select'
+import Select, { SelectChangeEvent } from '@mui/material/Select'
 import ThumbUpIcon from '@mui/icons-material/ThumbUp'
 import ThumbUpOutlinedIcon from '@mui/icons-material/ThumbUpOutlined'
 import DeleteIcon from '@mui/icons-material/Delete'
 
-const CATEGORY_COLORS = {
+type CategoryColor = 'primary' | 'secondary' | 'error' | 'default'
+
+const CATEGORY_COLORS: Record<string, CategoryColor> = {
   feature: 'primary',
   event: 'secondary',
   bug: 'error',
@@ -20,7 +22,30 @@ const CATEGORY_COLORS = {
 
 const STATUS_LIST = ['open', 'reviewed', 'accepted', 'rejected']
 
-export default function FeedbackCard({ feedback, userId, isModerator, onVote, onStatusChange, onDelete }) {
+interface Feedback {
+  id: string
+  author_id: string
+  author_display_name?: string
+  author_avatar_url?: string
+  category: string
+  status: string
+  title: string
+  content: string
+  vote_count: number
+  has_voted: boolean
+  created_at: string
+}
+
+interface FeedbackCardProps {
+  feedback: Feedback
+  userId: string
+  isModerator: boolean
+  onVote: (id: string) => void
+  onStatusChange: (id: string, status: string) => void
+  onDelete: (id: string) => void
+}
+
+export default function FeedbackCard({ feedback, userId, isModerator, onVote, onStatusChange, onDelete }: FeedbackCardProps) {
   const { t } = useTranslation()
   const isAuthor = feedback.author_id === userId
 
@@ -55,7 +80,6 @@ export default function FeedbackCard({ feedback, userId, isModerator, onVote, on
           </Box>
 
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            {/* Vote button */}
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
               <IconButton size="small" onClick={() => onVote(feedback.id)} color={feedback.has_voted ? 'primary' : 'default'}>
                 {feedback.has_voted ? <ThumbUpIcon fontSize="small" /> : <ThumbUpOutlinedIcon fontSize="small" />}
@@ -63,11 +87,10 @@ export default function FeedbackCard({ feedback, userId, isModerator, onVote, on
               <Typography variant="body2">{t('feedback.votes', { count: feedback.vote_count })}</Typography>
             </Box>
 
-            {/* Moderator status dropdown */}
             {isModerator && (
               <Select
                 value={feedback.status}
-                onChange={(e) => onStatusChange(feedback.id, e.target.value)}
+                onChange={(e: SelectChangeEvent) => onStatusChange(feedback.id, e.target.value)}
                 size="small"
                 variant="outlined"
                 sx={{ minWidth: 120, height: 32 }}
@@ -78,7 +101,6 @@ export default function FeedbackCard({ feedback, userId, isModerator, onVote, on
               </Select>
             )}
 
-            {/* Delete button for author */}
             {isAuthor && (
               <IconButton size="small" color="error" onClick={() => onDelete(feedback.id)}>
                 <DeleteIcon fontSize="small" />

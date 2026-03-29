@@ -14,16 +14,22 @@ import Avatar from '@mui/material/Avatar'
 import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
 
-/**
- * Shared leaderboard dialog.
- * Props:
- *   - open: boolean
- *   - onClose: () => void
- *   - title: string
- *   - rows: [{ rank, displayName, avatarUrl, value }]
- *   - valueLabel: string (e.g. "XP" or "Score")
- */
-export default function LeaderboardDialog({ open, onClose, title, rows = [], valueLabel }) {
+interface LeaderboardRow {
+  rank: number
+  displayName: string
+  avatarUrl?: string
+  value: number | string
+}
+
+interface LeaderboardDialogProps {
+  open: boolean
+  onClose: () => void
+  title: string
+  rows?: LeaderboardRow[]
+  valueLabel: string
+}
+
+export default function LeaderboardDialog({ open, onClose, title, rows = [], valueLabel }: LeaderboardDialogProps) {
   const { t } = useTranslation()
 
   return (

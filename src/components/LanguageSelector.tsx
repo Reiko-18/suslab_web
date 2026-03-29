@@ -8,7 +8,12 @@ import TranslateIcon from '@mui/icons-material/Translate'
 import CheckIcon from '@mui/icons-material/Check'
 import ListItemIcon from '@mui/material/ListItemIcon'
 
-const LANGUAGES = [
+interface Language {
+  code: string
+  label: string
+}
+
+const LANGUAGES: Language[] = [
   { code: 'en', label: 'English' },
   { code: 'ja', label: '日本語' },
   { code: 'zh-CN', label: '简体中文' },
@@ -17,7 +22,7 @@ const LANGUAGES = [
 
 export default function LanguageSelector() {
   const { i18n } = useTranslation()
-  const [anchorEl, setAnchorEl] = useState(null)
+  const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null)
 
   return (
     <>

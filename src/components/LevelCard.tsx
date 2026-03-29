@@ -9,11 +9,16 @@ import LinearProgress from '@mui/material/LinearProgress'
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents'
 import LeaderboardIcon from '@mui/icons-material/Leaderboard'
 
-export default function LevelCard({ level, xp, badges, onLeaderboard }) {
+interface LevelCardProps {
+  level: number
+  xp: number
+  badges?: string[]
+  onLeaderboard: () => void
+}
+
+export default function LevelCard({ level, xp, badges, onLeaderboard }: LevelCardProps) {
   const { t } = useTranslation()
 
-  // Level formula: level = floor(sqrt(xp / 10)) + 1
-  // XP needed for next level: 10 * level^2
   const currentLevelMinXp = 10 * (level - 1) * (level - 1)
   const nextLevelMinXp = 10 * level * level
   const xpInLevel = xp - currentLevelMinXp

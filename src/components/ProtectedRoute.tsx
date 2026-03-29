@@ -2,6 +2,7 @@ import { ReactNode } from 'react'
 import { Navigate, Outlet } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../context/AuthContext'
+import type { Role } from '../context/AuthContext'
 import Box from '@mui/material/Box'
 import Card from '@mui/material/Card'
 import Typography from '@mui/material/Typography'
@@ -9,7 +10,7 @@ import CircularProgress from '@mui/material/CircularProgress'
 
 interface ProtectedRouteProps {
   children?: ReactNode
-  minimumRole?: string
+  minimumRole?: Role
 }
 
 export default function ProtectedRoute({ children, minimumRole = 'member' }: ProtectedRouteProps) {

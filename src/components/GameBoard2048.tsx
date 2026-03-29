@@ -7,7 +7,12 @@ import { useTheme } from '@mui/material/styles'
 
 const GRID_SIZE = 4
 
-const TILE_COLORS = {
+interface TileColor {
+  bg: string
+  text: string
+}
+
+const TILE_COLORS: Record<number, TileColor> = {
   2: { bg: '#eee4da', text: '#776e65' },
   4: { bg: '#ede0c8', text: '#776e65' },
   8: { bg: '#f2b179', text: '#f9f6f2' },
@@ -21,12 +26,15 @@ const TILE_COLORS = {
   2048: { bg: '#edc22e', text: '#f9f6f2' },
 }
 
-function createEmptyBoard() {
+type Board = number[][]
+type Direction = 'left' | 'right' | 'up' | 'down'
+
+function createEmptyBoard(): Board {
   return Array.from({ length: GRID_SIZE }, () => Array(GRID_SIZE).fill(0))
 }
 
-function addRandomTile(board) {
-  const empty = []
+function addRandomTile(board: Board): Board {
+  const empty: [number, number][] = []
   for (let r = 0; r < GRID_SIZE; r++) {
     for (let c = 0; c < GRID_SIZE; c++) {
       if (board[r][c] === 0) empty.push([r, c])
@@ -39,7 +47,7 @@ function addRandomTile(board) {
   return newBoard
 }
 
-function rotateBoard(board) {
+function rotateBoard(board: Board): Board {
   const n = board.length
   const rotated = createEmptyBoard()
   for (let r = 0; r < n; r++) {
@@ -50,12 +58,10 @@ function rotateBoard(board) {
   return rotated
 }
 
-function slideLeft(board) {
+function slideLeft(board: Board): { board: Board; score: number } {
   let score = 0
   const newBoard = board.map((row) => {
-    // Remove zeros
     let tiles = row.filter((v) => v !== 0)
-    // Merge adjacent equal tiles
     for (let i = 0; i < tiles.length - 1; i++) {
       if (tiles[i] === tiles[i + 1]) {
         tiles[i] *= 2
@@ -63,33 +69,29 @@ function slideLeft(board) {
         tiles[i + 1] = 0
       }
     }
-    // Remove zeros again after merge
     tiles = tiles.filter((v) => v !== 0)
-    // Pad right with zeros
     while (tiles.length < GRID_SIZE) tiles.push(0)
     return tiles
   })
   return { board: newBoard, score }
 }
 
-function move(board, direction) {
+function move(board: Board, direction: Direction): { board: Board; score: number } {
   let rotated = board
-  const rotations = { left: 0, up: 1, right: 2, down: 3 }
+  const rotations: Record<Direction, number> = { left: 0, up: 1, right: 2, down: 3 }
   const times = rotations[direction]
 
-  // Rotate so we can always slide left
   for (let i = 0; i < times; i++) rotated = rotateBoard(rotated)
 
   const { board: slid, score } = slideLeft(rotated)
 
-  // Rotate back
   let result = slid
   for (let i = 0; i < (4 - times) % 4; i++) result = rotateBoard(result)
 
   return { board: result, score }
 }
 
-function boardsEqual(a, b) {
+function boardsEqual(a: Board, b: Board): boolean {
   for (let r = 0; r < GRID_SIZE; r++) {
     for (let c = 0; c < GRID_SIZE; c++) {
       if (a[r][c] !== b[r][c]) return false
@@ -98,14 +100,12 @@ function boardsEqual(a, b) {
   return true
 }
 
-function isGameOver(board) {
-  // Check for empty cells
+function isGameOver(board: Board): boolean {
   for (let r = 0; r < GRID_SIZE; r++) {
     for (let c = 0; c < GRID_SIZE; c++) {
       if (board[r][c] === 0) return false
     }
   }
-  // Check for possible merges
   for (let r = 0; r < GRID_SIZE; r++) {
     for (let c = 0; c < GRID_SIZE; c++) {
       const val = board[r][c]
@@ -116,23 +116,29 @@ function isGameOver(board) {
   return true
 }
 
-function initBoard() {
+function initBoard(): Board {
   let board = createEmptyBoard()
   board = addRandomTile(board)
   board = addRandomTile(board)
   return board
 }
 
-export default function GameBoard2048({ bestScore = 0, onGameOver, onScoreUpdate }) {
+interface GameBoard2048Props {
+  bestScore?: number
+  onGameOver?: (score: number) => void
+  onScoreUpdate?: (score: number) => void
+}
+
+export default function GameBoard2048({ bestScore = 0, onGameOver, onScoreUpdate }: GameBoard2048Props) {
   const { t } = useTranslation()
   const theme = useTheme()
-  const [board, setBoard] = useState(() => initBoard())
+  const [board, setBoard] = useState<Board>(() => initBoard())
   const [score, setScore] = useState(0)
   const [gameOver, setGameOver] = useState(false)
-  const boardRef = useRef(null)
-  const touchStartRef = useRef(null)
+  const boardRef = useRef<HTMLDivElement | null>(null)
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null)
 
-  const handleMove = useCallback((direction) => {
+  const handleMove = useCallback((direction: Direction) => {
     if (gameOver) return
 
     setBoard((prevBoard) => {
@@ -150,7 +156,6 @@ export default function GameBoard2048({ bestScore = 0, onGameOver, onScoreUpdate
 
       if (isGameOver(withTile)) {
         setGameOver(true)
-        // Defer onGameOver to allow state to update first
         setTimeout(() => {
           setScore((currentScore) => {
             if (onGameOver) onGameOver(currentScore)
@@ -163,10 +168,9 @@ export default function GameBoard2048({ bestScore = 0, onGameOver, onScoreUpdate
     })
   }, [gameOver, onGameOver, onScoreUpdate])
 
-  // Keyboard controls
   useEffect(() => {
-    const handleKeyDown = (e) => {
-      const keyMap = {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const keyMap: Record<string, Direction> = {
         ArrowUp: 'up',
         ArrowDown: 'down',
         ArrowLeft: 'left',
@@ -183,17 +187,16 @@ export default function GameBoard2048({ bestScore = 0, onGameOver, onScoreUpdate
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [handleMove])
 
-  // Touch / swipe controls
   useEffect(() => {
     const el = boardRef.current
     if (!el) return
 
-    const handleTouchStart = (e) => {
+    const handleTouchStart = (e: TouchEvent) => {
       const touch = e.touches[0]
       touchStartRef.current = { x: touch.clientX, y: touch.clientY }
     }
 
-    const handleTouchEnd = (e) => {
+    const handleTouchEnd = (e: TouchEvent) => {
       if (!touchStartRef.current) return
       const touch = e.changedTouches[0]
       const dx = touch.clientX - touchStartRef.current.x
@@ -232,7 +235,6 @@ export default function GameBoard2048({ bestScore = 0, onGameOver, onScoreUpdate
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
-      {/* Score bar */}
       <Box sx={{ display: 'flex', gap: 3, alignItems: 'center', width: '100%', justifyContent: 'center' }}>
         <Box sx={{ textAlign: 'center' }}>
           <Typography variant="caption" color="text.secondary">{t('games.score')}</Typography>
@@ -245,7 +247,6 @@ export default function GameBoard2048({ bestScore = 0, onGameOver, onScoreUpdate
         <Button variant="outlined" size="small" onClick={handleNewGame}>{t('games.newGame')}</Button>
       </Box>
 
-      {/* Board */}
       <Box
         ref={boardRef}
         sx={{
@@ -295,7 +296,6 @@ export default function GameBoard2048({ bestScore = 0, onGameOver, onScoreUpdate
           )
         })}
 
-        {/* Game over overlay */}
         {gameOver && (
           <Box
             sx={{

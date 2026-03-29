@@ -15,7 +15,6 @@ import ChecklistIcon from '@mui/icons-material/Checklist'
 import CampaignIcon from '@mui/icons-material/Campaign'
 import SportsEsportsIcon from '@mui/icons-material/SportsEsports'
 import FeedbackIcon from '@mui/icons-material/Feedback'
-import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings'
 import ManageAccountsIcon from '@mui/icons-material/ManageAccounts'
 import ConfirmationNumberIcon from '@mui/icons-material/ConfirmationNumber'
 import RateReviewIcon from '@mui/icons-material/RateReview'
@@ -51,9 +50,6 @@ export const ADMIN_NAV: NavItem[] = [
   { key: 'nav.admin.feedbackReview', path: '/admin/feedback', icon: RateReviewIcon },
   { key: 'nav.admin.settings', path: '/admin/settings', icon: SettingsIcon },
 ]
-
-// Keep this export to avoid TS unused-import warning
-export { AdminPanelSettingsIcon as _AdminPanelSettingsIcon }
 
 export default function NavRail({ onExpand }: NavRailProps) {
   const { t } = useTranslation()

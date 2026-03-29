@@ -14,8 +14,10 @@ const PRESETS = [
 
 export default function ThemeColorPicker() {
   const { t } = useTranslation()
-  const { seedColor, setSeedColor } = useThemeControls()
-  const [anchorEl, setAnchorEl] = useState(null)
+  const themeControls = useThemeControls()
+  const seedColor = themeControls?.seedColor ?? '#7C9070'
+  const setSeedColor = themeControls?.setSeedColor ?? (() => undefined)
+  const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null)
 
   return (
     <>

@@ -112,7 +112,12 @@ export default function ProfileEditor() {
   useEffect(() => {
     const load = async () => {
       try {
-        const data = await edgeFunctions.getOwnProfile()
+        const data = await edgeFunctions.getOwnProfile() as {
+          bio?: string
+          skill_tags?: string[]
+          social_links?: Partial<SocialLinks>
+          visibility?: Partial<Visibility>
+        }
         setBio(data.bio ?? '')
         setSkillTags(data.skill_tags ?? [])
         setSocialLinks({
@@ -153,8 +158,8 @@ export default function ProfileEditor() {
       await edgeFunctions.updateProfile({
         bio,
         skill_tags: skillTags,
-        social_links: filteredLinks,
-        visibility,
+        social_links: filteredLinks as Record<string, string>,
+        visibility: visibility as unknown as string,
       })
       setSnackbar({ open: true, severity: 'success', message: t('profile.saved') })
     } catch (err) {

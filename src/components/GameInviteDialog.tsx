@@ -9,7 +9,20 @@ import TextField from '@mui/material/TextField'
 import MenuItem from '@mui/material/MenuItem'
 import Stack from '@mui/material/Stack'
 
-export default function GameInviteDialog({ open, onClose, onCreate }) {
+interface GameInvitePayload {
+  game_type: string
+  title: string
+  description?: string
+  max_players: number
+}
+
+interface GameInviteDialogProps {
+  open: boolean
+  onClose: () => void
+  onCreate: (payload: GameInvitePayload) => void
+}
+
+export default function GameInviteDialog({ open, onClose, onCreate }: GameInviteDialogProps) {
   const { t } = useTranslation()
   const [gameType, setGameType] = useState('2048')
   const [title, setTitle] = useState('')

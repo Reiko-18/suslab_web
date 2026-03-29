@@ -20,7 +20,6 @@ import ListItemAvatar from '@mui/material/ListItemAvatar'
 import ListItemText from '@mui/material/ListItemText'
 import CircularProgress from '@mui/material/CircularProgress'
 import DeleteIcon from '@mui/icons-material/Delete'
-import OpenInNewIcon from '@mui/icons-material/OpenInNew'
 import XIcon from '@mui/icons-material/X'
 import GitHubIcon from '@mui/icons-material/GitHub'
 import YouTubeIcon from '@mui/icons-material/YouTube'
@@ -74,7 +73,7 @@ export default function MemberDialog({ member, open, onClose }: MemberDialogProp
     if (!member?.user_id) return
     setLoadingComments(true)
     try {
-      const result = await edgeFunctions.listComments(member.user_id)
+      const result = await edgeFunctions.listComments(member.user_id) as { comments?: Comment[] }
       setComments(result.comments ?? [])
     } catch (err) {
       console.error('Failed to load comments:', err)
@@ -276,4 +275,3 @@ export default function MemberDialog({ member, open, onClose }: MemberDialogProp
   )
 }
 
-export { OpenInNewIcon as _OpenInNewIcon }

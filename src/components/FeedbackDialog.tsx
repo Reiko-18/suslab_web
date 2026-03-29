@@ -9,7 +9,19 @@ import TextField from '@mui/material/TextField'
 import MenuItem from '@mui/material/MenuItem'
 import Stack from '@mui/material/Stack'
 
-export default function FeedbackDialog({ open, onClose, onCreate }) {
+interface FeedbackPayload {
+  category: string
+  title: string
+  content: string
+}
+
+interface FeedbackDialogProps {
+  open: boolean
+  onClose: () => void
+  onCreate: (payload: FeedbackPayload) => void
+}
+
+export default function FeedbackDialog({ open, onClose, onCreate }: FeedbackDialogProps) {
   const { t } = useTranslation()
   const [category, setCategory] = useState('feature')
   const [title, setTitle] = useState('')

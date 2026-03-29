@@ -28,7 +28,9 @@ export default function TopAppBar({ title, onMenuClick }: TopAppBarProps) {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const { user, signOut } = useAuth()
-  const { mode, toggleMode } = useThemeControls()
+  const themeControls = useThemeControls()
+  const mode = themeControls?.mode ?? 'light'
+  const toggleMode = themeControls?.toggleMode ?? (() => undefined)
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null)
 
   const meta = user?.user_metadata || {}

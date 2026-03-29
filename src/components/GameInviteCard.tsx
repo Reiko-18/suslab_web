@@ -9,7 +9,29 @@ import Avatar from '@mui/material/Avatar'
 import Box from '@mui/material/Box'
 import PeopleIcon from '@mui/icons-material/People'
 
-export default function GameInviteCard({ invite, userId, onJoin, onLeave, onClose }) {
+interface GameInvite {
+  id: string
+  host_id: string
+  host_display_name?: string
+  host_avatar_url?: string
+  game_type: string
+  title: string
+  description?: string
+  status: string
+  is_participant: boolean
+  participant_count: number
+  max_players: number
+}
+
+interface GameInviteCardProps {
+  invite: GameInvite
+  userId: string
+  onJoin: (id: string) => void
+  onLeave: (id: string) => void
+  onClose: (id: string) => void
+}
+
+export default function GameInviteCard({ invite, userId, onJoin, onLeave, onClose }: GameInviteCardProps) {
   const { t } = useTranslation()
   const isHost = invite.host_id === userId
   const isParticipant = invite.is_participant
