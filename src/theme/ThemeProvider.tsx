@@ -2,15 +2,16 @@ import { useMemo, createContext, useContext } from 'react'
 import { ThemeProvider as MuiThemeProvider, createTheme } from '@mui/material/styles'
 import CssBaseline from '@mui/material/CssBaseline'
 import { useThemeSettings } from './useThemeSettings'
+import type { ThemeSettings } from './useThemeSettings'
 import { generateMuiPalette } from './colorUtils'
 
-const ThemeSettingsContext = createContext(null)
+const ThemeSettingsContext = createContext<ThemeSettings | null>(null)
 
-export function useThemeControls() {
+export function useThemeControls(): ThemeSettings | null {
   return useContext(ThemeSettingsContext)
 }
 
-export default function ThemeProvider({ children }) {
+export default function ThemeProvider({ children }: { children: React.ReactNode }) {
   const settings = useThemeSettings()
   const { mode, seedColor } = settings
 

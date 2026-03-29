@@ -1,4 +1,3 @@
-// src/components/admin/UserActionDialog.jsx
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import Dialog from '@mui/material/Dialog'
@@ -8,11 +7,33 @@ import DialogActions from '@mui/material/DialogActions'
 import Button from '@mui/material/Button'
 import TextField from '@mui/material/TextField'
 import MenuItem from '@mui/material/MenuItem'
-import Select from '@mui/material/Select'
+import Select, { SelectChangeEvent } from '@mui/material/Select'
 import FormControl from '@mui/material/FormControl'
 import InputLabel from '@mui/material/InputLabel'
 import Typography from '@mui/material/Typography'
 import Alert from '@mui/material/Alert'
+
+type ActionType = 'ban' | 'kick' | 'timeout'
+
+interface TargetUser {
+  id: string
+  display_name?: string
+}
+
+interface ConfirmPayload {
+  actionType: ActionType
+  userId: string
+  reason: string
+  durationMinutes: number
+}
+
+interface UserActionDialogProps {
+  open: boolean
+  onClose: () => void
+  actionType: ActionType
+  targetUser: TargetUser
+  onConfirm: (payload: ConfirmPayload) => Promise<void>
+}
 
 const TIMEOUT_OPTIONS = [
   { value: 5, label: '5 min' },
@@ -22,12 +43,12 @@ const TIMEOUT_OPTIONS = [
   { value: 10080, label: '7 days' },
 ]
 
-export default function UserActionDialog({ open, onClose, actionType, targetUser, onConfirm }) {
+export default function UserActionDialog({ open, onClose, actionType, targetUser, onConfirm }: UserActionDialogProps) {
   const { t } = useTranslation()
   const [reason, setReason] = useState('')
   const [duration, setDuration] = useState(60)
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState(null)
+  const [error, setError] = useState<string | null>(null)
 
   const handleConfirm = async () => {
     setLoading(true)
@@ -42,13 +63,13 @@ export default function UserActionDialog({ open, onClose, actionType, targetUser
       setReason('')
       onClose()
     } catch (err) {
-      setError(err.message)
+      setError((err as Error).message)
     } finally {
       setLoading(false)
     }
   }
 
-  const titleMap = {
+  const titleMap: Record<ActionType, string> = {
     ban: t('admin.users.actions.ban'),
     kick: t('admin.users.actions.kick'),
     timeout: t('admin.users.actions.timeout'),
@@ -80,7 +101,7 @@ export default function UserActionDialog({ open, onClose, actionType, targetUser
             <Select
               value={duration}
               label={t('admin.users.actions.duration')}
-              onChange={(e) => setDuration(e.target.value)}
+              onChange={(e: SelectChangeEvent<number>) => setDuration(e.target.value as number)}
             >
               {TIMEOUT_OPTIONS.map((opt) => (
                 <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>

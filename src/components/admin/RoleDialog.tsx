@@ -1,4 +1,3 @@
-// src/components/admin/RoleDialog.jsx
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import Dialog from '@mui/material/Dialog'
@@ -10,13 +9,34 @@ import TextField from '@mui/material/TextField'
 import Box from '@mui/material/Box'
 import Alert from '@mui/material/Alert'
 
-export default function RoleDialog({ open, onClose, role, onSave }) {
+interface Role {
+  id?: string
+  name: string
+  color?: string
+  position?: number
+}
+
+interface SavePayload {
+  id?: string
+  name: string
+  color: string
+  position: number
+}
+
+interface RoleDialogProps {
+  open: boolean
+  onClose: () => void
+  role: Role | null
+  onSave: (payload: SavePayload) => Promise<void>
+}
+
+export default function RoleDialog({ open, onClose, role, onSave }: RoleDialogProps) {
   const { t } = useTranslation()
   const [name, setName] = useState('')
   const [color, setColor] = useState('#99AAB5')
   const [position, setPosition] = useState(0)
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState(null)
+  const [error, setError] = useState<string | null>(null)
 
   const isEdit = Boolean(role)
 
@@ -40,7 +60,7 @@ export default function RoleDialog({ open, onClose, role, onSave }) {
       await onSave({ id: role?.id, name: name.trim(), color, position })
       onClose()
     } catch (err) {
-      setError(err.message)
+      setError((err as Error).message)
     } finally {
       setLoading(false)
     }

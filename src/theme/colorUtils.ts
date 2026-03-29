@@ -4,7 +4,19 @@ import {
   themeFromSourceColor,
 } from '@material/material-color-utilities'
 
-export function generateMuiPalette(seedHex, mode = 'light') {
+export type ThemeMode = 'light' | 'dark'
+
+export interface MuiPalette {
+  primary: { main: string; light: string; dark: string; contrastText: string }
+  secondary: { main: string; light: string; dark: string; contrastText: string }
+  info: { main: string; light: string; dark: string; contrastText: string }
+  error: { main: string; light: string; dark: string; contrastText: string }
+  background: { default: string; paper: string }
+  text: { primary: string; secondary: string }
+  divider: string
+}
+
+export function generateMuiPalette(seedHex: string, mode: ThemeMode = 'light'): MuiPalette {
   const theme = themeFromSourceColor(argbFromHex(seedHex))
   const scheme = mode === 'dark' ? theme.schemes.dark : theme.schemes.light
 

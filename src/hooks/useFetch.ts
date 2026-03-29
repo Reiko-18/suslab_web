@@ -1,10 +1,17 @@
 import { useState, useEffect } from 'react'
+import type { AxiosResponse } from 'axios'
 import api from '../services/api'
 
-function useFetch(url) {
-  const [data, setData] = useState(null)
+interface UseFetchResult<T> {
+  data: T | null
+  loading: boolean
+  error: unknown
+}
+
+function useFetch<T = unknown>(url: string): UseFetchResult<T> {
+  const [data, setData] = useState<T | null>(null)
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
+  const [error, setError] = useState<unknown>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -12,7 +19,7 @@ function useFetch(url) {
     async function fetchData() {
       try {
         setLoading(true)
-        const response = await api.get(url)
+        const response: AxiosResponse<T> = await api.get<T>(url)
         if (!cancelled) setData(response.data)
       } catch (err) {
         if (!cancelled) setError(err)

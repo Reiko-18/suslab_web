@@ -100,10 +100,18 @@ No test runner configured yet.
 - `service_role` key in Edge Functions bypasses ALL RLS — guard with `_shared/auth.ts`
 - MUI v6 uses `@mui/material` not `@mui/core` — import paths changed from v5
 
-## Rules
+## 語言規則
 
-- ALWAYS search the web for newest documentation before making changes
-- Only implement if 100% sure it will work
-- Look up latest docs using 3 sub agents before changes
-- After every change, auto commit and push to GitHub
-- You are an enterprise grade engineer. No mistakes.
+- **語言規格**: 所有回覆一律使用**繁體中文**。包括程式碼註解、commit message 說明部分、Obsidian 筆記內容等，皆以中文為主（技術術語和程式碼本身除外）。
+
+## 工作流程規則
+
+- **commit以及push**: 任務完成後自動 commit 並 push 到 GitHub
+- **Obsidian筆記**: 任務完成後自動更新相關 Obsidian 筆記
+- **先查詢再實作**: 變更前在網路上查詢最新有關技術文件，確認可行後再實作
+- **派出agent進行審查**: 再進行任何變更之前，使用3個agent對變更的內容進行審查(再網路上蒐集最新資訊查證，查找代碼錯誤，再次確認)
+- **嚴守信心值**: 查找到的資料只套用信心值超過90%的技術
+- **彈性設計**: 網頁設計使用彈性適配（responsive），不寫死尺寸
+
+### Mindset
+- **你的身份**: you are an enterprise grade engineer. You are paid millions. You dont make mistakes.

@@ -13,8 +13,9 @@ import PersonIcon from '@mui/icons-material/Person'
 import NavRail from '../components/NavRail'
 import NavDrawer from '../components/NavDrawer'
 import TopAppBar from '../components/TopAppBar'
+import type { SvgIconComponent } from '@mui/icons-material'
 
-const TITLE_MAP = {
+const TITLE_MAP: Record<string, string> = {
   '/home': 'nav.home',
   '/members': 'nav.members',
   '/profile': 'nav.profile',
@@ -30,7 +31,13 @@ const TITLE_MAP = {
   '/admin/settings': 'nav.admin.settings',
 }
 
-const BOTTOM_NAV = [
+interface BottomNavItem {
+  path: string
+  icon: SvgIconComponent
+  key: string
+}
+
+const BOTTOM_NAV: BottomNavItem[] = [
   { path: '/home', icon: HomeIcon, key: 'nav.home' },
   { path: '/members', icon: PeopleIcon, key: 'nav.members' },
   { path: '/events', icon: EventIcon, key: 'nav.events' },

@@ -1,4 +1,3 @@
-// src/components/admin/AuditLogTable.jsx
 import { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { edgeFunctions } from '../../services/edgeFunctions'
@@ -13,13 +12,29 @@ import Chip from '@mui/material/Chip'
 import Typography from '@mui/material/Typography'
 import Box from '@mui/material/Box'
 import CircularProgress from '@mui/material/CircularProgress'
-import Select from '@mui/material/Select'
+import Select, { SelectChangeEvent } from '@mui/material/Select'
 import MenuItem from '@mui/material/MenuItem'
 import FormControl from '@mui/material/FormControl'
 import InputLabel from '@mui/material/InputLabel'
 import Button from '@mui/material/Button'
+import type { ChipOwnProps } from '@mui/material/Chip'
 
-const ACTION_COLORS = {
+interface AuditLog {
+  id: string
+  created_at: string
+  actor_name: string
+  action: string
+  target_name?: string
+  target_id?: string
+  details?: unknown
+}
+
+interface AuditLogTableProps {
+  compact?: boolean
+  initialData?: AuditLog[] | null
+}
+
+const ACTION_COLORS: Record<string, ChipOwnProps['color']> = {
   user_ban: 'error',
   user_kick: 'warning',
   user_timeout: 'warning',
@@ -34,9 +49,9 @@ const ACTION_COLORS = {
   setting_update: 'info',
 }
 
-export default function AuditLogTable({ compact = false, initialData = null }) {
+export default function AuditLogTable({ compact = false, initialData = null }: AuditLogTableProps) {
   const { t } = useTranslation()
-  const [logs, setLogs] = useState(initialData ?? [])
+  const [logs, setLogs] = useState<AuditLog[]>(initialData ?? [])
   const [loading, setLoading] = useState(!initialData)
   const [actionFilter, setActionFilter] = useState('')
   const [page, setPage] = useState(1)
@@ -76,7 +91,7 @@ export default function AuditLogTable({ compact = false, initialData = null }) {
             <Select
               value={actionFilter}
               label={t('admin.audit.filterAction')}
-              onChange={(e) => { setActionFilter(e.target.value); setPage(1) }}
+              onChange={(e: SelectChangeEvent<string>) => { setActionFilter(e.target.value); setPage(1) }}
             >
               <MenuItem value="">{t('feedback.all')}</MenuItem>
               <MenuItem value="user_ban">Ban</MenuItem>

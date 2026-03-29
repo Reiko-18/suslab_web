@@ -1,4 +1,3 @@
-// src/components/admin/TicketDetailDialog.jsx
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { edgeFunctions } from '../../services/edgeFunctions'
@@ -13,35 +12,67 @@ import Chip from '@mui/material/Chip'
 import Avatar from '@mui/material/Avatar'
 import Box from '@mui/material/Box'
 import Divider from '@mui/material/Divider'
-import Select from '@mui/material/Select'
+import Select, { SelectChangeEvent } from '@mui/material/Select'
 import MenuItem from '@mui/material/MenuItem'
 import FormControl from '@mui/material/FormControl'
 import InputLabel from '@mui/material/InputLabel'
 import CircularProgress from '@mui/material/CircularProgress'
 import Paper from '@mui/material/Paper'
+import type { ChipOwnProps } from '@mui/material/Chip'
 
-const STATUS_COLORS = {
+type TicketStatus = 'open' | 'in_progress' | 'resolved' | 'closed'
+type TicketPriority = 'low' | 'normal' | 'high' | 'urgent'
+
+interface Ticket {
+  id: string
+  title: string
+  content: string
+  status: TicketStatus
+  priority: TicketPriority
+  category: string
+  source: string
+  created_at: string
+  author_name?: string
+  author_avatar?: string
+}
+
+interface TicketReply {
+  id: string
+  content: string
+  created_at: string
+  author_name?: string
+  author_avatar?: string
+}
+
+interface TicketDetailDialogProps {
+  open: boolean
+  onClose: () => void
+  ticket: Ticket | null
+  onUpdate: (updated: Ticket) => void
+}
+
+const STATUS_COLORS: Record<TicketStatus, ChipOwnProps['color']> = {
   open: 'info',
   in_progress: 'warning',
   resolved: 'success',
   closed: 'default',
 }
 
-const PRIORITY_COLORS = {
+const PRIORITY_COLORS: Record<TicketPriority, ChipOwnProps['color']> = {
   low: 'default',
   normal: 'info',
   high: 'warning',
   urgent: 'error',
 }
 
-export default function TicketDetailDialog({ open, onClose, ticket, onUpdate }) {
+export default function TicketDetailDialog({ open, onClose, ticket, onUpdate }: TicketDetailDialogProps) {
   const { t } = useTranslation()
-  const [replies, setReplies] = useState([])
+  const [replies, setReplies] = useState<TicketReply[]>([])
   const [replyText, setReplyText] = useState('')
   const [loadingReplies, setLoadingReplies] = useState(false)
   const [sending, setSending] = useState(false)
-  const [status, setStatus] = useState(ticket?.status ?? 'open')
-  const [priority, setPriority] = useState(ticket?.priority ?? 'normal')
+  const [status, setStatus] = useState<TicketStatus>(ticket?.status ?? 'open')
+  const [priority, setPriority] = useState<TicketPriority>(ticket?.priority ?? 'normal')
 
   useEffect(() => {
     if (open && ticket) {
@@ -56,7 +87,7 @@ export default function TicketDetailDialog({ open, onClose, ticket, onUpdate }) 
   }, [open, ticket])
 
   const handleSendReply = async () => {
-    if (!replyText.trim()) return
+    if (!replyText.trim() || !ticket) return
     setSending(true)
     try {
       const reply = await edgeFunctions.replyTicket(ticket.id, replyText.trim())
@@ -69,7 +100,8 @@ export default function TicketDetailDialog({ open, onClose, ticket, onUpdate }) 
     }
   }
 
-  const handleStatusChange = async (newStatus) => {
+  const handleStatusChange = async (newStatus: TicketStatus) => {
+    if (!ticket) return
     setStatus(newStatus)
     try {
       await edgeFunctions.updateTicket(ticket.id, { status: newStatus, priority })
@@ -79,7 +111,8 @@ export default function TicketDetailDialog({ open, onClose, ticket, onUpdate }) 
     }
   }
 
-  const handlePriorityChange = async (newPriority) => {
+  const handlePriorityChange = async (newPriority: TicketPriority) => {
+    if (!ticket) return
     setPriority(newPriority)
     try {
       await edgeFunctions.updateTicket(ticket.id, { status, priority: newPriority })
@@ -119,16 +152,24 @@ export default function TicketDetailDialog({ open, onClose, ticket, onUpdate }) 
         <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
           <FormControl size="small" sx={{ minWidth: 140 }}>
             <InputLabel>{t('admin.tickets.statusLabel')}</InputLabel>
-            <Select value={status} label={t('admin.tickets.statusLabel')} onChange={(e) => handleStatusChange(e.target.value)}>
-              {['open', 'in_progress', 'resolved', 'closed'].map((s) => (
+            <Select
+              value={status}
+              label={t('admin.tickets.statusLabel')}
+              onChange={(e: SelectChangeEvent<TicketStatus>) => handleStatusChange(e.target.value as TicketStatus)}
+            >
+              {(['open', 'in_progress', 'resolved', 'closed'] as TicketStatus[]).map((s) => (
                 <MenuItem key={s} value={s}>{t(`admin.tickets.status.${s}`)}</MenuItem>
               ))}
             </Select>
           </FormControl>
           <FormControl size="small" sx={{ minWidth: 140 }}>
             <InputLabel>{t('admin.tickets.priorityLabel')}</InputLabel>
-            <Select value={priority} label={t('admin.tickets.priorityLabel')} onChange={(e) => handlePriorityChange(e.target.value)}>
-              {['low', 'normal', 'high', 'urgent'].map((p) => (
+            <Select
+              value={priority}
+              label={t('admin.tickets.priorityLabel')}
+              onChange={(e: SelectChangeEvent<TicketPriority>) => handlePriorityChange(e.target.value as TicketPriority)}
+            >
+              {(['low', 'normal', 'high', 'urgent'] as TicketPriority[]).map((p) => (
                 <MenuItem key={p} value={p}>{t(`admin.tickets.priority.${p}`)}</MenuItem>
               ))}
             </Select>
