@@ -64,6 +64,8 @@ export default function AppLayout() {
         flexGrow: 1, ml: { xs: 0, md: '72px' },
         mt: '64px', mb: { xs: '56px', md: 0 },
         minHeight: 'calc(100vh - 64px)',
+        bgcolor: '#202225',
+        p: { xs: 0, md: '10px' },
       }}>
         <Outlet />
       </Box>

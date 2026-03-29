@@ -69,6 +69,8 @@
   "home.badges": "徽章",
   "home.earned": "已獲得",
   "home.noBadges": "還沒有徽章 — 繼續參與吧！",
+  "home.recentEvent": "近期活動",
+  "home.perPage": "每頁",
   "profile.role": "角色",
   "profile.joinDate": "加入日期",
   "profile.verifiedVia": "透過 Discord 驗證",

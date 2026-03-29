@@ -39,7 +39,7 @@ export default function TopAppBar({ title, onMenuClick }: TopAppBarProps) {
 
   return (
     <AppBar position="fixed" color="default" elevation={0}
-      sx={{ left: { xs: 0, md: 72 }, width: { xs: '100%', md: 'calc(100% - 72px)' }, borderBottom: 1, borderColor: 'divider', bgcolor: 'background.paper' }}
+      sx={{ left: { xs: 0, md: 72 }, width: { xs: '100%', md: 'calc(100% - 72px)' }, borderBottom: 1, borderColor: '#202225', bgcolor: '#2f3136', color: '#dcddde' }}
     >
       <Toolbar>
         <IconButton edge="start" onClick={onMenuClick} sx={{ mr: 1, display: { md: 'flex' } }}>

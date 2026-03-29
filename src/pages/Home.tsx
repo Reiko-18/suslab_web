@@ -1,271 +1,599 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
 import { edgeFunctions } from '../services/edgeFunctions'
 import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
-import Card from '@mui/material/Card'
 import Skeleton from '@mui/material/Skeleton'
-import Tooltip from '@mui/material/Tooltip'
-import List from '@mui/material/List'
-import ListItem from '@mui/material/ListItem'
-import ListItemText from '@mui/material/ListItemText'
-import ListItemButton from '@mui/material/ListItemButton'
 import Button from '@mui/material/Button'
-import LinearProgress from '@mui/material/LinearProgress'
-import ChatBubbleIcon from '@mui/icons-material/ChatBubble'
-import HeadphonesIcon from '@mui/icons-material/Headphones'
-import FavoriteIcon from '@mui/icons-material/Favorite'
-import MilitaryTechIcon from '@mui/icons-material/MilitaryTech'
-import TrendingUpIcon from '@mui/icons-material/TrendingUp'
-import WorkspacePremiumIcon from '@mui/icons-material/WorkspacePremium'
-import DiamondIcon from '@mui/icons-material/Diamond'
-import BugReportIcon from '@mui/icons-material/BugReport'
-import ShieldIcon from '@mui/icons-material/Shield'
-import VerifiedIcon from '@mui/icons-material/Verified'
-import CodeIcon from '@mui/icons-material/Code'
-import VolunteerActivismIcon from '@mui/icons-material/VolunteerActivism'
-import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome'
-import LocalFireDepartmentIcon from '@mui/icons-material/LocalFireDepartment'
-import GroupsIcon from '@mui/icons-material/Groups'
-import RocketLaunchIcon from '@mui/icons-material/RocketLaunch'
-import EmojiEventsIcon from '@mui/icons-material/EmojiEvents'
-import type { SvgIconComponent } from '@mui/icons-material'
+import IconButton from '@mui/material/IconButton'
+import ViewListIcon from '@mui/icons-material/ViewList'
+import GridViewIcon from '@mui/icons-material/GridView'
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft'
+import ChevronRightIcon from '@mui/icons-material/ChevronRight'
 
-interface StatCard {
-  key: string
-  label: string
-  icon: SvgIconComponent
-  iconColor: string
-  badgeBg: string
-  badgeColor: string
-  change?: string
+interface Announcement {
+  id: string
+  title: string
+  content: string
+  created_at: string
+  pinned?: boolean
+  author_name?: string
 }
 
-const STAT_CARDS: StatCard[] = [
-  { key: 'messages', label: 'home.stats.messages', icon: ChatBubbleIcon, iconColor: '#7C9070', badgeBg: '#7C907015', badgeColor: '#4A5D43', change: '+12%' },
-  { key: 'vcHours', label: 'home.stats.vcHours', icon: HeadphonesIcon, iconColor: '#5B9BD5', badgeBg: '#5B9BD515', badgeColor: '#5B9BD5', change: '+8%' },
-  { key: 'friends', label: 'home.stats.friends', icon: FavoriteIcon, iconColor: '#D4845E', badgeBg: '#D4845E15', badgeColor: '#D4845E', change: '+3 this month' },
-  { key: 'level', label: 'home.stats.level', icon: MilitaryTechIcon, iconColor: '#9B8AA8', badgeBg: '#9B8AA815', badgeColor: '#9B8AA8' },
-]
-
-interface DiscordBadgeDef {
-  bit: number
-  name: string
-  icon: SvgIconComponent
-  bg: string
-  color: string
+interface EventItem {
+  id: string
+  title: string
+  description: string
+  event_date: string
+  location?: string
+  image_url?: string
 }
 
-const DISCORD_BADGES: DiscordBadgeDef[] = [
-  { bit: 0, name: 'Discord Staff', icon: ShieldIcon, bg: '#5865F215', color: '#5865F2' },
-  { bit: 1, name: 'Partnered Server Owner', icon: VerifiedIcon, bg: '#5865F215', color: '#5865F2' },
-  { bit: 2, name: 'HypeSquad Events', icon: EmojiEventsIcon, bg: '#F4720015', color: '#F47200' },
-  { bit: 3, name: 'Bug Hunter Level 1', icon: BugReportIcon, bg: '#3BA55D15', color: '#3BA55D' },
-  { bit: 6, name: 'HypeSquad Bravery', icon: LocalFireDepartmentIcon, bg: '#9B59B615', color: '#9B59B6' },
-  { bit: 7, name: 'HypeSquad Brilliance', icon: AutoAwesomeIcon, bg: '#F4720015', color: '#F47200' },
-  { bit: 8, name: 'HypeSquad Balance', icon: VolunteerActivismIcon, bg: '#2ECC7115', color: '#2ECC71' },
-  { bit: 9, name: 'Early Nitro Supporter', icon: DiamondIcon, bg: '#F47FFF15', color: '#F47FFF' },
-  { bit: 10, name: 'Team User', icon: GroupsIcon, bg: '#5865F215', color: '#5865F2' },
-  { bit: 14, name: 'Bug Hunter Level 2', icon: BugReportIcon, bg: '#FFD70015', color: '#FFD700' },
-  { bit: 17, name: 'Early Verified Bot Developer', icon: CodeIcon, bg: '#5865F215', color: '#5865F2' },
-  { bit: 18, name: 'Discord Certified Moderator', icon: ShieldIcon, bg: '#5865F215', color: '#5865F2' },
-  { bit: 22, name: 'Active Developer', icon: RocketLaunchIcon, bg: '#3BA55D15', color: '#3BA55D' },
-]
-
-interface BadgeItem {
-  name: string
-  icon: SvgIconComponent
-  bg: string
-  color: string
-}
-
-function getDiscordBadges(discordFlags: number | undefined | null): BadgeItem[] {
-  const flags = discordFlags ?? 0
-  return DISCORD_BADGES.filter(({ bit }) => (flags & (1 << bit)) !== 0)
-}
+const CAROUSEL_INTERVAL = 6000
+const EVENTS_PER_PAGE = 10
 
 export default function Home() {
   const { t, i18n } = useTranslation()
-  const { user } = useAuth()
   const navigate = useNavigate()
-  const [stats, setStats] = useState<any>(null)
-  const [level, setLevel] = useState<any>(null)
-  const [profile, setProfile] = useState<any>(null)
-  const [announcements, setAnnouncements] = useState<any[]>([])
-  const [loadingStats, setLoadingStats] = useState(true)
+  const [announcements, setAnnouncements] = useState<Announcement[]>([])
+  const [events, setEvents] = useState<EventItem[]>([])
   const [loadingAnn, setLoadingAnn] = useState(true)
-
-  const meta = user?.user_metadata || {}
-  const displayName: string = meta.full_name || meta.user_name || meta.name || 'User'
-
-  const discordBadges = useMemo(() => getDiscordBadges(profile?.discord_flags), [profile])
+  const [loadingEvents, setLoadingEvents] = useState(true)
+  const [carouselIndex, setCarouselIndex] = useState(0)
+  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list')
+  const [currentPage, setCurrentPage] = useState(1)
 
   useEffect(() => {
-    edgeFunctions.getStats()
-      .then(setStats)
-      .catch((err: unknown) => console.error('Failed to load stats:', err))
-      .finally(() => setLoadingStats(false))
-
-    edgeFunctions.listAnnouncements({ page: 1, pageSize: 3 })
-      .then((data: any) => setAnnouncements(data.announcements ?? []))
+    edgeFunctions.listAnnouncements({ page: 1, pageSize: 5 })
+      .then((data: { announcements?: Announcement[] }) => setAnnouncements(data.announcements ?? []))
       .catch((err: unknown) => console.error('Failed to load announcements:', err))
       .finally(() => setLoadingAnn(false))
 
-    edgeFunctions.getMyLevel()
-      .then(setLevel)
-      .catch((err: unknown) => console.error('Failed to load level:', err))
-
-    edgeFunctions.getOwnProfile()
-      .then(setProfile)
-      .catch((err: unknown) => console.error('Failed to load profile:', err))
+    edgeFunctions.getEvents()
+      .then((data: EventItem[] | { events?: EventItem[] }) => {
+        const items = Array.isArray(data) ? data : (data.events ?? [])
+        setEvents(items)
+      })
+      .catch((err: unknown) => console.error('Failed to load events:', err))
+      .finally(() => setLoadingEvents(false))
   }, [])
 
-  const xp: number = level?.xp ?? 0
-  const lvl: number = level?.level ?? 1
-  const xpNext: number = lvl * lvl * 10
-  const xpProgress: number = xpNext > 0 ? Math.min((xp / xpNext) * 100, 100) : 0
+  // Carousel auto-advance
+  const carouselItems = announcements.length > 0 ? announcements : []
+  const carouselCount = Math.max(carouselItems.length, 1)
 
-  const appBadges: BadgeItem[] = (level?.badges ?? []).map((b: string) => ({
-    name: b, icon: MilitaryTechIcon, bg: '#9B8AA815', color: '#9B8AA8',
-  }))
-  const allBadges: BadgeItem[] = [...discordBadges, ...appBadges]
+  const advanceCarousel = useCallback(() => {
+    if (carouselItems.length > 1) {
+      setCarouselIndex((prev) => (prev + 1) % carouselCount)
+    }
+  }, [carouselItems.length, carouselCount])
+
+  useEffect(() => {
+    if (carouselItems.length <= 1) return
+    const timer = setInterval(advanceCarousel, CAROUSEL_INTERVAL)
+    return () => clearInterval(timer)
+  }, [advanceCarousel, carouselItems.length])
+
+  // Pagination
+  const totalPages = Math.max(Math.ceil(events.length / EVENTS_PER_PAGE), 1)
+  const paginatedEvents = events.slice(
+    (currentPage - 1) * EVENTS_PER_PAGE,
+    currentPage * EVENTS_PER_PAGE
+  )
+
+  const currentAnn = carouselItems[carouselIndex] ?? null
+
+  // Banner placeholder images (Discord-style winter/event banners)
+  const bannerImages = [
+    'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=1200&h=600&fit=crop',
+    'https://images.unsplash.com/photo-1534796636912-3b95b3ab5986?w=1200&h=600&fit=crop',
+    'https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=1200&h=600&fit=crop',
+    'https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=1200&h=600&fit=crop',
+    'https://images.unsplash.com/photo-1507400492013-162706c8c05e?w=1200&h=600&fit=crop',
+  ]
 
   return (
-    <Box sx={{ p: { xs: 2, md: 4 }, width: '100%', boxSizing: 'border-box' }}>
-      {/* Header */}
-      <Box sx={{ mb: 3 }}>
-        <Typography sx={{ fontSize: 13, fontWeight: 500, color: 'text.secondary' }}>
-          {t('home.welcomeBack')}
-        </Typography>
-        <Typography sx={{ fontSize: 28, fontWeight: 500, color: 'text.primary', fontFamily: 'serif', letterSpacing: -1 }}>
-          {displayName}
-        </Typography>
-      </Box>
+    <Box sx={{
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '5px',
+      p: '5px',
+      width: '100%',
+      boxSizing: 'border-box',
+      bgcolor: '#2f3136',
+      minHeight: '100%',
+      borderRadius: { xs: 0, md: '8px' },
+    }}>
+      {/* Carousel Banner */}
+      <Box sx={{
+        position: 'relative',
+        width: '100%',
+        aspectRatio: { xs: '16/9', md: '2.2/1' },
+        borderRadius: '20px',
+        overflow: 'hidden',
+        flexShrink: 0,
+      }}>
+        {loadingAnn ? (
+          <Skeleton
+            variant="rectangular"
+            sx={{ width: '100%', height: '100%', bgcolor: '#36393f' }}
+          />
+        ) : (
+          <>
+            {/* Background image */}
+            <Box
+              component="img"
+              src={bannerImages[carouselIndex % bannerImages.length]}
+              alt=""
+              sx={{
+                position: 'absolute',
+                inset: 0,
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+              }}
+            />
 
-      {/* Stats Row */}
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', lg: 'repeat(4, 1fr)' }, gap: 2, mb: 3 }}>
-        {STAT_CARDS.map((card) => (
-          <Card key={card.key} sx={{ p: 2.5, borderRadius: 4, boxShadow: '0 4px 30px #00000006' }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}>
-              <Typography sx={{ fontSize: 12, fontWeight: 600, color: 'text.secondary' }}>
-                {t(card.label)}
+            {/* Content overlay */}
+            <Box sx={{
+              position: 'absolute',
+              bottom: 0,
+              left: 0,
+              right: 0,
+              background: 'linear-gradient(transparent, rgba(0,0,0,0.85))',
+              p: { xs: 1.5, md: '10px' },
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '10px',
+              border: '1px solid #292b2f',
+            }}>
+              <Typography sx={{
+                fontFamily: '"Noto Sans", sans-serif',
+                fontSize: { xs: 20, sm: 28, md: 40 },
+                fontWeight: 700,
+                color: '#ffffff',
+                lineHeight: 1.35,
+                textShadow: '0 2px 8px rgba(0,0,0,0.5)',
+              }}>
+                {currentAnn?.title ?? t('home.welcomeBack')}
               </Typography>
-              <card.icon sx={{ fontSize: 18, color: card.iconColor }} />
+
+              <Typography sx={{
+                fontFamily: '"Noto Sans", sans-serif',
+                fontSize: { xs: 11, sm: 13, md: 15 },
+                fontWeight: 700,
+                color: '#ffffff',
+                lineHeight: 1.6,
+                maxHeight: { xs: 40, md: 60 },
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                display: '-webkit-box',
+                WebkitLineClamp: { xs: 2, md: 3 },
+                WebkitBoxOrient: 'vertical',
+                textShadow: '0 1px 4px rgba(0,0,0,0.4)',
+              }}>
+                {currentAnn?.content ?? t('landing.hero.subtitle')}
+              </Typography>
+
+              <Button
+                variant="contained"
+                size="small"
+                onClick={() => navigate('/announcements')}
+                sx={{
+                  bgcolor: '#5865f2',
+                  color: '#ffffff',
+                  fontFamily: '"Whitney Semibold", "Noto Sans", sans-serif',
+                  fontSize: 9.5,
+                  fontWeight: 600,
+                  borderRadius: '2px',
+                  px: '11px',
+                  py: '5px',
+                  minWidth: 'auto',
+                  alignSelf: 'flex-start',
+                  textTransform: 'none',
+                  '&:hover': { bgcolor: '#4752c4' },
+                }}
+              >
+                {t('home.viewAll')}
+              </Button>
             </Box>
-            {loadingStats && card.key !== 'level' ? (
-              <Skeleton variant="text" width={80} sx={{ fontSize: '2rem' }} />
-            ) : card.key === 'level' ? (
-              <>
-                <Typography sx={{ fontSize: 32, fontWeight: 500, color: 'text.primary', fontFamily: 'serif', letterSpacing: -1 }}>
-                  {t('levels.level', { level: lvl })}
-                </Typography>
-                <Box sx={{ mt: 1 }}>
-                  <LinearProgress
-                    variant="determinate"
-                    value={xpProgress}
+
+            {/* Carousel indicators */}
+            {carouselItems.length > 1 && (
+              <Box sx={{
+                position: 'absolute',
+                bottom: 8,
+                left: '50%',
+                transform: 'translateX(-50%)',
+                display: 'flex',
+                gap: '8px',
+                zIndex: 2,
+              }}>
+                {carouselItems.map((_, idx) => (
+                  <Box
+                    key={idx}
+                    onClick={() => setCarouselIndex(idx)}
                     sx={{
-                      height: 6, borderRadius: 3, bgcolor: 'action.hover',
-                      '& .MuiLinearProgress-bar': { bgcolor: '#9B8AA8', borderRadius: 3 },
+                      width: 14,
+                      height: 14,
+                      borderRadius: '50%',
+                      bgcolor: idx === carouselIndex ? '#b9bbbe' : '#4f545c',
+                      cursor: 'pointer',
+                      transition: 'background-color 0.2s',
+                      '&:hover': { bgcolor: idx === carouselIndex ? '#b9bbbe' : '#72767d' },
                     }}
                   />
-                  <Typography sx={{ fontSize: 10, fontWeight: 500, color: 'text.secondary', mt: 0.5 }}>
-                    {t('levels.xp', { current: xp, next: xpNext })}
-                  </Typography>
-                </Box>
-              </>
-            ) : (
-              <>
-                <Typography sx={{ fontSize: 32, fontWeight: 500, color: 'text.primary', fontFamily: 'serif', letterSpacing: -1 }}>
-                  {card.key === 'messages' ? (stats?.memberCount ?? 0) : card.key === 'vcHours' ? '—' : (stats?.eventCount ?? 0)}
-                </Typography>
-                {card.change && (
-                  <Box sx={{
-                    display: 'inline-flex', alignItems: 'center', gap: 0.5,
-                    px: 1.2, py: 0.4, borderRadius: 1.5, bgcolor: card.badgeBg, mt: 0.5,
-                  }}>
-                    <TrendingUpIcon sx={{ fontSize: 12, color: card.badgeColor }} />
-                    <Typography sx={{ fontSize: 11, fontWeight: 500, color: card.badgeColor, fontFamily: 'monospace' }}>
-                      {card.change}
-                    </Typography>
-                  </Box>
-                )}
-              </>
+                ))}
+              </Box>
             )}
-          </Card>
-        ))}
+          </>
+        )}
       </Box>
 
-      {/* Bottom Row */}
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 2 }}>
-        {/* Badges */}
-        <Card sx={{ p: 2.5, borderRadius: 4, boxShadow: '0 4px 30px #00000006' }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-            <Typography sx={{ fontSize: 16, fontWeight: 500, color: 'text.primary', fontFamily: 'serif' }}>
-              {t('home.badges')}
-            </Typography>
-            <Typography sx={{ fontSize: 12, fontWeight: 500, color: 'text.secondary' }}>
-              {allBadges.length} {t('home.earned')}
-            </Typography>
-          </Box>
-          {allBadges.length === 0 ? (
-            <Typography sx={{ fontSize: 13, color: 'text.secondary', py: 1 }}>
-              {t('home.noBadges')}
-            </Typography>
-          ) : (
-            <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
-              {allBadges.map((badge, i) => (
-                <Tooltip key={i} title={badge.name} arrow>
-                  <Box sx={{
-                    width: 48, height: 48, minWidth: 48, borderRadius: 3, bgcolor: badge.bg,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    cursor: 'default', transition: 'transform 0.15s',
-                    '&:hover': { transform: 'scale(1.1)' },
-                  }}>
-                    <badge.icon sx={{ fontSize: 24, color: badge.color }} />
-                  </Box>
-                </Tooltip>
-              ))}
-            </Box>
-          )}
-        </Card>
+      {/* Recent Event Section */}
+      <Box sx={{
+        bgcolor: '#36393f',
+        borderRadius: '20px',
+        p: '10px',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '8px',
+        flex: 1,
+      }}>
+        {/* Section header */}
+        <Box sx={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '10px',
+        }}>
+          <Typography sx={{
+            fontFamily: '"Noto Sans", sans-serif',
+            fontSize: 24,
+            fontWeight: 700,
+            color: '#dcddde',
+          }}>
+            {t('home.recentEvent')}
+          </Typography>
 
-        {/* Latest Announcements */}
-        <Card sx={{ p: 2.5, borderRadius: 4, boxShadow: '0 4px 30px #00000006' }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-            <Typography sx={{ fontSize: 16, fontWeight: 500, color: 'text.primary', fontFamily: 'serif' }}>
-              {t('home.latestAnnouncements')}
-            </Typography>
-            <Button size="small" onClick={() => navigate('/announcements')} sx={{ fontSize: 12, color: 'text.secondary' }}>
-              {t('home.viewAll')}
-            </Button>
-          </Box>
-          {loadingAnn ? (
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-              {[1, 2, 3].map((i) => <Skeleton key={i} variant="text" height={36} />)}
+          {/* List/Grid toggle */}
+          <Box sx={{
+            display: 'flex',
+            bgcolor: '#2f3136',
+            borderRadius: '20px',
+            p: '6px',
+            gap: '4px',
+            ml: 'auto',
+          }}>
+            <Box
+              onClick={() => setViewMode('list')}
+              sx={{
+                width: 26,
+                height: 26,
+                borderRadius: '50%',
+                bgcolor: viewMode === 'list' ? '#d9d9d9' : 'transparent',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                transition: 'background-color 0.15s',
+              }}
+            >
+              <ViewListIcon sx={{ fontSize: 18, color: viewMode === 'list' ? '#4f5660' : '#b9bbbe' }} />
             </Box>
-          ) : announcements.length === 0 ? (
-            <Typography sx={{ fontSize: 13, color: 'text.secondary', py: 2 }}>
-              {t('announcements.empty')}
+            <Box
+              onClick={() => setViewMode('grid')}
+              sx={{
+                width: 26,
+                height: 26,
+                borderRadius: '50%',
+                bgcolor: viewMode === 'grid' ? '#d9d9d9' : 'transparent',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                transition: 'background-color 0.15s',
+              }}
+            >
+              <GridViewIcon sx={{ fontSize: 16, color: viewMode === 'grid' ? '#4f5660' : '#b9bbbe' }} />
+            </Box>
+          </Box>
+        </Box>
+
+        {/* Event list */}
+        {loadingEvents ? (
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+            {[1, 2, 3].map((i) => (
+              <Skeleton
+                key={i}
+                variant="rectangular"
+                sx={{ height: 104, borderRadius: '10px', bgcolor: '#2f3136' }}
+              />
+            ))}
+          </Box>
+        ) : paginatedEvents.length === 0 ? (
+          <Box sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            py: 6,
+          }}>
+            <Typography sx={{ fontSize: 14, color: '#72767d' }}>
+              {t('events.empty')}
             </Typography>
-          ) : (
-            <List disablePadding>
-              {announcements.map((ann) => (
-                <ListItem key={ann.id} disablePadding>
-                  <ListItemButton onClick={() => navigate('/announcements')} sx={{ borderRadius: 2, py: 0.5 }}>
-                    <ListItemText
-                      primary={ann.title}
-                      secondary={new Date(ann.created_at).toLocaleDateString(i18n.language, { month: 'short', day: 'numeric' })}
-                      primaryTypographyProps={{ fontSize: 13, fontWeight: 600, color: 'text.primary' }}
-                      secondaryTypographyProps={{ fontSize: 11, color: 'text.secondary' }}
-                    />
-                  </ListItemButton>
-                </ListItem>
-              ))}
-            </List>
-          )}
-        </Card>
+          </Box>
+        ) : viewMode === 'list' ? (
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: '8px', flex: 1 }}>
+            {paginatedEvents.map((event) => (
+              <Box
+                key={event.id}
+                onClick={() => navigate('/events')}
+                sx={{
+                  display: 'flex',
+                  gap: '10px',
+                  bgcolor: '#2f3136',
+                  borderRadius: '10px',
+                  p: '5px',
+                  cursor: 'pointer',
+                  transition: 'background-color 0.15s',
+                  '&:hover': { bgcolor: '#34373c' },
+                }}
+              >
+                {/* Thumbnail */}
+                <Box sx={{
+                  width: { xs: 120, sm: 160, md: 188 },
+                  height: { xs: 60, sm: 80, md: 94 },
+                  flexShrink: 0,
+                  borderRadius: '15px',
+                  overflow: 'hidden',
+                  bgcolor: '#d9d9d9',
+                }}>
+                  <Box
+                    component="img"
+                    src={event.image_url || bannerImages[(events.indexOf(event)) % bannerImages.length]}
+                    alt=""
+                    sx={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                    }}
+                  />
+                </Box>
+
+                {/* Event info */}
+                <Box sx={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '10px',
+                  flex: 1,
+                  minWidth: 0,
+                  justifyContent: 'center',
+                }}>
+                  <Typography sx={{
+                    fontFamily: '"Noto Sans", sans-serif',
+                    fontSize: { xs: 14, md: 20 },
+                    fontWeight: 400,
+                    color: '#ffffff',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}>
+                    {event.title}
+                  </Typography>
+
+                  <Typography sx={{
+                    fontFamily: '"Noto Sans", sans-serif',
+                    fontSize: 12,
+                    fontWeight: 400,
+                    color: '#dcddde',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    display: '-webkit-box',
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: 'vertical',
+                  }}>
+                    {event.description}
+                  </Typography>
+
+                  <Typography sx={{
+                    fontFamily: '"Noto Sans", sans-serif',
+                    fontSize: 12,
+                    fontWeight: 400,
+                    color: '#72767d',
+                  }}>
+                    {new Date(event.event_date).toLocaleString(i18n.language, {
+                      year: 'numeric',
+                      month: '2-digit',
+                      day: '2-digit',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}
+                    {event.location ? `, ${event.location}` : ''}
+                  </Typography>
+                </Box>
+              </Box>
+            ))}
+          </Box>
+        ) : (
+          /* Grid view */
+          <Box sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', lg: 'repeat(3, 1fr)' },
+            gap: '8px',
+            flex: 1,
+          }}>
+            {paginatedEvents.map((event) => (
+              <Box
+                key={event.id}
+                onClick={() => navigate('/events')}
+                sx={{
+                  bgcolor: '#2f3136',
+                  borderRadius: '10px',
+                  overflow: 'hidden',
+                  cursor: 'pointer',
+                  transition: 'background-color 0.15s',
+                  '&:hover': { bgcolor: '#34373c' },
+                }}
+              >
+                <Box sx={{
+                  width: '100%',
+                  aspectRatio: '2/1',
+                  overflow: 'hidden',
+                }}>
+                  <Box
+                    component="img"
+                    src={event.image_url || bannerImages[(events.indexOf(event)) % bannerImages.length]}
+                    alt=""
+                    sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  />
+                </Box>
+                <Box sx={{ p: '8px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  <Typography sx={{
+                    fontFamily: '"Noto Sans", sans-serif',
+                    fontSize: 14,
+                    fontWeight: 600,
+                    color: '#ffffff',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}>
+                    {event.title}
+                  </Typography>
+                  <Typography sx={{
+                    fontFamily: '"Noto Sans", sans-serif',
+                    fontSize: 11,
+                    color: '#72767d',
+                  }}>
+                    {new Date(event.event_date).toLocaleString(i18n.language, {
+                      year: 'numeric',
+                      month: '2-digit',
+                      day: '2-digit',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}
+                  </Typography>
+                </Box>
+              </Box>
+            ))}
+          </Box>
+        )}
+
+        {/* Pagination */}
+        <Box sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          mt: 'auto',
+          pt: 1,
+        }}>
+          {/* Per page info */}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <Box sx={{
+              bgcolor: '#2f3136',
+              borderRadius: '30px',
+              px: 1.2,
+              py: 0.3,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}>
+              <Typography sx={{
+                fontFamily: '"Noto Sans", sans-serif',
+                fontSize: 8,
+                color: '#ffffff',
+              }}>
+                {EVENTS_PER_PAGE}
+              </Typography>
+            </Box>
+            <Typography sx={{
+              fontFamily: '"Noto Sans", sans-serif',
+              fontSize: 8,
+              color: '#ffffff',
+            }}>
+              {t('home.perPage')}
+            </Typography>
+          </Box>
+
+          {/* Page numbers */}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <IconButton
+              size="small"
+              disabled={currentPage <= 1}
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              sx={{
+                width: 20,
+                height: 20,
+                bgcolor: '#4f545c',
+                borderRadius: '50%',
+                color: '#b9bbbe',
+                '&:hover': { bgcolor: '#5d6269' },
+                '&.Mui-disabled': { bgcolor: '#36393f', color: '#4f545c' },
+              }}
+            >
+              <ChevronLeftIcon sx={{ fontSize: 14 }} />
+            </IconButton>
+
+            {Array.from({ length: Math.min(totalPages, 4) }, (_, i) => {
+              const page = i + 1
+              if (totalPages > 4 && i === 3) {
+                return (
+                  <Box key="ellipsis" sx={{
+                    width: 20, height: 20, borderRadius: '50%',
+                    bgcolor: '#4f545c',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}>
+                    <Typography sx={{ fontSize: 10, color: '#ffffff', fontFamily: '"Noto Sans", sans-serif' }}>
+                      ...
+                    </Typography>
+                  </Box>
+                )
+              }
+              return (
+                <Box
+                  key={page}
+                  onClick={() => setCurrentPage(page)}
+                  sx={{
+                    width: 20,
+                    height: 20,
+                    borderRadius: '50%',
+                    bgcolor: currentPage === page ? '#72767d' : '#4f545c',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    transition: 'background-color 0.15s',
+                    '&:hover': { bgcolor: '#72767d' },
+                  }}
+                >
+                  <Typography sx={{
+                    fontFamily: '"Noto Sans", sans-serif',
+                    fontSize: 10,
+                    color: '#ffffff',
+                  }}>
+                    {page}
+                  </Typography>
+                </Box>
+              )
+            })}
+
+            <IconButton
+              size="small"
+              disabled={currentPage >= totalPages}
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              sx={{
+                width: 20,
+                height: 20,
+                bgcolor: '#4f545c',
+                borderRadius: '50%',
+                color: '#b9bbbe',
+                '&:hover': { bgcolor: '#5d6269' },
+                '&.Mui-disabled': { bgcolor: '#36393f', color: '#4f545c' },
+              }}
+            >
+              <ChevronRightIcon sx={{ fontSize: 14 }} />
+            </IconButton>
+          </Box>
+        </Box>
       </Box>
     </Box>
   )

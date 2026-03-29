@@ -66,9 +66,9 @@ export default function NavRail({ onExpand }: NavRailProps) {
           onClick={() => navigate(path)}
           sx={{
             width: 48, height: 48, borderRadius: 3,
-            color: active ? 'primary.main' : 'text.secondary',
-            bgcolor: active ? (theme) => alpha(theme.palette.primary.main, 0.1) : 'transparent',
-            '&:hover': { bgcolor: 'action.hover' },
+            color: active ? '#ffffff' : '#b9bbbe',
+            bgcolor: active ? '#5865f2' : 'transparent',
+            '&:hover': { bgcolor: active ? '#5865f2' : '#36393f' },
           }}
         >
           <Icon />
@@ -81,7 +81,7 @@ export default function NavRail({ onExpand }: NavRailProps) {
     <Box sx={{
       width: 72, height: '100vh', position: 'fixed', top: 0, left: 0, zIndex: 1200,
       display: { xs: 'none', md: 'flex' }, flexDirection: 'column', alignItems: 'center',
-      py: 1, gap: 0.5, bgcolor: 'background.paper', borderRight: 1, borderColor: 'divider',
+      py: 1, gap: 0.5, bgcolor: '#2f3136', borderRight: 1, borderColor: '#202225',
     }}>
       <Tooltip title="SusLab" placement="right">
         <IconButton onClick={onExpand} aria-label="Open navigation menu" sx={{ width: 48, height: 48, mb: 1 }}>
