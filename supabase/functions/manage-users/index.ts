@@ -62,10 +62,9 @@ Deno.serve(async (req: Request) => {
       }
       if (user_id === user.id) return errorResponse('Cannot change your own role', 400)
 
-      const { data, error } = await supabaseClient
+      const { data, error } = await sc
         .from('user_roles')
-        .update({ role: newRole })
-        .eq('user_id', user_id)
+        .upsert({ user_id, role: newRole }, { onConflict: 'user_id' })
         .select()
         .single()
 
