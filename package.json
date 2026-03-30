@@ -13,8 +13,6 @@
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
     "@material/material-color-utilities": "^0.4.0",
-    "@mui/icons-material": "^6.5.0",
-    "@mui/material": "^6.5.0",
     "@supabase/supabase-js": "^2.99.3",
     "axios": "^1.13.6",
     "i18next": "^25.10.5",
@@ -34,7 +32,9 @@
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.5.2",
     "globals": "^17.4.0",
+    "jiti": "^2.6.1",
     "typescript": "^5.9.3",
+    "typescript-eslint": "^8.57.2",
     "vite": "^8.0.1"
   }
 }

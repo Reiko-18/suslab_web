@@ -18,6 +18,7 @@ interface NavRailProps {
   onExpand: () => void
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const USER_NAV: NavItem[] = [
   { key: 'nav.home', path: '/home', icon: 'home' },
   { key: 'nav.members', path: '/members', icon: 'group' },
@@ -28,6 +29,7 @@ export const USER_NAV: NavItem[] = [
   { key: 'nav.feedback', path: '/feedback', icon: 'feedback' },
 ]
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const ADMIN_NAV: NavItem[] = [
   { key: 'nav.admin.overview', path: '/admin', icon: 'dashboard' },
   { key: 'nav.admin.roles', path: '/admin/roles', icon: 'shield' },

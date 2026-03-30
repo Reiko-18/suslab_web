@@ -1,5 +1,4 @@
 /** @jsxImportSource @emotion/react */
-import { css } from '@emotion/react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Dialog, TextField, Select, Button } from './ui'

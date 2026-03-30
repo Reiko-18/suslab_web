@@ -7,6 +7,7 @@ import { generateCssVariables, getFontStack } from './colorUtils'
 
 const ThemeSettingsContext = createContext<ThemeSettings | null>(null)
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useThemeControls(): ThemeSettings {
   const ctx = useContext(ThemeSettingsContext)
   if (!ctx) throw new Error('useThemeControls must be used within ThemeProvider')
