@@ -1,10 +1,9 @@
+/** @jsxImportSource @emotion/react */
 import { useEffect, useMemo, createContext, useContext } from 'react'
-import { ThemeProvider as MuiThemeProvider, createTheme } from '@mui/material/styles'
-import CssBaseline from '@mui/material/CssBaseline'
 import { useTranslation } from 'react-i18next'
 import { useThemeSettings } from './useThemeSettings'
 import type { ThemeSettings } from './useThemeSettings'
-import { generateCssVariables, getFontStack, generateMuiPalette } from './colorUtils'
+import { generateCssVariables, getFontStack } from './colorUtils'
 
 const ThemeSettingsContext = createContext<ThemeSettings | null>(null)
 
@@ -19,19 +18,7 @@ export default function ThemeProvider({ children }: { children: React.ReactNode 
   const { mode, seedColor } = settings
   const { i18n } = useTranslation()
 
-  const muiTheme = useMemo(() => {
-    const palette = generateMuiPalette(seedColor, mode)
-    return createTheme({
-      palette: { mode, ...palette },
-      typography: { fontFamily: "'Noto Sans', 'Noto Sans TC', 'Noto Sans SC', 'Noto Sans JP', sans-serif" },
-      shape: { borderRadius: 12 },
-    })
-  }, [mode, seedColor])
-
-  const cssVars = useMemo(
-    () => generateCssVariables(seedColor, mode),
-    [seedColor, mode],
-  )
+  const cssVars = useMemo(() => generateCssVariables(seedColor, mode), [seedColor, mode])
 
   useEffect(() => {
     const root = document.documentElement
@@ -44,10 +31,7 @@ export default function ThemeProvider({ children }: { children: React.ReactNode 
 
   return (
     <ThemeSettingsContext.Provider value={settings}>
-      <MuiThemeProvider theme={muiTheme}>
-        <CssBaseline enableColorScheme />
-        {children}
-      </MuiThemeProvider>
+      {children}
     </ThemeSettingsContext.Provider>
   )
 }
