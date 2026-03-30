@@ -1,16 +1,10 @@
+/** @jsxImportSource @emotion/react */
+import { css } from '@emotion/react'
 import { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { edgeFunctions } from '../services/edgeFunctions'
-import Box from '@mui/material/Box'
-import Typography from '@mui/material/Typography'
-import Skeleton from '@mui/material/Skeleton'
-import Button from '@mui/material/Button'
-import IconButton from '@mui/material/IconButton'
-import ViewListIcon from '@mui/icons-material/ViewList'
-import GridViewIcon from '@mui/icons-material/GridView'
-import ChevronLeftIcon from '@mui/icons-material/ChevronLeft'
-import ChevronRightIcon from '@mui/icons-material/ChevronRight'
+import { Icon, Button, Skeleton } from '../components/ui'
 
 interface Announcement {
   id: string
@@ -94,294 +88,305 @@ export default function Home() {
   ]
 
   return (
-    <Box sx={{
+    <div css={css({
       display: 'flex',
       flexDirection: 'column',
-      gap: '5px',
-      p: '5px',
+      gap: 5,
+      padding: 5,
       width: '100%',
       boxSizing: 'border-box',
-      bgcolor: '#2f3136',
+      background: '#2f3136',
       minHeight: '100%',
-      borderRadius: { xs: 0, md: '8px' },
-    }}>
+      borderRadius: 0,
+      '@media (min-width: 769px)': { borderRadius: 8 },
+    })}>
       {/* Carousel Banner */}
-      <Box sx={{
+      <div css={css({
         position: 'relative',
         width: '100%',
-        aspectRatio: { xs: '16/9', md: '2.2/1' },
-        borderRadius: '20px',
+        aspectRatio: '16/9',
+        borderRadius: 20,
         overflow: 'hidden',
         flexShrink: 0,
-      }}>
+        '@media (min-width: 769px)': { aspectRatio: '2.2/1' },
+      })}>
         {loadingAnn ? (
           <Skeleton
             variant="rectangular"
-            sx={{ width: '100%', height: '100%', bgcolor: '#36393f' }}
+            width="100%"
+            height="100%"
           />
         ) : (
           <>
             {/* Background image */}
-            <Box
-              component="img"
+            <img
               src={bannerImages[carouselIndex % bannerImages.length]}
               alt=""
-              sx={{
+              css={css({
                 position: 'absolute',
                 inset: 0,
                 width: '100%',
                 height: '100%',
                 objectFit: 'cover',
-              }}
+              })}
             />
 
             {/* Content overlay */}
-            <Box sx={{
+            <div css={css({
               position: 'absolute',
               bottom: 0,
               left: 0,
               right: 0,
               background: 'linear-gradient(transparent, rgba(0,0,0,0.85))',
-              p: { xs: 1.5, md: '10px' },
+              padding: 12,
               display: 'flex',
               flexDirection: 'column',
-              gap: '10px',
+              gap: 10,
               border: '1px solid #292b2f',
-            }}>
-              <Typography sx={{
+              '@media (min-width: 769px)': { padding: 10 },
+            })}>
+              <h2 css={css({
                 fontFamily: '"Noto Sans", sans-serif',
-                fontSize: { xs: 20, sm: 28, md: 40 },
+                fontSize: 20,
                 fontWeight: 700,
                 color: '#ffffff',
                 lineHeight: 1.35,
                 textShadow: '0 2px 8px rgba(0,0,0,0.5)',
-              }}>
+                margin: 0,
+                '@media (min-width: 600px)': { fontSize: 28 },
+                '@media (min-width: 769px)': { fontSize: 40 },
+              })}>
                 {currentAnn?.title ?? t('home.welcomeBack')}
-              </Typography>
+              </h2>
 
-              <Typography sx={{
+              <p css={css({
                 fontFamily: '"Noto Sans", sans-serif',
-                fontSize: { xs: 11, sm: 13, md: 15 },
+                fontSize: 11,
                 fontWeight: 700,
                 color: '#ffffff',
                 lineHeight: 1.6,
-                maxHeight: { xs: 40, md: 60 },
+                maxHeight: 40,
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
                 display: '-webkit-box',
-                WebkitLineClamp: { xs: 2, md: 3 },
+                WebkitLineClamp: 2,
                 WebkitBoxOrient: 'vertical',
                 textShadow: '0 1px 4px rgba(0,0,0,0.4)',
-              }}>
+                margin: 0,
+                '@media (min-width: 600px)': { fontSize: 13 },
+                '@media (min-width: 769px)': { fontSize: 15, maxHeight: 60, WebkitLineClamp: 3 },
+              })}>
                 {currentAnn?.content ?? t('landing.hero.subtitle')}
-              </Typography>
+              </p>
 
-              <Button
-                variant="contained"
-                size="small"
+              <button
                 onClick={() => navigate('/announcements')}
-                sx={{
-                  bgcolor: '#5865f2',
+                css={css({
+                  background: '#5865f2',
                   color: '#ffffff',
                   fontFamily: '"Whitney Semibold", "Noto Sans", sans-serif',
                   fontSize: 9.5,
                   fontWeight: 600,
-                  borderRadius: '2px',
-                  px: '11px',
-                  py: '5px',
+                  borderRadius: 2,
+                  padding: '5px 11px',
                   minWidth: 'auto',
                   alignSelf: 'flex-start',
                   textTransform: 'none',
-                  '&:hover': { bgcolor: '#4752c4' },
-                }}
+                  border: 'none',
+                  cursor: 'pointer',
+                  '&:hover': { background: '#4752c4' },
+                })}
               >
                 {t('home.viewAll')}
-              </Button>
-            </Box>
+              </button>
+            </div>
 
             {/* Carousel indicators */}
             {carouselItems.length > 1 && (
-              <Box sx={{
+              <div css={css({
                 position: 'absolute',
                 bottom: 8,
                 left: '50%',
                 transform: 'translateX(-50%)',
                 display: 'flex',
-                gap: '8px',
+                gap: 8,
                 zIndex: 2,
-              }}>
+              })}>
                 {carouselItems.map((_, idx) => (
-                  <Box
+                  <div
                     key={idx}
                     onClick={() => setCarouselIndex(idx)}
-                    sx={{
+                    css={css({
                       width: 14,
                       height: 14,
                       borderRadius: '50%',
-                      bgcolor: idx === carouselIndex ? '#b9bbbe' : '#4f545c',
+                      background: idx === carouselIndex ? '#b9bbbe' : '#4f545c',
                       cursor: 'pointer',
                       transition: 'background-color 0.2s',
-                      '&:hover': { bgcolor: idx === carouselIndex ? '#b9bbbe' : '#72767d' },
-                    }}
+                      '&:hover': { background: idx === carouselIndex ? '#b9bbbe' : '#72767d' },
+                    })}
                   />
                 ))}
-              </Box>
+              </div>
             )}
           </>
         )}
-      </Box>
+      </div>
 
       {/* Recent Event Section */}
-      <Box sx={{
-        bgcolor: '#36393f',
-        borderRadius: '20px',
-        p: '10px',
+      <div css={css({
+        background: '#36393f',
+        borderRadius: 20,
+        padding: 10,
         display: 'flex',
         flexDirection: 'column',
-        gap: '8px',
+        gap: 8,
         flex: 1,
-      }}>
+      })}>
         {/* Section header */}
-        <Box sx={{
+        <div css={css({
           display: 'flex',
           alignItems: 'center',
-          gap: '10px',
-        }}>
-          <Typography sx={{
+          gap: 10,
+        })}>
+          <h2 css={css({
             fontFamily: '"Noto Sans", sans-serif',
             fontSize: 24,
             fontWeight: 700,
             color: '#dcddde',
-          }}>
+            margin: 0,
+          })}>
             {t('home.recentEvent')}
-          </Typography>
+          </h2>
 
           {/* List/Grid toggle */}
-          <Box sx={{
+          <div css={css({
             display: 'flex',
-            bgcolor: '#2f3136',
-            borderRadius: '20px',
-            p: '6px',
-            gap: '4px',
-            ml: 'auto',
-          }}>
-            <Box
+            background: '#2f3136',
+            borderRadius: 20,
+            padding: 6,
+            gap: 4,
+            marginLeft: 'auto',
+          })}>
+            <div
               onClick={() => setViewMode('list')}
-              sx={{
+              css={css({
                 width: 26,
                 height: 26,
                 borderRadius: '50%',
-                bgcolor: viewMode === 'list' ? '#d9d9d9' : 'transparent',
+                background: viewMode === 'list' ? '#d9d9d9' : 'transparent',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 cursor: 'pointer',
                 transition: 'background-color 0.15s',
-              }}
+              })}
             >
-              <ViewListIcon sx={{ fontSize: 18, color: viewMode === 'list' ? '#4f5660' : '#b9bbbe' }} />
-            </Box>
-            <Box
+              <Icon name="view_list" size={18} css={css({ color: viewMode === 'list' ? '#4f5660' : '#b9bbbe' })} />
+            </div>
+            <div
               onClick={() => setViewMode('grid')}
-              sx={{
+              css={css({
                 width: 26,
                 height: 26,
                 borderRadius: '50%',
-                bgcolor: viewMode === 'grid' ? '#d9d9d9' : 'transparent',
+                background: viewMode === 'grid' ? '#d9d9d9' : 'transparent',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 cursor: 'pointer',
                 transition: 'background-color 0.15s',
-              }}
+              })}
             >
-              <GridViewIcon sx={{ fontSize: 16, color: viewMode === 'grid' ? '#4f5660' : '#b9bbbe' }} />
-            </Box>
-          </Box>
-        </Box>
+              <Icon name="grid_view" size={16} css={css({ color: viewMode === 'grid' ? '#4f5660' : '#b9bbbe' })} />
+            </div>
+          </div>
+        </div>
 
         {/* Event list */}
         {loadingEvents ? (
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+          <div css={css({ display: 'flex', flexDirection: 'column', gap: 8 })}>
             {[1, 2, 3].map((i) => (
               <Skeleton
                 key={i}
                 variant="rectangular"
-                sx={{ height: 104, borderRadius: '10px', bgcolor: '#2f3136' }}
+                height={104}
               />
             ))}
-          </Box>
+          </div>
         ) : paginatedEvents.length === 0 ? (
-          <Box sx={{
+          <div css={css({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            py: 6,
-          }}>
-            <Typography sx={{ fontSize: 14, color: '#72767d' }}>
+            padding: '48px 0',
+          })}>
+            <span css={css({ fontSize: 14, color: '#72767d' })}>
               {t('events.empty')}
-            </Typography>
-          </Box>
+            </span>
+          </div>
         ) : viewMode === 'list' ? (
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: '8px', flex: 1 }}>
+          <div css={css({ display: 'flex', flexDirection: 'column', gap: 8, flex: 1 })}>
             {paginatedEvents.map((event) => (
-              <Box
+              <div
                 key={event.id}
                 onClick={() => navigate('/events')}
-                sx={{
+                css={css({
                   display: 'flex',
-                  gap: '10px',
-                  bgcolor: '#2f3136',
-                  borderRadius: '10px',
-                  p: '5px',
+                  gap: 10,
+                  background: '#2f3136',
+                  borderRadius: 10,
+                  padding: 5,
                   cursor: 'pointer',
                   transition: 'background-color 0.15s',
-                  '&:hover': { bgcolor: '#34373c' },
-                }}
+                  '&:hover': { background: '#34373c' },
+                })}
               >
                 {/* Thumbnail */}
-                <Box sx={{
-                  width: { xs: 120, sm: 160, md: 188 },
-                  height: { xs: 60, sm: 80, md: 94 },
+                <div css={css({
+                  width: 120,
+                  height: 60,
                   flexShrink: 0,
-                  borderRadius: '15px',
+                  borderRadius: 15,
                   overflow: 'hidden',
-                  bgcolor: '#d9d9d9',
-                }}>
-                  <Box
-                    component="img"
+                  background: '#d9d9d9',
+                  '@media (min-width: 600px)': { width: 160, height: 80 },
+                  '@media (min-width: 769px)': { width: 188, height: 94 },
+                })}>
+                  <img
                     src={event.image_url || bannerImages[(events.indexOf(event)) % bannerImages.length]}
                     alt=""
-                    sx={{
+                    css={css({
                       width: '100%',
                       height: '100%',
                       objectFit: 'cover',
-                    }}
+                    })}
                   />
-                </Box>
+                </div>
 
                 {/* Event info */}
-                <Box sx={{
+                <div css={css({
                   display: 'flex',
                   flexDirection: 'column',
-                  gap: '10px',
+                  gap: 10,
                   flex: 1,
                   minWidth: 0,
                   justifyContent: 'center',
-                }}>
-                  <Typography sx={{
+                })}>
+                  <span css={css({
                     fontFamily: '"Noto Sans", sans-serif',
-                    fontSize: { xs: 14, md: 20 },
+                    fontSize: 14,
                     fontWeight: 400,
                     color: '#ffffff',
                     overflow: 'hidden',
                     textOverflow: 'ellipsis',
                     whiteSpace: 'nowrap',
-                  }}>
+                    '@media (min-width: 769px)': { fontSize: 20 },
+                  })}>
                     {event.title}
-                  </Typography>
+                  </span>
 
-                  <Typography sx={{
+                  <span css={css({
                     fontFamily: '"Noto Sans", sans-serif',
                     fontSize: 12,
                     fontWeight: 400,
@@ -391,16 +396,16 @@ export default function Home() {
                     display: '-webkit-box',
                     WebkitLineClamp: 2,
                     WebkitBoxOrient: 'vertical',
-                  }}>
+                  })}>
                     {event.description}
-                  </Typography>
+                  </span>
 
-                  <Typography sx={{
+                  <span css={css({
                     fontFamily: '"Noto Sans", sans-serif',
                     fontSize: 12,
                     fontWeight: 400,
                     color: '#72767d',
-                  }}>
+                  })}>
                     {new Date(event.event_date).toLocaleString(i18n.language, {
                       year: 'numeric',
                       month: '2-digit',
@@ -409,46 +414,47 @@ export default function Home() {
                       minute: '2-digit',
                     })}
                     {event.location ? `, ${event.location}` : ''}
-                  </Typography>
-                </Box>
-              </Box>
+                  </span>
+                </div>
+              </div>
             ))}
-          </Box>
+          </div>
         ) : (
           /* Grid view */
-          <Box sx={{
+          <div css={css({
             display: 'grid',
-            gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', lg: 'repeat(3, 1fr)' },
-            gap: '8px',
+            gridTemplateColumns: '1fr',
+            gap: 8,
             flex: 1,
-          }}>
+            '@media (min-width: 600px)': { gridTemplateColumns: '1fr 1fr' },
+            '@media (min-width: 1024px)': { gridTemplateColumns: 'repeat(3, 1fr)' },
+          })}>
             {paginatedEvents.map((event) => (
-              <Box
+              <div
                 key={event.id}
                 onClick={() => navigate('/events')}
-                sx={{
-                  bgcolor: '#2f3136',
-                  borderRadius: '10px',
+                css={css({
+                  background: '#2f3136',
+                  borderRadius: 10,
                   overflow: 'hidden',
                   cursor: 'pointer',
                   transition: 'background-color 0.15s',
-                  '&:hover': { bgcolor: '#34373c' },
-                }}
+                  '&:hover': { background: '#34373c' },
+                })}
               >
-                <Box sx={{
+                <div css={css({
                   width: '100%',
                   aspectRatio: '2/1',
                   overflow: 'hidden',
-                }}>
-                  <Box
-                    component="img"
+                })}>
+                  <img
                     src={event.image_url || bannerImages[(events.indexOf(event)) % bannerImages.length]}
                     alt=""
-                    sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    css={css({ width: '100%', height: '100%', objectFit: 'cover' })}
                   />
-                </Box>
-                <Box sx={{ p: '8px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                  <Typography sx={{
+                </div>
+                <div css={css({ padding: 8, display: 'flex', flexDirection: 'column', gap: 4 })}>
+                  <span css={css({
                     fontFamily: '"Noto Sans", sans-serif',
                     fontSize: 14,
                     fontWeight: 600,
@@ -456,14 +462,14 @@ export default function Home() {
                     overflow: 'hidden',
                     textOverflow: 'ellipsis',
                     whiteSpace: 'nowrap',
-                  }}>
+                  })}>
                     {event.title}
-                  </Typography>
-                  <Typography sx={{
+                  </span>
+                  <span css={css({
                     fontFamily: '"Noto Sans", sans-serif',
                     fontSize: 11,
                     color: '#72767d',
-                  }}>
+                  })}>
                     {new Date(event.event_date).toLocaleString(i18n.language, {
                       year: 'numeric',
                       month: '2-digit',
@@ -471,130 +477,137 @@ export default function Home() {
                       hour: '2-digit',
                       minute: '2-digit',
                     })}
-                  </Typography>
-                </Box>
-              </Box>
+                  </span>
+                </div>
+              </div>
             ))}
-          </Box>
+          </div>
         )}
 
         {/* Pagination */}
-        <Box sx={{
+        <div css={css({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          mt: 'auto',
-          pt: 1,
-        }}>
+          marginTop: 'auto',
+          paddingTop: 8,
+        })}>
           {/* Per page info */}
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-            <Box sx={{
-              bgcolor: '#2f3136',
-              borderRadius: '30px',
-              px: 1.2,
-              py: 0.3,
+          <div css={css({ display: 'flex', alignItems: 'center', gap: 4 })}>
+            <div css={css({
+              background: '#2f3136',
+              borderRadius: 30,
+              padding: '2px 10px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-            }}>
-              <Typography sx={{
+            })}>
+              <span css={css({
                 fontFamily: '"Noto Sans", sans-serif',
                 fontSize: 8,
                 color: '#ffffff',
-              }}>
+              })}>
                 {EVENTS_PER_PAGE}
-              </Typography>
-            </Box>
-            <Typography sx={{
+              </span>
+            </div>
+            <span css={css({
               fontFamily: '"Noto Sans", sans-serif',
               fontSize: 8,
               color: '#ffffff',
-            }}>
+            })}>
               {t('home.perPage')}
-            </Typography>
-          </Box>
+            </span>
+          </div>
 
           {/* Page numbers */}
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <IconButton
-              size="small"
+          <div css={css({ display: 'flex', alignItems: 'center', gap: 10 })}>
+            <button
               disabled={currentPage <= 1}
               onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-              sx={{
+              css={css({
                 width: 20,
                 height: 20,
-                bgcolor: '#4f545c',
+                background: currentPage <= 1 ? '#36393f' : '#4f545c',
                 borderRadius: '50%',
-                color: '#b9bbbe',
-                '&:hover': { bgcolor: '#5d6269' },
-                '&.Mui-disabled': { bgcolor: '#36393f', color: '#4f545c' },
-              }}
+                color: currentPage <= 1 ? '#4f545c' : '#b9bbbe',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                border: 'none',
+                cursor: currentPage <= 1 ? 'not-allowed' : 'pointer',
+                padding: 0,
+                '&:hover:not(:disabled)': { background: '#5d6269' },
+              })}
             >
-              <ChevronLeftIcon sx={{ fontSize: 14 }} />
-            </IconButton>
+              <Icon name="chevron_left" size={14} />
+            </button>
 
             {Array.from({ length: Math.min(totalPages, 4) }, (_, i) => {
               const page = i + 1
               if (totalPages > 4 && i === 3) {
                 return (
-                  <Box key="ellipsis" sx={{
+                  <div key="ellipsis" css={css({
                     width: 20, height: 20, borderRadius: '50%',
-                    bgcolor: '#4f545c',
+                    background: '#4f545c',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  }}>
-                    <Typography sx={{ fontSize: 10, color: '#ffffff', fontFamily: '"Noto Sans", sans-serif' }}>
+                  })}>
+                    <span css={css({ fontSize: 10, color: '#ffffff', fontFamily: '"Noto Sans", sans-serif' })}>
                       ...
-                    </Typography>
-                  </Box>
+                    </span>
+                  </div>
                 )
               }
               return (
-                <Box
+                <div
                   key={page}
                   onClick={() => setCurrentPage(page)}
-                  sx={{
+                  css={css({
                     width: 20,
                     height: 20,
                     borderRadius: '50%',
-                    bgcolor: currentPage === page ? '#72767d' : '#4f545c',
+                    background: currentPage === page ? '#72767d' : '#4f545c',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     cursor: 'pointer',
                     transition: 'background-color 0.15s',
-                    '&:hover': { bgcolor: '#72767d' },
-                  }}
+                    '&:hover': { background: '#72767d' },
+                  })}
                 >
-                  <Typography sx={{
+                  <span css={css({
                     fontFamily: '"Noto Sans", sans-serif',
                     fontSize: 10,
                     color: '#ffffff',
-                  }}>
+                  })}>
                     {page}
-                  </Typography>
-                </Box>
+                  </span>
+                </div>
               )
             })}
 
-            <IconButton
-              size="small"
+            <button
               disabled={currentPage >= totalPages}
               onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-              sx={{
+              css={css({
                 width: 20,
                 height: 20,
-                bgcolor: '#4f545c',
+                background: currentPage >= totalPages ? '#36393f' : '#4f545c',
                 borderRadius: '50%',
-                color: '#b9bbbe',
-                '&:hover': { bgcolor: '#5d6269' },
-                '&.Mui-disabled': { bgcolor: '#36393f', color: '#4f545c' },
-              }}
+                color: currentPage >= totalPages ? '#4f545c' : '#b9bbbe',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                border: 'none',
+                cursor: currentPage >= totalPages ? 'not-allowed' : 'pointer',
+                padding: 0,
+                '&:hover:not(:disabled)': { background: '#5d6269' },
+              })}
             >
-              <ChevronRightIcon sx={{ fontSize: 14 }} />
-            </IconButton>
-          </Box>
-        </Box>
-      </Box>
-    </Box>
+              <Icon name="chevron_right" size={14} />
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   )
 }
