@@ -1,23 +1,12 @@
+/** @jsxImportSource @emotion/react */
+import { css } from '@emotion/react'
 import { useTranslation } from 'react-i18next'
-import Card from '@mui/material/Card'
-import CardContent from '@mui/material/CardContent'
-import Typography from '@mui/material/Typography'
-import Chip from '@mui/material/Chip'
-import Box from '@mui/material/Box'
-import IconButton from '@mui/material/IconButton'
-import Avatar from '@mui/material/Avatar'
-import MenuItem from '@mui/material/MenuItem'
-import Select, { SelectChangeEvent } from '@mui/material/Select'
-import ThumbUpIcon from '@mui/icons-material/ThumbUp'
-import ThumbUpOutlinedIcon from '@mui/icons-material/ThumbUpOutlined'
-import DeleteIcon from '@mui/icons-material/Delete'
+import { Card, Chip, Icon, Avatar, Button, Select } from './ui'
 
-type CategoryColor = 'primary' | 'secondary' | 'error' | 'default'
-
-const CATEGORY_COLORS: Record<string, CategoryColor> = {
-  feature: 'primary',
-  event: 'secondary',
-  bug: 'error',
+const CATEGORY_COLORS: Record<string, { bg: string; color: string }> = {
+  feature: { bg: 'var(--color-primary)', color: 'var(--color-on-primary)' },
+  event: { bg: 'var(--color-secondary-container)', color: 'var(--color-on-secondary-container)' },
+  bug: { bg: 'var(--color-error)', color: '#fff' },
 }
 
 const STATUS_LIST = ['open', 'reviewed', 'accepted', 'rejected']
@@ -48,67 +37,86 @@ interface FeedbackCardProps {
 export default function FeedbackCard({ feedback, userId, isModerator, onVote, onStatusChange, onDelete }: FeedbackCardProps) {
   const { t } = useTranslation()
   const isAuthor = feedback.author_id === userId
+  const categoryStyle = CATEGORY_COLORS[feedback.category] || { bg: 'var(--color-surface-container)', color: 'var(--color-on-surface)' }
 
   return (
-    <Card sx={{ mb: 2 }}>
-      <CardContent>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1, flexWrap: 'wrap' }}>
-          <Chip
-            label={t(`feedback.${feedback.category}`)}
-            size="small"
-            color={CATEGORY_COLORS[feedback.category] || 'default'}
-          />
-          <Chip label={t(`feedback.status.${feedback.status}`)} size="small" variant="outlined" />
-        </Box>
+    <Card css={css`margin-bottom: var(--spacing-3);`}>
+      {/* 分類 + 狀態標籤 */}
+      <div css={css`display: flex; align-items: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap;`}>
+        <Chip
+          label={t(`feedback.${feedback.category}`)}
+          size="small"
+          bg={categoryStyle.bg}
+          color={categoryStyle.color}
+        />
+        <Chip label={t(`feedback.status.${feedback.status}`)} size="small" variant="outlined" />
+      </div>
 
-        <Typography variant="h6" gutterBottom>{feedback.title}</Typography>
-        <Typography
-          variant="body2"
-          color="text.secondary"
-          sx={{ mb: 2, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}
-        >
-          {feedback.content}
-        </Typography>
+      {/* 標題 */}
+      <h3 css={css`font-size: 18px; font-weight: 600; color: var(--color-on-surface); margin: 0 0 4px 0;`}>
+        {feedback.title}
+      </h3>
 
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 1 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Avatar src={feedback.author_avatar_url} sx={{ width: 24, height: 24 }} />
-            <Typography variant="caption" color="text.secondary">{feedback.author_display_name}</Typography>
-            <Typography variant="caption" color="text.disabled">
-              {new Date(feedback.created_at).toLocaleDateString()}
-            </Typography>
-          </Box>
+      {/* 內容 */}
+      <p
+        css={css`
+          font-size: 13px;
+          color: var(--color-on-surface-muted);
+          margin: 0 0 16px 0;
+          display: -webkit-box;
+          -webkit-line-clamp: 2;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+        `}
+      >
+        {feedback.content}
+      </p>
 
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-              <IconButton size="small" onClick={() => onVote(feedback.id)} color={feedback.has_voted ? 'primary' : 'default'}>
-                {feedback.has_voted ? <ThumbUpIcon fontSize="small" /> : <ThumbUpOutlinedIcon fontSize="small" />}
-              </IconButton>
-              <Typography variant="body2">{t('feedback.votes', { count: feedback.vote_count })}</Typography>
-            </Box>
+      {/* 底部列 */}
+      <div css={css`display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;`}>
+        {/* 作者 */}
+        <div css={css`display: flex; align-items: center; gap: 8px;`}>
+          <Avatar src={feedback.author_avatar_url} size={24} />
+          <span css={css`font-size: 12px; color: var(--color-on-surface-muted);`}>{feedback.author_display_name}</span>
+          <span css={css`font-size: 12px; color: var(--color-on-surface-dim);`}>
+            {new Date(feedback.created_at).toLocaleDateString()}
+          </span>
+        </div>
 
-            {isModerator && (
-              <Select
-                value={feedback.status}
-                onChange={(e: SelectChangeEvent) => onStatusChange(feedback.id, e.target.value)}
-                size="small"
-                variant="outlined"
-                sx={{ minWidth: 120, height: 32 }}
-              >
-                {STATUS_LIST.map((s) => (
-                  <MenuItem key={s} value={s}>{t(`feedback.status.${s}`)}</MenuItem>
-                ))}
-              </Select>
-            )}
+        {/* 投票 + 操作 */}
+        <div css={css`display: flex; align-items: center; gap: 8px;`}>
+          <div css={css`display: flex; align-items: center;`}>
+            <Button
+              variant="icon"
+              onClick={() => onVote(feedback.id)}
+              css={css`color: ${feedback.has_voted ? 'var(--color-primary)' : 'var(--color-on-surface-muted)'};`}
+            >
+              <Icon name="thumb_up" size={18} />
+            </Button>
+            <span css={css`font-size: 13px; color: var(--color-on-surface);`}>
+              {t('feedback.votes', { count: feedback.vote_count })}
+            </span>
+          </div>
 
-            {isAuthor && (
-              <IconButton size="small" color="error" onClick={() => onDelete(feedback.id)}>
-                <DeleteIcon fontSize="small" />
-              </IconButton>
-            )}
-          </Box>
-        </Box>
-      </CardContent>
+          {isModerator && (
+            <Select
+              value={feedback.status}
+              onChange={(value) => onStatusChange(feedback.id, value)}
+              options={STATUS_LIST.map((s) => ({ value: s, label: t(`feedback.status.${s}`) }))}
+            />
+          )}
+
+          {isAuthor && (
+            <Button
+              variant="icon"
+              onClick={() => onDelete(feedback.id)}
+              css={css`color: var(--color-error);`}
+            >
+              <Icon name="delete" size={18} />
+            </Button>
+          )}
+        </div>
+      </div>
     </Card>
   )
 }
