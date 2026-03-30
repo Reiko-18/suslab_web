@@ -1,17 +1,8 @@
+/** @jsxImportSource @emotion/react */
+import { css } from '@emotion/react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import Dialog from '@mui/material/Dialog'
-import DialogTitle from '@mui/material/DialogTitle'
-import DialogContent from '@mui/material/DialogContent'
-import DialogActions from '@mui/material/DialogActions'
-import Button from '@mui/material/Button'
-import TextField from '@mui/material/TextField'
-import Select, { SelectChangeEvent } from '@mui/material/Select'
-import MenuItem from '@mui/material/MenuItem'
-import FormControl from '@mui/material/FormControl'
-import InputLabel from '@mui/material/InputLabel'
-import Alert from '@mui/material/Alert'
-import Box from '@mui/material/Box'
+import { Dialog, TextField, Select, Button, Alert } from '../ui'
 
 type TicketCategory = 'general' | 'bug' | 'request' | 'report'
 type TicketPriority = 'low' | 'normal' | 'high' | 'urgent'
@@ -57,17 +48,31 @@ export default function TicketCreateDialog({ open, onClose, onCreated }: TicketC
   }
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle>{t('admin.tickets.create')}</DialogTitle>
-      <DialogContent>
-        {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+    <Dialog
+      open={open}
+      onClose={onClose}
+      title={t('admin.tickets.create')}
+      actions={
+        <>
+          <Button variant="ghost" onClick={onClose}>{t('common.cancel')}</Button>
+          <Button variant="primary" onClick={handleCreate} disabled={loading || !title.trim() || !content.trim()}>
+            {t('common.save')}
+          </Button>
+        </>
+      }
+    >
+      {error && (
+        <div css={css`margin-bottom: var(--spacing-3);`}>
+          <Alert severity="error">{error}</Alert>
+        </div>
+      )}
 
+      <div css={css`display: flex; flex-direction: column; gap: var(--spacing-3);`}>
         <TextField
           label={t('admin.tickets.titleLabel')}
           fullWidth
           value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          sx={{ mt: 1, mb: 2 }}
+          onChange={(e) => setTitle((e.target as HTMLInputElement).value)}
         />
 
         <TextField
@@ -76,43 +81,32 @@ export default function TicketCreateDialog({ open, onClose, onCreated }: TicketC
           multiline
           rows={4}
           value={content}
-          onChange={(e) => setContent(e.target.value)}
-          sx={{ mb: 2 }}
+          onChange={(e) => setContent((e.target as HTMLTextAreaElement).value)}
         />
 
-        <Box sx={{ display: 'flex', gap: 2 }}>
-          <FormControl fullWidth>
-            <InputLabel>{t('admin.tickets.categoryLabel')}</InputLabel>
-            <Select
-              value={category}
-              label={t('admin.tickets.categoryLabel')}
-              onChange={(e: SelectChangeEvent<TicketCategory>) => setCategory(e.target.value as TicketCategory)}
-            >
-              {(['general', 'bug', 'request', 'report'] as TicketCategory[]).map((c) => (
-                <MenuItem key={c} value={c}>{t(`admin.tickets.category.${c}`)}</MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-          <FormControl fullWidth>
-            <InputLabel>{t('admin.tickets.priorityLabel')}</InputLabel>
-            <Select
-              value={priority}
-              label={t('admin.tickets.priorityLabel')}
-              onChange={(e: SelectChangeEvent<TicketPriority>) => setPriority(e.target.value as TicketPriority)}
-            >
-              {(['low', 'normal', 'high', 'urgent'] as TicketPriority[]).map((p) => (
-                <MenuItem key={p} value={p}>{t(`admin.tickets.priority.${p}`)}</MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </Box>
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose}>{t('common.cancel')}</Button>
-        <Button onClick={handleCreate} variant="contained" disabled={loading || !title.trim() || !content.trim()}>
-          {t('common.save')}
-        </Button>
-      </DialogActions>
+        <div css={css`display: flex; gap: var(--spacing-3);`}>
+          <Select
+            label={t('admin.tickets.categoryLabel')}
+            value={category}
+            onChange={(value) => setCategory(value as TicketCategory)}
+            options={(['general', 'bug', 'request', 'report'] as TicketCategory[]).map((c) => ({
+              value: c,
+              label: t(`admin.tickets.category.${c}`),
+            }))}
+            fullWidth
+          />
+          <Select
+            label={t('admin.tickets.priorityLabel')}
+            value={priority}
+            onChange={(value) => setPriority(value as TicketPriority)}
+            options={(['low', 'normal', 'high', 'urgent'] as TicketPriority[]).map((p) => ({
+              value: p,
+              label: t(`admin.tickets.priority.${p}`),
+            }))}
+            fullWidth
+          />
+        </div>
+      </div>
     </Dialog>
   )
 }

@@ -1,24 +1,9 @@
+/** @jsxImportSource @emotion/react */
+import { css } from '@emotion/react'
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { edgeFunctions } from '../../services/edgeFunctions'
-import Dialog from '@mui/material/Dialog'
-import DialogTitle from '@mui/material/DialogTitle'
-import DialogContent from '@mui/material/DialogContent'
-import DialogActions from '@mui/material/DialogActions'
-import Button from '@mui/material/Button'
-import TextField from '@mui/material/TextField'
-import Typography from '@mui/material/Typography'
-import Chip from '@mui/material/Chip'
-import Avatar from '@mui/material/Avatar'
-import Box from '@mui/material/Box'
-import Divider from '@mui/material/Divider'
-import Select, { SelectChangeEvent } from '@mui/material/Select'
-import MenuItem from '@mui/material/MenuItem'
-import FormControl from '@mui/material/FormControl'
-import InputLabel from '@mui/material/InputLabel'
-import CircularProgress from '@mui/material/CircularProgress'
-import Paper from '@mui/material/Paper'
-import type { ChipOwnProps } from '@mui/material/Chip'
+import { Dialog, TextField, Chip, Avatar, Button, Divider, Select, CircularProgress } from '../ui'
 
 type TicketStatus = 'open' | 'in_progress' | 'resolved' | 'closed'
 type TicketPriority = 'low' | 'normal' | 'high' | 'urgent'
@@ -51,18 +36,18 @@ interface TicketDetailDialogProps {
   onUpdate: (updated: Ticket) => void
 }
 
-const STATUS_COLORS: Record<TicketStatus, ChipOwnProps['color']> = {
-  open: 'info',
-  in_progress: 'warning',
-  resolved: 'success',
-  closed: 'default',
+const STATUS_COLORS: Record<TicketStatus, { bg: string; color: string }> = {
+  open: { bg: 'var(--color-primary)', color: 'var(--color-on-primary)' },
+  in_progress: { bg: 'var(--color-warning)', color: '#000' },
+  resolved: { bg: 'var(--color-success)', color: '#fff' },
+  closed: { bg: 'var(--color-surface-container)', color: 'var(--color-on-surface)' },
 }
 
-const PRIORITY_COLORS: Record<TicketPriority, ChipOwnProps['color']> = {
-  low: 'default',
-  normal: 'info',
-  high: 'warning',
-  urgent: 'error',
+const PRIORITY_COLORS: Record<TicketPriority, { bg: string; color: string }> = {
+  low: { bg: 'var(--color-surface-container)', color: 'var(--color-on-surface)' },
+  normal: { bg: 'var(--color-primary)', color: 'var(--color-on-primary)' },
+  high: { bg: 'var(--color-warning)', color: '#000' },
+  urgent: { bg: 'var(--color-error)', color: '#fff' },
 }
 
 export default function TicketDetailDialog({ open, onClose, ticket, onUpdate }: TicketDetailDialogProps) {
@@ -100,23 +85,25 @@ export default function TicketDetailDialog({ open, onClose, ticket, onUpdate }: 
     }
   }
 
-  const handleStatusChange = async (newStatus: TicketStatus) => {
+  const handleStatusChange = async (newStatus: string) => {
     if (!ticket) return
-    setStatus(newStatus)
+    const s = newStatus as TicketStatus
+    setStatus(s)
     try {
-      await edgeFunctions.updateTicket(ticket.id, { status: newStatus, priority })
-      onUpdate({ ...ticket, status: newStatus, priority })
+      await edgeFunctions.updateTicket(ticket.id, { status: s, priority })
+      onUpdate({ ...ticket, status: s, priority })
     } catch {
       setStatus(ticket.status)
     }
   }
 
-  const handlePriorityChange = async (newPriority: TicketPriority) => {
+  const handlePriorityChange = async (newPriority: string) => {
     if (!ticket) return
-    setPriority(newPriority)
+    const p = newPriority as TicketPriority
+    setPriority(p)
     try {
-      await edgeFunctions.updateTicket(ticket.id, { status, priority: newPriority })
-      onUpdate({ ...ticket, status, priority: newPriority })
+      await edgeFunctions.updateTicket(ticket.id, { status, priority: p })
+      onUpdate({ ...ticket, status, priority: p })
     } catch {
       setPriority(ticket.priority)
     }
@@ -124,94 +111,131 @@ export default function TicketDetailDialog({ open, onClose, ticket, onUpdate }: 
 
   if (!ticket) return null
 
+  const statusStyle = STATUS_COLORS[ticket.status]
+  const priorityStyle = PRIORITY_COLORS[ticket.priority]
+
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-      <DialogTitle>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
-          <Typography variant="h6" sx={{ flex: 1 }}>{ticket.title}</Typography>
-          <Chip label={t(`admin.tickets.status.${ticket.status}`)} color={STATUS_COLORS[ticket.status]} size="small" />
-          <Chip label={t(`admin.tickets.priority.${ticket.priority}`)} color={PRIORITY_COLORS[ticket.priority]} size="small" />
-        </Box>
-      </DialogTitle>
-      <DialogContent>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-          <Avatar src={ticket.author_avatar} sx={{ width: 24, height: 24 }}>
-            {(ticket.author_name ?? '?')[0]}
-          </Avatar>
-          <Typography variant="body2" color="text.secondary">
-            {ticket.author_name} &middot; {new Date(ticket.created_at).toLocaleString()}
-          </Typography>
-          <Chip label={t(`admin.tickets.category.${ticket.category}`)} size="small" variant="outlined" />
-          <Chip label={ticket.source.toUpperCase()} size="small" variant="outlined" />
-        </Box>
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth={720}
+      title=""
+      actions={
+        <Button variant="ghost" onClick={onClose}>{t('common.cancel')}</Button>
+      }
+    >
+      {/* 標題 + 標籤 */}
+      <div css={css`display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: var(--spacing-3);`}>
+        <h2 css={css`font-size: 18px; font-weight: 600; color: var(--color-on-surface); margin: 0; flex: 1; min-width: 0;`}>
+          {ticket.title}
+        </h2>
+        <Chip
+          label={t(`admin.tickets.status.${ticket.status}`)}
+          size="small"
+          bg={statusStyle.bg}
+          color={statusStyle.color}
+        />
+        <Chip
+          label={t(`admin.tickets.priority.${ticket.priority}`)}
+          size="small"
+          bg={priorityStyle.bg}
+          color={priorityStyle.color}
+        />
+      </div>
 
-        <Paper variant="outlined" sx={{ p: 2, mb: 3 }}>
-          <Typography sx={{ whiteSpace: 'pre-wrap' }}>{ticket.content}</Typography>
-        </Paper>
+      {/* 作者資訊 */}
+      <div css={css`display: flex; align-items: center; gap: 8px; margin-bottom: var(--spacing-3);`}>
+        <Avatar src={ticket.author_avatar} size={24} fallback={(ticket.author_name ?? '?')[0]} />
+        <span css={css`font-size: 13px; color: var(--color-on-surface-muted);`}>
+          {ticket.author_name} &middot; {new Date(ticket.created_at).toLocaleString()}
+        </span>
+        <Chip label={t(`admin.tickets.category.${ticket.category}`)} size="small" variant="outlined" />
+        <Chip label={ticket.source.toUpperCase()} size="small" variant="outlined" />
+      </div>
 
-        <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
-          <FormControl size="small" sx={{ minWidth: 140 }}>
-            <InputLabel>{t('admin.tickets.statusLabel')}</InputLabel>
-            <Select
-              value={status}
-              label={t('admin.tickets.statusLabel')}
-              onChange={(e: SelectChangeEvent<TicketStatus>) => handleStatusChange(e.target.value as TicketStatus)}
+      {/* 內容 */}
+      <div
+        css={css`
+          padding: var(--spacing-3);
+          border: 1px solid var(--color-divider);
+          border-radius: var(--radius-sm);
+          margin-bottom: var(--spacing-4);
+        `}
+      >
+        <p css={css`white-space: pre-wrap; color: var(--color-on-surface); margin: 0; font-size: 14px;`}>
+          {ticket.content}
+        </p>
+      </div>
+
+      {/* 狀態 + 優先度控制 */}
+      <div css={css`display: flex; gap: var(--spacing-3); margin-bottom: var(--spacing-4);`}>
+        <Select
+          label={t('admin.tickets.statusLabel')}
+          value={status}
+          onChange={handleStatusChange}
+          options={(['open', 'in_progress', 'resolved', 'closed'] as TicketStatus[]).map((s) => ({
+            value: s,
+            label: t(`admin.tickets.status.${s}`),
+          }))}
+        />
+        <Select
+          label={t('admin.tickets.priorityLabel')}
+          value={priority}
+          onChange={handlePriorityChange}
+          options={(['low', 'normal', 'high', 'urgent'] as TicketPriority[]).map((p) => ({
+            value: p,
+            label: t(`admin.tickets.priority.${p}`),
+          }))}
+        />
+      </div>
+
+      <Divider />
+      <p css={css`font-size: 13px; font-weight: 600; color: var(--color-on-surface); margin: var(--spacing-3) 0 8px 0;`}>
+        {t('admin.tickets.replies')}
+      </p>
+
+      {loadingReplies ? (
+        <div css={css`display: flex; justify-content: center; padding: var(--spacing-3) 0;`}>
+          <CircularProgress size={24} />
+        </div>
+      ) : (
+        <div css={css`display: flex; flex-direction: column; gap: 8px;`}>
+          {replies.map((r) => (
+            <div
+              key={r.id}
+              css={css`
+                padding: 12px;
+                border: 1px solid var(--color-divider);
+                border-radius: var(--radius-sm);
+              `}
             >
-              {(['open', 'in_progress', 'resolved', 'closed'] as TicketStatus[]).map((s) => (
-                <MenuItem key={s} value={s}>{t(`admin.tickets.status.${s}`)}</MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-          <FormControl size="small" sx={{ minWidth: 140 }}>
-            <InputLabel>{t('admin.tickets.priorityLabel')}</InputLabel>
-            <Select
-              value={priority}
-              label={t('admin.tickets.priorityLabel')}
-              onChange={(e: SelectChangeEvent<TicketPriority>) => handlePriorityChange(e.target.value as TicketPriority)}
-            >
-              {(['low', 'normal', 'high', 'urgent'] as TicketPriority[]).map((p) => (
-                <MenuItem key={p} value={p}>{t(`admin.tickets.priority.${p}`)}</MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </Box>
-
-        <Divider sx={{ mb: 2 }} />
-        <Typography variant="subtitle2" sx={{ mb: 1 }}>{t('admin.tickets.replies')}</Typography>
-
-        {loadingReplies ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', py: 2 }}><CircularProgress size={24} /></Box>
-        ) : (
-          replies.map((r) => (
-            <Paper key={r.id} variant="outlined" sx={{ p: 1.5, mb: 1 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-                <Avatar src={r.author_avatar} sx={{ width: 20, height: 20 }}>{(r.author_name ?? '?')[0]}</Avatar>
-                <Typography variant="caption" color="text.secondary">
+              <div css={css`display: flex; align-items: center; gap: 8px; margin-bottom: 4px;`}>
+                <Avatar src={r.author_avatar} size={20} fallback={(r.author_name ?? '?')[0]} />
+                <span css={css`font-size: 12px; color: var(--color-on-surface-muted);`}>
                   {r.author_name} &middot; {new Date(r.created_at).toLocaleString()}
-                </Typography>
-              </Box>
-              <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>{r.content}</Typography>
-            </Paper>
-          ))
-        )}
+                </span>
+              </div>
+              <p css={css`font-size: 13px; white-space: pre-wrap; color: var(--color-on-surface); margin: 0;`}>
+                {r.content}
+              </p>
+            </div>
+          ))}
+        </div>
+      )}
 
-        <Box sx={{ display: 'flex', gap: 1, mt: 2 }}>
-          <TextField
-            fullWidth
-            size="small"
-            placeholder={t('admin.tickets.replyPlaceholder')}
-            value={replyText}
-            onChange={(e) => setReplyText(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSendReply()}
-          />
-          <Button variant="contained" onClick={handleSendReply} disabled={sending || !replyText.trim()}>
-            {t('admin.tickets.send')}
-          </Button>
-        </Box>
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose}>{t('common.cancel')}</Button>
-      </DialogActions>
+      {/* 回覆輸入 */}
+      <div css={css`display: flex; gap: 8px; margin-top: var(--spacing-3);`}>
+        <TextField
+          fullWidth
+          placeholder={t('admin.tickets.replyPlaceholder')}
+          value={replyText}
+          onChange={(e) => setReplyText((e.target as HTMLInputElement).value)}
+          onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSendReply()}
+        />
+        <Button variant="primary" onClick={handleSendReply} disabled={sending || !replyText.trim()}>
+          {t('admin.tickets.send')}
+        </Button>
+      </div>
     </Dialog>
   )
 }

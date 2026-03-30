@@ -1,23 +1,9 @@
+/** @jsxImportSource @emotion/react */
+import { css } from '@emotion/react'
 import { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { edgeFunctions } from '../../services/edgeFunctions'
-import Table from '@mui/material/Table'
-import TableBody from '@mui/material/TableBody'
-import TableCell from '@mui/material/TableCell'
-import TableContainer from '@mui/material/TableContainer'
-import TableHead from '@mui/material/TableHead'
-import TableRow from '@mui/material/TableRow'
-import Paper from '@mui/material/Paper'
-import Chip from '@mui/material/Chip'
-import Typography from '@mui/material/Typography'
-import Box from '@mui/material/Box'
-import CircularProgress from '@mui/material/CircularProgress'
-import Select, { SelectChangeEvent } from '@mui/material/Select'
-import MenuItem from '@mui/material/MenuItem'
-import FormControl from '@mui/material/FormControl'
-import InputLabel from '@mui/material/InputLabel'
-import Button from '@mui/material/Button'
-import type { ChipOwnProps } from '@mui/material/Chip'
+import { Chip, Select, Button, CircularProgress } from '../ui'
 
 interface AuditLog {
   id: string
@@ -34,19 +20,19 @@ interface AuditLogTableProps {
   initialData?: AuditLog[] | null
 }
 
-const ACTION_COLORS: Record<string, ChipOwnProps['color']> = {
-  user_ban: 'error',
-  user_kick: 'warning',
-  user_timeout: 'warning',
-  user_unban: 'success',
-  role_change: 'info',
-  role_create: 'success',
-  role_update: 'info',
-  role_delete: 'error',
-  ticket_create: 'default',
-  ticket_update: 'info',
-  ticket_delete: 'error',
-  setting_update: 'info',
+const ACTION_COLORS: Record<string, { bg: string; color: string }> = {
+  user_ban: { bg: 'var(--color-error)', color: '#fff' },
+  user_kick: { bg: 'var(--color-warning)', color: '#000' },
+  user_timeout: { bg: 'var(--color-warning)', color: '#000' },
+  user_unban: { bg: 'var(--color-success)', color: '#fff' },
+  role_change: { bg: 'var(--color-primary)', color: 'var(--color-on-primary)' },
+  role_create: { bg: 'var(--color-success)', color: '#fff' },
+  role_update: { bg: 'var(--color-primary)', color: 'var(--color-on-primary)' },
+  role_delete: { bg: 'var(--color-error)', color: '#fff' },
+  ticket_create: { bg: 'var(--color-surface-container)', color: 'var(--color-on-surface)' },
+  ticket_update: { bg: 'var(--color-primary)', color: 'var(--color-on-primary)' },
+  ticket_delete: { bg: 'var(--color-error)', color: '#fff' },
+  setting_update: { bg: 'var(--color-primary)', color: 'var(--color-on-primary)' },
 }
 
 export default function AuditLogTable({ compact = false, initialData = null }: AuditLogTableProps) {
@@ -79,86 +65,141 @@ export default function AuditLogTable({ compact = false, initialData = null }: A
   }, [page, actionFilter, initialData, fetchLogs])
 
   if (loading) {
-    return <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}><CircularProgress /></Box>
+    return (
+      <div css={css`display: flex; justify-content: center; padding: var(--spacing-6) 0;`}>
+        <CircularProgress />
+      </div>
+    )
   }
 
   return (
     <>
       {!compact && (
-        <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
-          <FormControl size="small" sx={{ minWidth: 160 }}>
-            <InputLabel>{t('admin.audit.filterAction')}</InputLabel>
-            <Select
-              value={actionFilter}
-              label={t('admin.audit.filterAction')}
-              onChange={(e: SelectChangeEvent<string>) => { setActionFilter(e.target.value); setPage(1) }}
-            >
-              <MenuItem value="">{t('feedback.all')}</MenuItem>
-              <MenuItem value="user_ban">Ban</MenuItem>
-              <MenuItem value="user_kick">Kick</MenuItem>
-              <MenuItem value="user_timeout">Timeout</MenuItem>
-              <MenuItem value="role_change">Role Change</MenuItem>
-              <MenuItem value="role_create">Role Create</MenuItem>
-              <MenuItem value="ticket_update">Ticket Update</MenuItem>
-              <MenuItem value="setting_update">Setting Update</MenuItem>
-            </Select>
-          </FormControl>
-        </Box>
+        <div css={css`display: flex; gap: var(--spacing-3); margin-bottom: var(--spacing-3);`}>
+          <Select
+            label={t('admin.audit.filterAction')}
+            value={actionFilter}
+            onChange={(value) => { setActionFilter(value); setPage(1) }}
+            options={[
+              { value: '', label: t('feedback.all') },
+              { value: 'user_ban', label: 'Ban' },
+              { value: 'user_kick', label: 'Kick' },
+              { value: 'user_timeout', label: 'Timeout' },
+              { value: 'role_change', label: 'Role Change' },
+              { value: 'role_create', label: 'Role Create' },
+              { value: 'ticket_update', label: 'Ticket Update' },
+              { value: 'setting_update', label: 'Setting Update' },
+            ]}
+          />
+        </div>
       )}
 
-      <TableContainer component={Paper} variant="outlined">
-        <Table size="small">
-          <TableHead>
-            <TableRow>
-              <TableCell>{t('admin.audit.time')}</TableCell>
-              <TableCell>{t('admin.audit.actor')}</TableCell>
-              <TableCell>{t('admin.audit.action')}</TableCell>
-              <TableCell>{t('admin.audit.target')}</TableCell>
-              {!compact && <TableCell>{t('admin.audit.details')}</TableCell>}
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {logs.map((log) => (
-              <TableRow key={log.id}>
-                <TableCell>
-                  <Typography variant="caption">
-                    {new Date(log.created_at).toLocaleString()}
-                  </Typography>
-                </TableCell>
-                <TableCell>{log.actor_name}</TableCell>
-                <TableCell>
-                  <Chip label={log.action} size="small" color={ACTION_COLORS[log.action] ?? 'default'} />
-                </TableCell>
-                <TableCell>{log.target_name ?? log.target_id}</TableCell>
-                {!compact && (
-                  <TableCell>
-                    <Typography variant="caption" sx={{ maxWidth: 200, display: 'block', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {JSON.stringify(log.details)}
-                    </Typography>
-                  </TableCell>
-                )}
-              </TableRow>
-            ))}
+      <div
+        css={css`
+          overflow-x: auto;
+          border-radius: var(--radius-sm);
+          border: 1px solid var(--color-divider);
+        `}
+      >
+        <table
+          css={css`
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+          `}
+        >
+          <thead>
+            <tr>
+              {[t('admin.audit.time'), t('admin.audit.actor'), t('admin.audit.action'), t('admin.audit.target'), ...(!compact ? [t('admin.audit.details')] : [])].map((header) => (
+                <th
+                  key={header}
+                  css={css`
+                    text-align: left;
+                    padding: 10px 12px;
+                    font-weight: 600;
+                    color: var(--color-on-surface-muted);
+                    background: var(--color-surface-container);
+                    border-bottom: 1px solid var(--color-divider);
+                    white-space: nowrap;
+                  `}
+                >
+                  {header}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {logs.map((log, idx) => {
+              const actionColor = ACTION_COLORS[log.action] || { bg: 'var(--color-surface-container)', color: 'var(--color-on-surface)' }
+              return (
+                <tr
+                  key={log.id}
+                  css={css`
+                    background: ${idx % 2 === 0 ? 'var(--color-surface)' : 'var(--color-surface-dim)'};
+                    &:hover { background: var(--color-surface-container); }
+                  `}
+                >
+                  <td css={css`padding: 10px 12px; color: var(--color-on-surface); border-bottom: 1px solid var(--color-divider);`}>
+                    <span css={css`font-size: 12px;`}>
+                      {new Date(log.created_at).toLocaleString()}
+                    </span>
+                  </td>
+                  <td css={css`padding: 10px 12px; color: var(--color-on-surface); border-bottom: 1px solid var(--color-divider);`}>
+                    {log.actor_name}
+                  </td>
+                  <td css={css`padding: 10px 12px; border-bottom: 1px solid var(--color-divider);`}>
+                    <Chip label={log.action} size="small" bg={actionColor.bg} color={actionColor.color} />
+                  </td>
+                  <td css={css`padding: 10px 12px; color: var(--color-on-surface); border-bottom: 1px solid var(--color-divider);`}>
+                    {log.target_name ?? log.target_id}
+                  </td>
+                  {!compact && (
+                    <td css={css`padding: 10px 12px; border-bottom: 1px solid var(--color-divider);`}>
+                      <span
+                        css={css`
+                          font-size: 12px;
+                          max-width: 200px;
+                          display: block;
+                          overflow: hidden;
+                          text-overflow: ellipsis;
+                          color: var(--color-on-surface-muted);
+                        `}
+                      >
+                        {JSON.stringify(log.details)}
+                      </span>
+                    </td>
+                  )}
+                </tr>
+              )
+            })}
             {logs.length === 0 && (
-              <TableRow>
-                <TableCell colSpan={compact ? 4 : 5} align="center">
-                  <Typography color="text.secondary">{t('admin.audit.empty')}</Typography>
-                </TableCell>
-              </TableRow>
+              <tr>
+                <td
+                  colSpan={compact ? 4 : 5}
+                  css={css`
+                    padding: 16px 12px;
+                    text-align: center;
+                    color: var(--color-on-surface-muted);
+                    border-bottom: 1px solid var(--color-divider);
+                  `}
+                >
+                  {t('admin.audit.empty')}
+                </td>
+              </tr>
             )}
-          </TableBody>
-        </Table>
-      </TableContainer>
+          </tbody>
+        </table>
+      </div>
 
       {!compact && logs.length >= 20 && (
-        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2, gap: 1 }}>
-          <Button size="small" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
+        <div css={css`display: flex; justify-content: center; margin-top: var(--spacing-3); gap: 8px;`}>
+          <Button size="small" variant="ghost" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
             {t('admin.audit.prev')}
           </Button>
-          <Button size="small" onClick={() => setPage((p) => p + 1)}>
+          <Button size="small" variant="ghost" onClick={() => setPage((p) => p + 1)}>
             {t('admin.audit.next')}
           </Button>
-        </Box>
+        </div>
       )}
     </>
   )

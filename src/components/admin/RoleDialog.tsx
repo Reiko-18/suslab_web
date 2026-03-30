@@ -1,13 +1,8 @@
+/** @jsxImportSource @emotion/react */
+import { css } from '@emotion/react'
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import Dialog from '@mui/material/Dialog'
-import DialogTitle from '@mui/material/DialogTitle'
-import DialogContent from '@mui/material/DialogContent'
-import DialogActions from '@mui/material/DialogActions'
-import Button from '@mui/material/Button'
-import TextField from '@mui/material/TextField'
-import Box from '@mui/material/Box'
-import Alert from '@mui/material/Alert'
+import { Dialog, TextField, Button, Alert } from '../ui'
 
 interface Role {
   id?: string
@@ -67,63 +62,71 @@ export default function RoleDialog({ open, onClose, role, onSave }: RoleDialogPr
   }
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle>
-        {isEdit ? t('admin.roles.edit') : t('admin.roles.create')}
-      </DialogTitle>
-      <DialogContent>
-        {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+    <Dialog
+      open={open}
+      onClose={onClose}
+      title={isEdit ? t('admin.roles.edit') : t('admin.roles.create')}
+      actions={
+        <>
+          <Button variant="ghost" onClick={onClose}>{t('common.cancel')}</Button>
+          <Button variant="primary" onClick={handleSave} disabled={loading || !name.trim()}>
+            {t('common.save')}
+          </Button>
+        </>
+      }
+    >
+      {error && (
+        <div css={css`margin-bottom: var(--spacing-3);`}>
+          <Alert severity="error">{error}</Alert>
+        </div>
+      )}
 
+      <div css={css`display: flex; flex-direction: column; gap: var(--spacing-3);`}>
         <TextField
           label={t('admin.roles.name')}
           fullWidth
           value={name}
-          onChange={(e) => setName(e.target.value)}
-          sx={{ mt: 1, mb: 2 }}
+          onChange={(e) => setName((e.target as HTMLInputElement).value)}
         />
 
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+        <div css={css`display: flex; align-items: center; gap: var(--spacing-3);`}>
           <TextField
             label={t('admin.roles.color')}
             value={color}
-            onChange={(e) => setColor(e.target.value)}
-            sx={{ flex: 1 }}
+            onChange={(e) => setColor((e.target as HTMLInputElement).value)}
+            fullWidth
           />
-          <Box
-            sx={{
-              width: 40,
-              height: 40,
-              borderRadius: 1,
-              bgcolor: color,
-              border: 1,
-              borderColor: 'divider',
-              cursor: 'pointer',
-            }}
-            component="label"
+          <label
+            css={css`
+              width: 40px;
+              height: 40px;
+              border-radius: 4px;
+              background: ${color};
+              border: 1px solid var(--color-divider);
+              cursor: pointer;
+              flex-shrink: 0;
+              display: block;
+              position: relative;
+              overflow: hidden;
+            `}
           >
             <input
               type="color"
               value={color}
               onChange={(e) => setColor(e.target.value)}
-              style={{ opacity: 0, width: 0, height: 0 }}
+              css={css`opacity: 0; width: 0; height: 0; position: absolute;`}
             />
-          </Box>
-        </Box>
+          </label>
+        </div>
 
         <TextField
           label={t('admin.roles.position')}
           type="number"
           fullWidth
-          value={position}
-          onChange={(e) => setPosition(Number(e.target.value))}
+          value={String(position)}
+          onChange={(e) => setPosition(Number((e.target as HTMLInputElement).value))}
         />
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose}>{t('common.cancel')}</Button>
-        <Button onClick={handleSave} variant="contained" disabled={loading || !name.trim()}>
-          {t('common.save')}
-        </Button>
-      </DialogActions>
+      </div>
     </Dialog>
   )
 }
