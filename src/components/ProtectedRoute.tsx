@@ -1,12 +1,11 @@
-import { ReactNode } from 'react'
+/** @jsxImportSource @emotion/react */
+import { css } from '@emotion/react'
+import { type ReactNode } from 'react'
 import { Navigate, Outlet } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../context/AuthContext'
 import type { Role } from '../context/AuthContext'
-import Box from '@mui/material/Box'
-import Card from '@mui/material/Card'
-import Typography from '@mui/material/Typography'
-import CircularProgress from '@mui/material/CircularProgress'
+import { Card, CircularProgress } from './ui'
 
 interface ProtectedRouteProps {
   children?: ReactNode
@@ -19,9 +18,16 @@ export default function ProtectedRoute({ children, minimumRole = 'member' }: Pro
 
   if (loading) {
     return (
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh' }}>
+      <div
+        css={css`
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          min-height: 100vh;
+        `}
+      >
         <CircularProgress />
-      </Box>
+      </div>
     )
   }
 
@@ -29,12 +35,42 @@ export default function ProtectedRoute({ children, minimumRole = 'member' }: Pro
 
   if (!hasRole(minimumRole)) {
     return (
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
-        <Card sx={{ textAlign: 'center', maxWidth: 400, p: 4 }}>
-          <Typography variant="h5" gutterBottom>{t('common.noPermission')}</Typography>
-          <Typography color="text.secondary">{t('common.noPermissionDesc', { role: minimumRole })}</Typography>
+      <div
+        css={css`
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          min-height: 60vh;
+        `}
+      >
+        <Card
+          css={css`
+            text-align: center;
+            max-width: 400px;
+            padding: var(--spacing-6);
+          `}
+        >
+          <h2
+            css={css`
+              font-size: 20px;
+              font-weight: 700;
+              color: var(--color-on-surface);
+              margin: 0 0 8px 0;
+            `}
+          >
+            {t('common.noPermission')}
+          </h2>
+          <p
+            css={css`
+              font-size: 14px;
+              color: var(--color-on-surface-muted);
+              margin: 0;
+            `}
+          >
+            {t('common.noPermissionDesc', { role: minimumRole })}
+          </p>
         </Card>
-      </Box>
+      </div>
     )
   }
 
