@@ -1,34 +1,13 @@
+/** @jsxImportSource @emotion/react */
+import { css } from '@emotion/react'
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { edgeFunctions } from '../../services/edgeFunctions'
 import { useAuth } from '../../context/AuthContext'
-import Container from '@mui/material/Container'
-import Typography from '@mui/material/Typography'
-import Table from '@mui/material/Table'
-import TableBody from '@mui/material/TableBody'
-import TableCell from '@mui/material/TableCell'
-import TableContainer from '@mui/material/TableContainer'
-import TableHead from '@mui/material/TableHead'
-import TableRow from '@mui/material/TableRow'
-import Paper from '@mui/material/Paper'
-import Avatar from '@mui/material/Avatar'
-import Chip from '@mui/material/Chip'
-import Select from '@mui/material/Select'
-import MenuItem from '@mui/material/MenuItem'
-import Alert from '@mui/material/Alert'
-import Box from '@mui/material/Box'
-import CircularProgress from '@mui/material/CircularProgress'
-import IconButton from '@mui/material/IconButton'
-import Tooltip from '@mui/material/Tooltip'
-import Tabs from '@mui/material/Tabs'
-import Tab from '@mui/material/Tab'
-import BlockIcon from '@mui/icons-material/Block'
-import LogoutIcon from '@mui/icons-material/Logout'
-import TimerIcon from '@mui/icons-material/Timer'
-import CheckCircleIcon from '@mui/icons-material/CheckCircle'
+import { Icon, Button, Chip, Avatar, Select, Alert, CircularProgress, Tabs, Tooltip, Table } from '../../components/ui'
+import { Container } from '../../components/layout'
 import UserActionDialog from '../../components/admin/UserActionDialog'
 import AuditLogTable from '../../components/admin/AuditLogTable'
-import type { SelectChangeEvent } from '@mui/material/Select'
 
 interface ActionDialogState {
   open: boolean
@@ -43,7 +22,7 @@ export default function AdminUsers() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
-  const [tab, setTab] = useState(0)
+  const [tab, setTab] = useState('users')
 
   const [actionDialog, setActionDialog] = useState<ActionDialogState>({ open: false, type: null, user: null })
 
@@ -96,116 +75,132 @@ export default function AdminUsers() {
   }
 
   if (loading) {
-    return <Box sx={{ display: 'flex', justifyContent: 'center', py: 10 }}><CircularProgress /></Box>
+    return (
+      <div css={css({ display: 'flex', justifyContent: 'center', padding: '80px 0' })}>
+        <CircularProgress />
+      </div>
+    )
   }
 
+  const columns = [
+    {
+      key: 'name',
+      header: t('admin.users.name'),
+      render: (u: any) => (
+        <div css={css({ display: 'flex', alignItems: 'center', gap: 8, opacity: u.is_banned ? 0.5 : 1 })}>
+          <Avatar src={u.avatar_url} size={32} fallback={(u.display_name || '?')[0]} />
+          {u.display_name}
+        </div>
+      ),
+    },
+    { key: 'email', header: t('admin.users.email') },
+    {
+      key: 'role',
+      header: t('admin.users.currentRole'),
+      render: (u: any) => (
+        <Chip
+          label={t(`profile.roles.${u.role}`) || u.role}
+          size="small"
+          color={u.role === 'admin' ? 'var(--color-error)' : u.role === 'moderator' ? 'var(--color-warning)' : undefined}
+        />
+      ),
+    },
+    {
+      key: 'status',
+      header: t('admin.users.status'),
+      render: (u: any) => {
+        const isTimedOut = u.timeout_until && new Date(u.timeout_until) > new Date()
+        if (u.is_banned) return <Chip label={t('admin.users.statusBanned')} size="small" color="var(--color-error)" />
+        if (isTimedOut) return <Chip label={t('admin.users.statusTimeout')} size="small" color="var(--color-warning)" />
+        return <Chip label={t('admin.users.statusActive')} size="small" color="var(--color-success)" />
+      },
+    },
+    {
+      key: 'changeRole',
+      header: t('admin.users.changeRole'),
+      render: (u: any) => {
+        const isSelf = u.id === currentUser?.id
+        if (isSelf) return <span css={css({ fontSize: 14, color: 'var(--color-on-surface-muted)' })}>{t('admin.users.self')}</span>
+        return (
+          <Select
+            value={u.role}
+            onChange={(val: string) => handleRoleChange(u.id, val)}
+            options={[
+              { value: 'member', label: t('profile.roles.member') },
+              { value: 'moderator', label: t('profile.roles.moderator') },
+              { value: 'admin', label: t('profile.roles.admin') },
+            ]}
+          />
+        )
+      },
+    },
+    {
+      key: 'actions',
+      header: t('admin.users.actions.label'),
+      render: (u: any) => {
+        const isSelf = u.id === currentUser?.id
+        if (isSelf) return null
+        return (
+          <div css={css({ display: 'flex', gap: 4, justifyContent: 'flex-end' })}>
+            {u.is_banned ? (
+              <Tooltip content={t('admin.users.actions.unban')}>
+                <Button variant="icon" onClick={() => handleUnban(u.id)} css={css({ color: 'var(--color-success)' })}>
+                  <Icon name="check_circle" size={18} />
+                </Button>
+              </Tooltip>
+            ) : (
+              <>
+                <Tooltip content={t('admin.users.actions.ban')}>
+                  <Button variant="icon" onClick={() => setActionDialog({ open: true, type: 'ban', user: u })} css={css({ color: 'var(--color-error)' })}>
+                    <Icon name="block" size={18} />
+                  </Button>
+                </Tooltip>
+                <Tooltip content={t('admin.users.actions.kick')}>
+                  <Button variant="icon" onClick={() => setActionDialog({ open: true, type: 'kick', user: u })} css={css({ color: 'var(--color-warning)' })}>
+                    <Icon name="logout" size={18} />
+                  </Button>
+                </Tooltip>
+                <Tooltip content={t('admin.users.actions.timeout')}>
+                  <Button variant="icon" onClick={() => setActionDialog({ open: true, type: 'timeout', user: u })}>
+                    <Icon name="timer" size={18} />
+                  </Button>
+                </Tooltip>
+              </>
+            )}
+          </div>
+        )
+      },
+    },
+  ]
+
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Typography variant="h4" gutterBottom sx={{ fontWeight: 700 }}>{t('admin.users.title')}</Typography>
-      <Typography color="text.secondary" sx={{ mb: 3 }}>{t('admin.users.desc')}</Typography>
+    <Container maxWidth="lg" css={css({ paddingTop: 32, paddingBottom: 32 })}>
+      <h1 css={css({ fontSize: 28, fontWeight: 700, color: 'var(--color-on-surface)', margin: '0 0 8px' })}>{t('admin.users.title')}</h1>
+      <p css={css({ color: 'var(--color-on-surface-muted)', margin: '0 0 24px' })}>{t('admin.users.desc')}</p>
 
-      {notice && <Alert severity="info" sx={{ mb: 2 }} onClose={() => setNotice(null)}>{notice}</Alert>}
-      {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+      {notice && <Alert severity="info" onClose={() => setNotice(null)} css={css({ marginBottom: 16 })}>{notice}</Alert>}
+      {error && <Alert severity="error" css={css({ marginBottom: 16 })}>{error}</Alert>}
 
-      <Tabs value={tab} onChange={(_, v: number) => setTab(v)} sx={{ mb: 2 }}>
-        <Tab label={t('admin.users.tabUsers')} />
-        <Tab label={t('admin.users.tabAuditLog')} />
-      </Tabs>
+      <Tabs
+        tabs={[
+          { label: t('admin.users.tabUsers'), value: 'users' },
+          { label: t('admin.users.tabAuditLog'), value: 'audit' },
+        ]}
+        value={tab}
+        onChange={setTab}
+      />
 
-      {tab === 0 && (
-        <TableContainer component={Paper} variant="outlined">
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>{t('admin.users.name')}</TableCell>
-                <TableCell>{t('admin.users.email')}</TableCell>
-                <TableCell>{t('admin.users.currentRole')}</TableCell>
-                <TableCell>{t('admin.users.status')}</TableCell>
-                <TableCell>{t('admin.users.changeRole')}</TableCell>
-                <TableCell align="right">{t('admin.users.actions.label')}</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {users.map((u) => {
-                const isSelf: boolean = u.id === currentUser?.id
-                const isTimedOut: boolean = u.timeout_until && new Date(u.timeout_until) > new Date()
+      <div css={css({ marginTop: 16 })}>
+        {tab === 'users' && (
+          <Table
+            columns={columns}
+            data={users}
+            keyExtractor={(u: any) => u.id}
+          />
+        )}
 
-                return (
-                  <TableRow key={u.id} sx={u.is_banned ? { opacity: 0.5 } : {}}>
-                    <TableCell>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Avatar src={u.avatar_url} sx={{ width: 32, height: 32 }}>{(u.display_name || '?')[0]}</Avatar>
-                        {u.display_name}
-                      </Box>
-                    </TableCell>
-                    <TableCell>{u.email}</TableCell>
-                    <TableCell>
-                      <Chip label={t(`profile.roles.${u.role}`) || u.role} size="small"
-                        color={u.role === 'admin' ? 'error' : u.role === 'moderator' ? 'warning' : 'primary'} />
-                    </TableCell>
-                    <TableCell>
-                      {u.is_banned && <Chip label={t('admin.users.statusBanned')} size="small" color="error" />}
-                      {isTimedOut && <Chip label={t('admin.users.statusTimeout')} size="small" color="warning" />}
-                      {!u.is_banned && !isTimedOut && <Chip label={t('admin.users.statusActive')} size="small" color="success" />}
-                    </TableCell>
-                    <TableCell>
-                      {isSelf ? (
-                        <Typography variant="body2" color="text.secondary">{t('admin.users.self')}</Typography>
-                      ) : (
-                        <Select
-                          value={u.role}
-                          size="small"
-                          onChange={(e: SelectChangeEvent<string>) => handleRoleChange(u.id, e.target.value)}
-                        >
-                          <MenuItem value="member">{t('profile.roles.member')}</MenuItem>
-                          <MenuItem value="moderator">{t('profile.roles.moderator')}</MenuItem>
-                          <MenuItem value="admin">{t('profile.roles.admin')}</MenuItem>
-                        </Select>
-                      )}
-                    </TableCell>
-                    <TableCell align="right">
-                      {!isSelf && (
-                        <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'flex-end' }}>
-                          {u.is_banned ? (
-                            <Tooltip title={t('admin.users.actions.unban')}>
-                              <IconButton size="small" color="success" onClick={() => handleUnban(u.id)}>
-                                <CheckCircleIcon fontSize="small" />
-                              </IconButton>
-                            </Tooltip>
-                          ) : (
-                            <>
-                              <Tooltip title={t('admin.users.actions.ban')}>
-                                <IconButton size="small" color="error"
-                                  onClick={() => setActionDialog({ open: true, type: 'ban', user: u })}>
-                                  <BlockIcon fontSize="small" />
-                                </IconButton>
-                              </Tooltip>
-                              <Tooltip title={t('admin.users.actions.kick')}>
-                                <IconButton size="small" color="warning"
-                                  onClick={() => setActionDialog({ open: true, type: 'kick', user: u })}>
-                                  <LogoutIcon fontSize="small" />
-                                </IconButton>
-                              </Tooltip>
-                              <Tooltip title={t('admin.users.actions.timeout')}>
-                                <IconButton size="small"
-                                  onClick={() => setActionDialog({ open: true, type: 'timeout', user: u })}>
-                                  <TimerIcon fontSize="small" />
-                                </IconButton>
-                              </Tooltip>
-                            </>
-                          )}
-                        </Box>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                )
-              })}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      )}
-
-      {tab === 1 && <AuditLogTable />}
+        {tab === 'audit' && <AuditLogTable />}
+      </div>
 
       <UserActionDialog
         open={actionDialog.open}

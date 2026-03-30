@@ -1,23 +1,14 @@
+/** @jsxImportSource @emotion/react */
+import { css } from '@emotion/react'
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { edgeFunctions } from '../../services/edgeFunctions'
-import Container from '@mui/material/Container'
-import Typography from '@mui/material/Typography'
-import Grid from '@mui/material/Grid'
-import Card from '@mui/material/Card'
-import CardContent from '@mui/material/CardContent'
-import Box from '@mui/material/Box'
-import CircularProgress from '@mui/material/CircularProgress'
-import Alert from '@mui/material/Alert'
-import PeopleIcon from '@mui/icons-material/People'
-import ConfirmationNumberIcon from '@mui/icons-material/ConfirmationNumber'
-import FeedbackIcon from '@mui/icons-material/Feedback'
-import SmartToyIcon from '@mui/icons-material/SmartToy'
+import { Icon, Card, Alert, CircularProgress } from '../../components/ui'
+import { Container, Grid } from '../../components/layout'
 import AuditLogTable from '../../components/admin/AuditLogTable'
-import type { SvgIconComponent } from '@mui/icons-material'
 
 interface StatCardItem {
-  icon: SvgIconComponent
+  icon: string
   label: string
   value: number
   color: string
@@ -37,41 +28,41 @@ export default function Overview() {
   }, [])
 
   if (loading) {
-    return <Box sx={{ display: 'flex', justifyContent: 'center', py: 10 }}><CircularProgress /></Box>
+    return (
+      <div css={css({ display: 'flex', justifyContent: 'center', padding: '80px 0' })}>
+        <CircularProgress />
+      </div>
+    )
   }
 
   const statCards: StatCardItem[] = [
-    { icon: PeopleIcon, label: t('admin.overview.totalUsers'), value: stats?.total_users ?? 0, color: 'primary.main' },
-    { icon: ConfirmationNumberIcon, label: t('admin.overview.openTickets'), value: stats?.open_tickets ?? 0, color: 'warning.main' },
-    { icon: FeedbackIcon, label: t('admin.overview.openFeedback'), value: stats?.open_feedback ?? 0, color: 'info.main' },
-    { icon: SmartToyIcon, label: t('admin.overview.pendingBotActions'), value: stats?.pending_bot_actions ?? 0, color: 'secondary.main' },
+    { icon: 'group', label: t('admin.overview.totalUsers'), value: stats?.total_users ?? 0, color: 'var(--color-primary)' },
+    { icon: 'confirmation_number', label: t('admin.overview.openTickets'), value: stats?.open_tickets ?? 0, color: 'var(--color-warning)' },
+    { icon: 'feedback', label: t('admin.overview.openFeedback'), value: stats?.open_feedback ?? 0, color: 'var(--color-info, var(--color-primary))' },
+    { icon: 'smart_toy', label: t('admin.overview.pendingBotActions'), value: stats?.pending_bot_actions ?? 0, color: 'var(--color-secondary, var(--color-primary))' },
   ]
 
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Typography variant="h4" gutterBottom sx={{ fontWeight: 700 }}>
+    <Container maxWidth="lg" css={css({ paddingTop: 32, paddingBottom: 32 })}>
+      <h1 css={css({ fontSize: 28, fontWeight: 700, color: 'var(--color-on-surface)', margin: '0 0 16px' })}>
         {t('admin.overview.title')}
-      </Typography>
+      </h1>
 
-      {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+      {error && <Alert severity="error" css={css({ marginBottom: 16 })}>{error}</Alert>}
 
-      <Grid container spacing={2} sx={{ mb: 4 }}>
+      <Grid columns={{ xs: 2, md: 4 }} gap={16} css={css({ marginBottom: 32 })}>
         {statCards.map((card) => (
-          <Grid size={{ xs: 6, md: 3 }} key={card.label}>
-            <Card variant="outlined">
-              <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <card.icon sx={{ fontSize: 40, color: card.color }} />
-                <Box>
-                  <Typography variant="h4" sx={{ fontWeight: 700 }}>{card.value}</Typography>
-                  <Typography variant="body2" color="text.secondary">{card.label}</Typography>
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
+          <Card key={card.label} css={css({ padding: 16, display: 'flex', alignItems: 'center', gap: 16 })}>
+            <Icon name={card.icon} size={40} css={css({ color: card.color })} />
+            <div>
+              <p css={css({ fontSize: 28, fontWeight: 700, color: 'var(--color-on-surface)', margin: 0 })}>{card.value}</p>
+              <p css={css({ fontSize: 14, color: 'var(--color-on-surface-muted)', margin: 0 })}>{card.label}</p>
+            </div>
+          </Card>
         ))}
       </Grid>
 
-      <Typography variant="h6" sx={{ mb: 2 }}>{t('admin.overview.recentActivity')}</Typography>
+      <h2 css={css({ fontSize: 18, fontWeight: 600, color: 'var(--color-on-surface)', margin: '0 0 16px' })}>{t('admin.overview.recentActivity')}</h2>
       <AuditLogTable compact initialData={stats?.recent_audit ?? []} />
     </Container>
   )

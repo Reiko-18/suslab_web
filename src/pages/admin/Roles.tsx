@@ -1,26 +1,11 @@
+/** @jsxImportSource @emotion/react */
+import { css } from '@emotion/react'
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../context/AuthContext'
 import { edgeFunctions } from '../../services/edgeFunctions'
-import Container from '@mui/material/Container'
-import Typography from '@mui/material/Typography'
-import Table from '@mui/material/Table'
-import TableBody from '@mui/material/TableBody'
-import TableCell from '@mui/material/TableCell'
-import TableContainer from '@mui/material/TableContainer'
-import TableHead from '@mui/material/TableHead'
-import TableRow from '@mui/material/TableRow'
-import Paper from '@mui/material/Paper'
-import Box from '@mui/material/Box'
-import Fab from '@mui/material/Fab'
-import IconButton from '@mui/material/IconButton'
-import Chip from '@mui/material/Chip'
-import CircularProgress from '@mui/material/CircularProgress'
-import Alert from '@mui/material/Alert'
-import AddIcon from '@mui/icons-material/Add'
-import EditIcon from '@mui/icons-material/Edit'
-import DeleteIcon from '@mui/icons-material/Delete'
-import SyncIcon from '@mui/icons-material/Sync'
+import { Icon, Button, Chip, Alert, CircularProgress, Table } from '../../components/ui'
+import { Container } from '../../components/layout'
 import RoleDialog from '../../components/admin/RoleDialog'
 
 export default function Roles() {
@@ -66,81 +51,87 @@ export default function Roles() {
   }
 
   if (loading) {
-    return <Box sx={{ display: 'flex', justifyContent: 'center', py: 10 }}><CircularProgress /></Box>
+    return (
+      <div css={css({ display: 'flex', justifyContent: 'center', padding: '80px 0' })}>
+        <CircularProgress />
+      </div>
+    )
   }
 
+  const columns = [
+    {
+      key: 'name',
+      header: t('admin.roles.name'),
+      render: (r: any) => (
+        <div css={css({ display: 'flex', alignItems: 'center', gap: 8 })}>
+          <div css={css({ width: 12, height: 12, borderRadius: '50%', background: r.color })} />
+          {r.name}
+        </div>
+      ),
+    },
+    { key: 'color', header: t('admin.roles.color') },
+    { key: 'position', header: t('admin.roles.position'), render: (r: any) => String(r.position) },
+    {
+      key: 'syncStatus',
+      header: t('admin.roles.syncStatus'),
+      render: (r: any) => (
+        <Chip
+          icon="sync"
+          label={r.is_synced ? t('admin.roles.synced') : t('admin.roles.notSynced')}
+          size="small"
+          variant="outlined"
+          color={r.is_synced ? 'var(--color-success)' : undefined}
+        />
+      ),
+    },
+    ...(isAdmin
+      ? [
+          {
+            key: 'actions',
+            header: t('admin.roles.actions'),
+            render: (r: any) => (
+              <div css={css({ display: 'flex', gap: 4, justifyContent: 'flex-end' })}>
+                <Button variant="icon" onClick={() => { setEditingRole(r); setDialogOpen(true) }}>
+                  <Icon name="edit" size={18} />
+                </Button>
+                <Button variant="icon" onClick={() => handleDelete(r.id)} css={css({ color: 'var(--color-error)' })}>
+                  <Icon name="delete" size={18} />
+                </Button>
+              </div>
+            ),
+          },
+        ]
+      : []),
+  ]
+
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Typography variant="h4" gutterBottom sx={{ fontWeight: 700 }}>
+    <Container maxWidth="lg" css={css({ paddingTop: 32, paddingBottom: 32 })}>
+      <h1 css={css({ fontSize: 28, fontWeight: 700, color: 'var(--color-on-surface)', margin: '0 0 8px' })}>
         {t('admin.roles.title')}
-      </Typography>
-      <Typography color="text.secondary" sx={{ mb: 3 }}>
+      </h1>
+      <p css={css({ color: 'var(--color-on-surface-muted)', margin: '0 0 24px' })}>
         {t('admin.roles.desc')}
-      </Typography>
+      </p>
 
-      {notice && <Alert severity="success" sx={{ mb: 2 }} onClose={() => setNotice(null)}>{notice}</Alert>}
-      {error && <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>{error}</Alert>}
+      {notice && <Alert severity="success" onClose={() => setNotice(null)} css={css({ marginBottom: 16 })}>{notice}</Alert>}
+      {error && <Alert severity="error" onClose={() => setError(null)} css={css({ marginBottom: 16 })}>{error}</Alert>}
 
-      <TableContainer component={Paper} variant="outlined">
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>{t('admin.roles.name')}</TableCell>
-              <TableCell>{t('admin.roles.color')}</TableCell>
-              <TableCell>{t('admin.roles.position')}</TableCell>
-              <TableCell>{t('admin.roles.syncStatus')}</TableCell>
-              {isAdmin && <TableCell align="right">{t('admin.roles.actions')}</TableCell>}
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {roles.map((r) => (
-              <TableRow key={r.id}>
-                <TableCell>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Box sx={{ width: 12, height: 12, borderRadius: '50%', bgcolor: r.color }} />
-                    {r.name}
-                  </Box>
-                </TableCell>
-                <TableCell>{r.color}</TableCell>
-                <TableCell>{r.position}</TableCell>
-                <TableCell>
-                  <Chip
-                    icon={<SyncIcon />}
-                    label={r.is_synced ? t('admin.roles.synced') : t('admin.roles.notSynced')}
-                    size="small"
-                    color={r.is_synced ? 'success' : 'default'}
-                    variant="outlined"
-                  />
-                </TableCell>
-                {isAdmin && (
-                  <TableCell align="right">
-                    <IconButton size="small" onClick={() => { setEditingRole(r); setDialogOpen(true) }}>
-                      <EditIcon fontSize="small" />
-                    </IconButton>
-                    <IconButton size="small" color="error" onClick={() => handleDelete(r.id)}>
-                      <DeleteIcon fontSize="small" />
-                    </IconButton>
-                  </TableCell>
-                )}
-              </TableRow>
-            ))}
-            {roles.length === 0 && (
-              <TableRow>
-                <TableCell colSpan={isAdmin ? 5 : 4} align="center">
-                  <Typography color="text.secondary">{t('admin.roles.empty')}</Typography>
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </TableContainer>
+      <Table
+        columns={columns}
+        data={roles}
+        keyExtractor={(r: any) => r.id}
+      />
+
+      {roles.length === 0 && (
+        <p css={css({ textAlign: 'center', color: 'var(--color-on-surface-muted)', padding: '32px 0' })}>
+          {t('admin.roles.empty')}
+        </p>
+      )}
 
       {isAdmin && (
-        <Fab color="primary" sx={{ position: 'fixed', bottom: 24, right: 24 }}
-          onClick={() => { setEditingRole(null); setDialogOpen(true) }}
-        >
-          <AddIcon />
-        </Fab>
+        <Button variant="fab" onClick={() => { setEditingRole(null); setDialogOpen(true) }}>
+          <Icon name="add" />
+        </Button>
       )}
 
       <RoleDialog

@@ -1,20 +1,11 @@
+/** @jsxImportSource @emotion/react */
+import { css } from '@emotion/react'
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { edgeFunctions } from '../../services/edgeFunctions'
 import { useAuth } from '../../context/AuthContext'
-import Container from '@mui/material/Container'
-import Typography from '@mui/material/Typography'
-import Card from '@mui/material/Card'
-import CardContent from '@mui/material/CardContent'
-import TextField from '@mui/material/TextField'
-import Switch from '@mui/material/Switch'
-import FormControlLabel from '@mui/material/FormControlLabel'
-import Button from '@mui/material/Button'
-import Box from '@mui/material/Box'
-import Divider from '@mui/material/Divider'
-import CircularProgress from '@mui/material/CircularProgress'
-import Alert from '@mui/material/Alert'
-import SaveIcon from '@mui/icons-material/Save'
+import { Button, Card, TextField, Switch, Alert, CircularProgress, Divider } from '../../components/ui'
+import { Container } from '../../components/layout'
 
 interface SettingGroup {
   titleKey: string
@@ -88,12 +79,14 @@ export default function Settings() {
     if (typeof value === 'boolean' || value === 'true' || value === 'false') {
       const boolVal = value === true || value === 'true'
       return (
-        <FormControlLabel
-          key={key}
-          control={<Switch checked={boolVal} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleChange(key, e.target.checked)} disabled={!isAdmin} />}
-          label={t(`admin.settings.keys.${key}`)}
-          sx={{ display: 'block', mb: 1 }}
-        />
+        <div key={key} css={css({ marginBottom: 8 })}>
+          <Switch
+            checked={boolVal}
+            onChange={(checked: boolean) => handleChange(key, checked)}
+            label={t(`admin.settings.keys.${key}`)}
+            disabled={!isAdmin}
+          />
+        </div>
       )
     }
 
@@ -113,7 +106,6 @@ export default function Settings() {
           }}
           disabled={!isAdmin}
           helperText="JSON array format"
-          sx={{ mb: 2 }}
         />
       )
     }
@@ -126,49 +118,52 @@ export default function Settings() {
         value={typeof value === 'string' ? value : JSON.stringify(value)}
         onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleChange(key, e.target.value)}
         disabled={!isAdmin}
-        sx={{ mb: 2 }}
       />
     )
   }
 
   if (loading) {
-    return <Box sx={{ display: 'flex', justifyContent: 'center', py: 10 }}><CircularProgress /></Box>
+    return (
+      <div css={css({ display: 'flex', justifyContent: 'center', padding: '80px 0' })}>
+        <CircularProgress />
+      </div>
+    )
   }
 
   return (
-    <Container maxWidth="md" sx={{ py: 4 }}>
-      <Typography variant="h4" gutterBottom sx={{ fontWeight: 700 }}>
+    <Container maxWidth="md" css={css({ paddingTop: 32, paddingBottom: 32 })}>
+      <h1 css={css({ fontSize: 28, fontWeight: 700, color: 'var(--color-on-surface)', margin: '0 0 8px' })}>
         {t('admin.settings.title')}
-      </Typography>
-      <Typography color="text.secondary" sx={{ mb: 3 }}>
+      </h1>
+      <p css={css({ color: 'var(--color-on-surface-muted)', margin: '0 0 24px' })}>
         {t('admin.settings.desc')}
-      </Typography>
+      </p>
 
-      {notice && <Alert severity="success" sx={{ mb: 2 }} onClose={() => setNotice(null)}>{notice}</Alert>}
-      {error && <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>{error}</Alert>}
+      {notice && <Alert severity="success" onClose={() => setNotice(null)} css={css({ marginBottom: 16 })}>{notice}</Alert>}
+      {error && <Alert severity="error" onClose={() => setError(null)} css={css({ marginBottom: 16 })}>{error}</Alert>}
 
       {SETTING_GROUPS.map(({ titleKey, keys }) => (
-        <Card key={titleKey} variant="outlined" sx={{ mb: 3 }}>
-          <CardContent>
-            <Typography variant="h6" sx={{ mb: 2 }}>{t(titleKey)}</Typography>
+        <Card key={titleKey} css={css({ marginBottom: 24, padding: 20 })}>
+          <h3 css={css({ fontSize: 18, fontWeight: 600, color: 'var(--color-on-surface)', margin: '0 0 16px' })}>{t(titleKey)}</h3>
+          <div css={css({ display: 'flex', flexDirection: 'column', gap: 16 })}>
             {keys.map(renderField)}
-          </CardContent>
+          </div>
         </Card>
       ))}
 
       {isAdmin && (
         <>
-          <Divider sx={{ mb: 3 }} />
-          <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+          <Divider css={css({ marginBottom: 24 })} />
+          <div css={css({ display: 'flex', justifyContent: 'flex-end' })}>
             <Button
-              variant="contained"
-              startIcon={<SaveIcon />}
+              variant="primary"
+              startIcon="save"
               onClick={handleSave}
               disabled={saving}
             >
               {saving ? t('common.loading') : t('common.save')}
             </Button>
-          </Box>
+          </div>
         </>
       )}
     </Container>
