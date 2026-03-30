@@ -4,6 +4,7 @@ import { BrowserRouter } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import ThemeProvider from './theme/ThemeProvider'
 import ErrorBoundary from './components/ErrorBoundary'
+import './styles/reset.css'
 import './i18n'
 import App from './App'
 
