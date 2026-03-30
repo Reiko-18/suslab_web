@@ -1,10 +1,7 @@
+/** @jsxImportSource @emotion/react */
+import { css } from '@emotion/react'
 import { useTranslation } from 'react-i18next'
-import ListItem from '@mui/material/ListItem'
-import ListItemIcon from '@mui/material/ListItemIcon'
-import ListItemText from '@mui/material/ListItemText'
-import IconButton from '@mui/material/IconButton'
-import Checkbox from '@mui/material/Checkbox'
-import DeleteIcon from '@mui/icons-material/Delete'
+import { Checkbox, Icon, Button } from './ui'
 
 interface Todo {
   id: string
@@ -23,32 +20,37 @@ export default function TodoItem({ todo, onToggle, onDelete, canDelete }: TodoIt
   const { t } = useTranslation()
 
   return (
-    <ListItem
-      secondaryAction={
-        canDelete && (
-          <IconButton edge="end" aria-label={t('todos.delete')} onClick={() => onDelete(todo.id)} size="small">
-            <DeleteIcon fontSize="small" />
-          </IconButton>
-        )
-      }
-      disablePadding
-      sx={{ pl: 1 }}
+    <div
+      css={css`
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 4px 8px;
+      `}
     >
-      <ListItemIcon sx={{ minWidth: 36 }}>
-        <Checkbox
-          edge="start"
-          checked={todo.completed}
-          onChange={() => onToggle(todo.id, !todo.completed)}
-          size="small"
-        />
-      </ListItemIcon>
-      <ListItemText
-        primary={todo.title}
-        sx={{
-          textDecoration: todo.completed ? 'line-through' : 'none',
-          color: todo.completed ? 'text.disabled' : 'text.primary',
-        }}
+      <Checkbox
+        checked={todo.completed}
+        onChange={() => onToggle(todo.id, !todo.completed)}
       />
-    </ListItem>
+      <span
+        css={css`
+          flex: 1;
+          font-size: 14px;
+          text-decoration: ${todo.completed ? 'line-through' : 'none'};
+          color: ${todo.completed ? 'var(--color-on-surface-dim)' : 'var(--color-on-surface)'};
+        `}
+      >
+        {todo.title}
+      </span>
+      {canDelete && (
+        <Button
+          variant="icon"
+          aria-label={t('todos.delete')}
+          onClick={() => onDelete(todo.id)}
+        >
+          <Icon name="delete" size={18} />
+        </Button>
+      )}
+    </div>
   )
 }

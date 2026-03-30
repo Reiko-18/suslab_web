@@ -1,13 +1,7 @@
+/** @jsxImportSource @emotion/react */
+import { css } from '@emotion/react'
 import { useTranslation } from 'react-i18next'
-import Card from '@mui/material/Card'
-import CardContent from '@mui/material/CardContent'
-import Typography from '@mui/material/Typography'
-import Box from '@mui/material/Box'
-import Chip from '@mui/material/Chip'
-import Button from '@mui/material/Button'
-import LinearProgress from '@mui/material/LinearProgress'
-import EmojiEventsIcon from '@mui/icons-material/EmojiEvents'
-import LeaderboardIcon from '@mui/icons-material/Leaderboard'
+import { Card, Chip, Button, Icon, LinearProgress } from './ui'
 
 interface LevelCardProps {
   level: number
@@ -26,48 +20,58 @@ export default function LevelCard({ level, xp, badges, onLeaderboard }: LevelCar
   const progress = xpForLevel > 0 ? (xpInLevel / xpForLevel) * 100 : 0
 
   return (
-    <Card sx={{ mb: 3 }}>
-      <CardContent>
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <EmojiEventsIcon color="primary" />
-            <Typography variant="h6" fontWeight={700}>{t('levels.title')}</Typography>
-          </Box>
-          <Button
-            size="small"
-            startIcon={<LeaderboardIcon />}
-            onClick={onLeaderboard}
-          >
-            {t('levels.leaderboard')}
-          </Button>
-        </Box>
+    <Card css={css`margin-bottom: var(--spacing-4);`}>
+      {/* 標題列 */}
+      <div css={css`display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;`}>
+        <div css={css`display: flex; align-items: center; gap: 8px;`}>
+          <Icon name="emoji_events" size={22} style={{ color: 'var(--color-primary)' }} />
+          <h3 css={css`font-size: 18px; font-weight: 700; color: var(--color-on-surface); margin: 0;`}>
+            {t('levels.title')}
+          </h3>
+        </div>
+        <Button size="small" variant="ghost" startIcon="leaderboard" onClick={onLeaderboard}>
+          {t('levels.leaderboard')}
+        </Button>
+      </div>
 
-        <Typography variant="subtitle1" fontWeight={600}>
-          {t('levels.level', { level })}
-        </Typography>
+      {/* 等級 */}
+      <p css={css`font-size: 15px; font-weight: 600; color: var(--color-on-surface); margin: 0 0 8px 0;`}>
+        {t('levels.level', { level })}
+      </p>
 
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-          <LinearProgress
-            variant="determinate"
-            value={Math.min(progress, 100)}
-            sx={{ flexGrow: 1, height: 8, borderRadius: 4 }}
-          />
-          <Typography variant="caption" color="text.secondary" sx={{ minWidth: 80, textAlign: 'right' }}>
-            {t('levels.xp', { current: xp, next: nextLevelMinXp })}
-          </Typography>
-        </Box>
+      {/* 經驗條 */}
+      <div css={css`display: flex; align-items: center; gap: 8px; margin-bottom: 8px;`}>
+        <div css={css`flex-grow: 1;`}>
+          <LinearProgress value={Math.min(progress, 100)} />
+        </div>
+        <span
+          css={css`
+            font-size: 12px;
+            color: var(--color-on-surface-muted);
+            min-width: 80px;
+            text-align: right;
+            white-space: nowrap;
+          `}
+        >
+          {t('levels.xp', { current: xp, next: nextLevelMinXp })}
+        </span>
+      </div>
 
-        {badges && badges.length > 0 ? (
-          <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', mt: 1 }}>
-            <Typography variant="caption" color="text.secondary" sx={{ mr: 0.5 }}>{t('levels.badges')}:</Typography>
-            {badges.map((badge) => (
-              <Chip key={badge} label={badge} size="small" variant="outlined" />
-            ))}
-          </Box>
-        ) : (
-          <Typography variant="caption" color="text.disabled">{t('levels.noBadges')}</Typography>
-        )}
-      </CardContent>
+      {/* 徽章 */}
+      {badges && badges.length > 0 ? (
+        <div css={css`display: flex; gap: 4px; flex-wrap: wrap; margin-top: 8px;`}>
+          <span css={css`font-size: 12px; color: var(--color-on-surface-muted); margin-right: 4px;`}>
+            {t('levels.badges')}:
+          </span>
+          {badges.map((badge) => (
+            <Chip key={badge} label={badge} size="small" variant="outlined" />
+          ))}
+        </div>
+      ) : (
+        <span css={css`font-size: 12px; color: var(--color-on-surface-dim);`}>
+          {t('levels.noBadges')}
+        </span>
+      )}
     </Card>
   )
 }
