@@ -1,19 +1,13 @@
+/** @jsxImportSource @emotion/react */
+import { css } from '@emotion/react'
 import { useState } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import Box from '@mui/material/Box'
-import BottomNavigation from '@mui/material/BottomNavigation'
-import BottomNavigationAction from '@mui/material/BottomNavigationAction'
-import { useNavigate } from 'react-router-dom'
-import HomeIcon from '@mui/icons-material/Home'
-import PeopleIcon from '@mui/icons-material/People'
-import EventIcon from '@mui/icons-material/Event'
-import SportsEsportsIcon from '@mui/icons-material/SportsEsports'
-import PersonIcon from '@mui/icons-material/Person'
+import { useBreakpoint } from '../hooks/useBreakpoint'
 import NavRail from '../components/NavRail'
 import NavDrawer from '../components/NavDrawer'
 import TopAppBar from '../components/TopAppBar'
-import type { SvgIconComponent } from '@mui/icons-material'
+import BottomNav from '../components/BottomNav'
 
 const TITLE_MAP: Record<string, string> = {
   '/home': 'nav.home',
@@ -31,53 +25,41 @@ const TITLE_MAP: Record<string, string> = {
   '/admin/settings': 'nav.admin.settings',
 }
 
-interface BottomNavItem {
-  path: string
-  icon: SvgIconComponent
-  key: string
-}
-
-const BOTTOM_NAV: BottomNavItem[] = [
-  { path: '/home', icon: HomeIcon, key: 'nav.home' },
-  { path: '/members', icon: PeopleIcon, key: 'nav.members' },
-  { path: '/events', icon: EventIcon, key: 'nav.events' },
-  { path: '/games', icon: SportsEsportsIcon, key: 'nav.games' },
-  { path: '/profile', icon: PersonIcon, key: 'nav.profile' },
-]
-
 export default function AppLayout() {
   const [drawerOpen, setDrawerOpen] = useState(false)
   const location = useLocation()
-  const navigate = useNavigate()
   const { t } = useTranslation()
+  const bp = useBreakpoint()
+  const isDesktop = bp === 'desktop'
 
   const titleKey = TITLE_MAP[location.pathname] || 'nav.home'
-  const bottomIdx = BOTTOM_NAV.findIndex((n) => n.path === location.pathname)
 
   return (
-    <Box sx={{ display: 'flex', minHeight: '100vh' }}>
+    <div
+      css={css`
+        display: flex;
+        min-height: 100vh;
+      `}
+    >
       <NavRail onExpand={() => setDrawerOpen(true)} />
       <NavDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />
       <TopAppBar title={t(titleKey)} onMenuClick={() => setDrawerOpen(!drawerOpen)} />
 
-      <Box component="main" sx={{
-        flexGrow: 1, ml: { xs: 0, md: '72px' },
-        mt: '64px', mb: { xs: '56px', md: 0 },
-        minHeight: 'calc(100vh - 64px)',
-        bgcolor: '#202225',
-        p: { xs: 0, md: '10px' },
-      }}>
-        <Outlet />
-      </Box>
-
-      {/* Mobile bottom navigation */}
-      <BottomNavigation value={bottomIdx === -1 ? false : bottomIdx} showLabels
-        sx={{ display: { xs: 'flex', md: 'none' }, position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 1200, borderTop: 1, borderColor: 'divider' }}
+      <main
+        css={css`
+          flex: 1;
+          margin-left: ${isDesktop ? '72px' : '0'};
+          margin-top: 64px;
+          margin-bottom: ${isDesktop ? '0' : '56px'};
+          min-height: calc(100vh - 64px);
+          background: #202225;
+          padding: ${isDesktop ? '10px' : '0'};
+        `}
       >
-        {BOTTOM_NAV.map((item) => (
-          <BottomNavigationAction key={item.path} label={t(item.key)} icon={<item.icon />} onClick={() => navigate(item.path)} />
-        ))}
-      </BottomNavigation>
-    </Box>
+        <Outlet />
+      </main>
+
+      <BottomNav />
+    </div>
   )
 }
