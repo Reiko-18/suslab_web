@@ -1,11 +1,7 @@
+/** @jsxImportSource @emotion/react */
+import { css } from '@emotion/react'
 import { useTranslation } from 'react-i18next'
-import Card from '@mui/material/Card'
-import CardActionArea from '@mui/material/CardActionArea'
-import CardContent from '@mui/material/CardContent'
-import Avatar from '@mui/material/Avatar'
-import Typography from '@mui/material/Typography'
-import Chip from '@mui/material/Chip'
-import Stack from '@mui/material/Stack'
+import { Avatar, Chip } from './ui'
 
 interface RoleStyle {
   bg: string
@@ -45,78 +41,104 @@ export default function MemberCard({ member, onClick }: MemberCardProps) {
   const roleStyle = (member.role && ROLE_COLORS[member.role]) || ROLE_COLORS.member
 
   return (
-    <Card sx={{
-      height: '100%', display: 'flex', flexDirection: 'column',
-      borderRadius: 4, boxShadow: 'none',
-      border: '1px solid', borderColor: 'divider',
-      transition: 'all 0.2s ease',
-      '&:hover': {
-        transform: 'translateY(-4px)',
-        boxShadow: '0 8px 30px rgba(0,0,0,0.08)',
-        borderColor: 'primary.main',
-      },
-    }}>
-      <CardActionArea onClick={onClick} sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', alignItems: 'stretch' }}>
-        <CardContent sx={{ textAlign: 'center', flexGrow: 1, py: 3, px: 2 }}>
+    <div
+      onClick={onClick}
+      css={css`
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        border-radius: 16px;
+        border: 1px solid var(--color-divider);
+        background: var(--color-surface);
+        cursor: pointer;
+        transition: all 0.2s ease;
+
+        &:hover {
+          transform: translateY(-4px);
+          box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+          border-color: var(--color-primary);
+        }
+      `}
+    >
+      <div
+        css={css`
+          text-align: center;
+          flex-grow: 1;
+          padding: 24px 16px;
+        `}
+      >
+        <div css={css`display: flex; justify-content: center; margin-bottom: 16px;`}>
           <Avatar
             src={member.avatar_url}
-            sx={{
-              width: 72, height: 72, mx: 'auto', mb: 2,
-              fontSize: 28, fontWeight: 700,
-              border: '3px solid', borderColor: 'divider',
-            }}
-          >
-            {(member.display_name || 'U')[0]?.toUpperCase()}
-          </Avatar>
-          <Typography sx={{ fontWeight: 700, fontSize: 15, mb: 0.5, color: 'text.primary' }}>
-            {member.display_name}
-          </Typography>
-          {member.role && (
+            size={72}
+            fallback={(member.display_name || 'U')[0]?.toUpperCase()}
+          />
+        </div>
+        <p
+          css={css`
+            font-weight: 700;
+            font-size: 15px;
+            margin: 0 0 4px 0;
+            color: var(--color-on-surface);
+          `}
+        >
+          {member.display_name}
+        </p>
+        {member.role && (
+          <div css={css`margin-top: 4px;`}>
             <Chip
               label={t(`profile.roles.${member.role}`)}
               size="small"
-              sx={{
-                mt: 0.5, fontWeight: 600, fontSize: 11,
-                bgcolor: roleStyle.bg, color: roleStyle.color,
-                border: '1px solid', borderColor: roleStyle.border,
-              }}
+              bg={roleStyle.bg}
+              color={roleStyle.color}
             />
-          )}
-          {member.bio && (
-            <Typography
-              variant="body2"
-              color="text.secondary"
-              sx={{
-                mt: 1.5, fontSize: 12, lineHeight: 1.5,
-                overflow: 'hidden', textOverflow: 'ellipsis',
-                display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
-              }}
-            >
-              {member.bio}
-            </Typography>
-          )}
-          {visibleTags.length > 0 && (
-            <Stack direction="row" sx={{ mt: 1.5, justifyContent: 'center', flexWrap: 'wrap', gap: 0.5 }}>
-              {visibleTags.map((tag) => (
-                <Chip
-                  key={tag} label={tag} size="small"
-                  sx={{
-                    fontSize: 11, height: 22,
-                    bgcolor: 'action.hover', border: 'none',
-                  }}
-                />
-              ))}
-              {extraCount > 0 && (
-                <Chip
-                  label={t('members.skillsMore', { count: extraCount })}
-                  size="small"
-                  sx={{ fontSize: 11, height: 22, bgcolor: 'action.hover', border: 'none' }}
-                />
-              )}
-            </Stack>
-          )}
-        </CardContent>
-      </CardActionArea>
-    </Card>
+          </div>
+        )}
+        {member.bio && (
+          <p
+            css={css`
+              margin: 12px 0 0;
+              font-size: 12px;
+              line-height: 1.5;
+              color: var(--color-on-surface-muted);
+              overflow: hidden;
+              text-overflow: ellipsis;
+              display: -webkit-box;
+              -webkit-line-clamp: 2;
+              -webkit-box-orient: vertical;
+            `}
+          >
+            {member.bio}
+          </p>
+        )}
+        {visibleTags.length > 0 && (
+          <div
+            css={css`
+              margin-top: 12px;
+              display: flex;
+              justify-content: center;
+              flex-wrap: wrap;
+              gap: 4px;
+            `}
+          >
+            {visibleTags.map((tag) => (
+              <Chip
+                key={tag}
+                label={tag}
+                size="small"
+                bg="var(--color-surface-container)"
+              />
+            ))}
+            {extraCount > 0 && (
+              <Chip
+                label={t('members.skillsMore', { count: extraCount })}
+                size="small"
+                bg="var(--color-surface-container)"
+              />
+            )}
+          </div>
+        )}
+      </div>
+    </div>
   )
 }
