@@ -1,19 +1,63 @@
+/** @jsxImportSource @emotion/react */
+import { css } from '@emotion/react'
 import { Outlet } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import Box from '@mui/material/Box'
-import AppBar from '@mui/material/AppBar'
-import Toolbar from '@mui/material/Toolbar'
-import Typography from '@mui/material/Typography'
-import Avatar from '@mui/material/Avatar'
-import LanguageSelector from '../components/LanguageSelector'
-import ThemeColorPicker from '../components/ThemeColorPicker'
-import IconButton from '@mui/material/IconButton'
-import DarkModeIcon from '@mui/icons-material/DarkMode'
-import LightModeIcon from '@mui/icons-material/LightMode'
-import LoginIcon from '@mui/icons-material/Login'
-import Button from '@mui/material/Button'
 import { useThemeControls } from '../theme/ThemeProvider'
 import { useAuth } from '../context/AuthContext'
+import Avatar from '../components/ui/Avatar'
+import Icon from '../components/ui/Icon'
+import LanguageSelector from '../components/LanguageSelector'
+import ThemeColorPicker from '../components/ThemeColorPicker'
+
+const headerStyle = css`
+  position: sticky;
+  top: 0;
+  z-index: var(--z-sticky);
+  display: flex;
+  align-items: center;
+  height: 64px;
+  padding: 0 16px;
+  background: transparent;
+  border-bottom: 1px solid var(--color-divider);
+`
+
+const iconBtnStyle = css`
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: var(--radius-full);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.08);
+  }
+`
+
+const loginBtnStyle = css`
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 8px;
+  padding: 6px 16px;
+  border: none;
+  border-radius: 24px;
+  background: #4A7C59;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+
+  &:hover {
+    background: #3D6B4B;
+  }
+`
 
 export default function PublicLayout() {
   const { t } = useTranslation()
@@ -21,35 +65,45 @@ export default function PublicLayout() {
   const { signInWithDiscord } = useAuth()
 
   return (
-    <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-      <AppBar position="static" color="transparent" elevation={0} sx={{ borderBottom: 1, borderColor: 'divider' }}>
-        <Toolbar>
-          <Avatar sx={{ bgcolor: 'primary.main', width: 32, height: 32, fontSize: 14, fontWeight: 700, mr: 1 }}>S</Avatar>
-          <Typography variant="h6" sx={{ flexGrow: 1, fontWeight: 700 }}>SusLab</Typography>
-          <LanguageSelector />
-          <IconButton onClick={toggleMode} color="inherit" aria-label={mode === 'dark' ? t('theme.light') : t('theme.dark')}>
-            {mode === 'dark' ? <LightModeIcon /> : <DarkModeIcon />}
-          </IconButton>
-          <ThemeColorPicker />
-          <Button
-            variant="contained"
-            size="small"
-            startIcon={<LoginIcon />}
-            onClick={signInWithDiscord}
-            sx={{
-              ml: 1, borderRadius: 6,
-              bgcolor: '#4A7C59', color: '#fff',
-              '&:hover': { bgcolor: '#3D6B4B' },
-              textTransform: 'none', fontWeight: 600,
-            }}
-          >
-            Login
-          </Button>
-        </Toolbar>
-      </AppBar>
-      <Box sx={{ flex: 1 }}>
+    <div
+      css={css`
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+      `}
+    >
+      <header css={headerStyle}>
+        <Avatar size={32} fallback="S" bg="var(--color-primary)" />
+        <span
+          css={css`
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-left: 8px;
+            flex: 1;
+          `}
+        >
+          SusLab
+        </span>
+
+        <LanguageSelector />
+        <button
+          type="button"
+          onClick={toggleMode}
+          css={iconBtnStyle}
+          aria-label={mode === 'dark' ? t('theme.light') : t('theme.dark')}
+        >
+          <Icon name={mode === 'dark' ? 'light_mode' : 'dark_mode'} size={24} />
+        </button>
+        <ThemeColorPicker />
+        <button type="button" onClick={signInWithDiscord} css={loginBtnStyle}>
+          <Icon name="login" size={18} />
+          Login
+        </button>
+      </header>
+
+      <div css={css`flex: 1;`}>
         <Outlet />
-      </Box>
-    </Box>
+      </div>
+    </div>
   )
 }
