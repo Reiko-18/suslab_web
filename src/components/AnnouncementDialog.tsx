@@ -1,14 +1,8 @@
+/** @jsxImportSource @emotion/react */
+import { css } from '@emotion/react'
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import Dialog from '@mui/material/Dialog'
-import DialogTitle from '@mui/material/DialogTitle'
-import DialogContent from '@mui/material/DialogContent'
-import DialogActions from '@mui/material/DialogActions'
-import TextField from '@mui/material/TextField'
-import Button from '@mui/material/Button'
-import FormControlLabel from '@mui/material/FormControlLabel'
-import Switch from '@mui/material/Switch'
-import CircularProgress from '@mui/material/CircularProgress'
+import { Dialog, TextField, Switch, Button, CircularProgress } from './ui'
 
 interface AnnouncementPayload {
   title: string
@@ -68,52 +62,52 @@ export default function AnnouncementDialog({ open, onClose, announcement, onSave
   const isValid = title.trim().length >= 1 && title.length <= 200 && content.trim().length >= 1 && content.length <= 5000
 
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
-      <DialogTitle>
-        {isEdit ? t('announcements.edit') : t('announcements.create')}
-      </DialogTitle>
-      <DialogContent>
+    <Dialog
+      open={open}
+      onClose={onClose}
+      title={isEdit ? t('announcements.edit') : t('announcements.create')}
+      actions={
+        <>
+          <Button variant="ghost" onClick={onClose} disabled={saving}>
+            {t('common.cancel')}
+          </Button>
+          <Button
+            variant="primary"
+            onClick={handleSave}
+            disabled={!isValid || saving}
+            startIcon={saving ? undefined : undefined}
+          >
+            {saving && (
+              <CircularProgress size={18} color="var(--color-on-primary)" />
+            )}
+            {t('announcements.save')}
+          </Button>
+        </>
+      }
+    >
+      <div css={css`display: flex; flex-direction: column; gap: var(--spacing-3);`}>
         <TextField
           fullWidth
           label={t('announcements.titleLabel')}
           value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          inputProps={{ maxLength: 200 }}
+          onChange={(e) => setTitle((e.target as HTMLInputElement).value)}
           helperText={`${title.length}/200`}
-          sx={{ mt: 1, mb: 2 }}
         />
         <TextField
           fullWidth
           multiline
-          minRows={4}
-          maxRows={12}
+          rows={4}
           label={t('announcements.contentLabel')}
           value={content}
-          onChange={(e) => setContent(e.target.value)}
-          inputProps={{ maxLength: 5000 }}
+          onChange={(e) => setContent((e.target as HTMLTextAreaElement).value)}
           helperText={`${content.length}/5000`}
-          sx={{ mb: 2 }}
         />
-        <FormControlLabel
-          control={
-            <Switch checked={pinned} onChange={(e) => setPinned(e.target.checked)} />
-          }
+        <Switch
+          checked={pinned}
+          onChange={(checked) => setPinned(checked)}
           label={t('announcements.pinnedLabel')}
         />
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose} disabled={saving}>
-          {t('common.cancel')}
-        </Button>
-        <Button
-          variant="contained"
-          onClick={handleSave}
-          disabled={!isValid || saving}
-          startIcon={saving ? <CircularProgress size={18} color="inherit" /> : null}
-        >
-          {t('announcements.save')}
-        </Button>
-      </DialogActions>
+      </div>
     </Dialog>
   )
 }
