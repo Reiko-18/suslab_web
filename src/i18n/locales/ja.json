@@ -69,6 +69,8 @@
   "home.badges": "バッジ",
   "home.earned": "獲得済み",
   "home.noBadges": "まだバッジはありません — 参加し続けよう！",
+  "home.recentEvent": "最近のイベント",
+  "home.perPage": "件ずつ",
   "profile.role": "ロール",
   "profile.joinDate": "参加日",
   "profile.verifiedVia": "Discord認証済み",
