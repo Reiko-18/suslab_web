@@ -1,16 +1,10 @@
+/** @jsxImportSource @emotion/react */
+import { css } from '@emotion/react'
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { edgeFunctions } from '../services/edgeFunctions'
-import Container from '@mui/material/Container'
-import Typography from '@mui/material/Typography'
-import TextField from '@mui/material/TextField'
-import Grid from '@mui/material/Grid'
-import Box from '@mui/material/Box'
-import Skeleton from '@mui/material/Skeleton'
-import Card from '@mui/material/Card'
-import CardContent from '@mui/material/CardContent'
-import InputAdornment from '@mui/material/InputAdornment'
-import SearchIcon from '@mui/icons-material/Search'
+import { Icon, TextField, Card, Skeleton } from '../components/ui'
+import { Container, Grid } from '../components/layout'
 import MemberCard from '../components/MemberCard'
 import MemberDialog from '../components/MemberDialog'
 
@@ -60,77 +54,61 @@ export default function Members() {
   }
 
   return (
-    <Container maxWidth="lg" sx={{ py: { xs: 3, md: 5 } }}>
+    <Container maxWidth="lg" css={css({
+      paddingTop: 24,
+      paddingBottom: 24,
+      '@media (min-width: 769px)': { paddingTop: 40, paddingBottom: 40 },
+    })}>
       {/* Header */}
-      <Box sx={{ mb: 4, textAlign: 'center' }}>
-        <Typography
-          variant="h4"
-          sx={{
-            fontWeight: 800, color: 'text.primary', mb: 1,
-            fontSize: { xs: 28, md: 34 },
-          }}
-        >
+      <div css={css({ marginBottom: 32, textAlign: 'center' })}>
+        <h1 css={css({
+          fontWeight: 800,
+          color: 'var(--color-on-surface)',
+          marginBottom: 8,
+          fontSize: 28,
+          margin: '0 0 8px',
+          '@media (min-width: 769px)': { fontSize: 34 },
+        })}>
           {t('members.title')}
-        </Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+        </h1>
+        <p css={css({ color: 'var(--color-on-surface-muted)', fontSize: 14, marginBottom: 24, margin: '0 0 24px' })}>
           {members.length > 0 && !loading
             ? `${members.length} ${members.length === 1 ? 'member' : 'members'}`
             : ''}
-        </Typography>
+        </p>
 
         {/* Search */}
-        <TextField
-          placeholder={t('members.search')}
-          value={search}
-          onChange={handleSearchChange}
-          sx={{
-            maxWidth: 420, width: '100%',
-            '& .MuiOutlinedInput-root': {
-              borderRadius: 3,
-              bgcolor: 'action.hover',
-              '& fieldset': { borderColor: 'transparent' },
-              '&:hover fieldset': { borderColor: 'divider' },
-              '&.Mui-focused fieldset': { borderColor: 'primary.main' },
-            },
-          }}
-          slotProps={{
-            input: {
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon sx={{ color: 'text.secondary' }} />
-                </InputAdornment>
-              ),
-            },
-          }}
-        />
-      </Box>
+        <div css={css({ maxWidth: 420, width: '100%', margin: '0 auto' })}>
+          <TextField
+            placeholder={t('members.search')}
+            value={search}
+            onChange={handleSearchChange}
+            fullWidth
+            startAdornment={<Icon name="search" size={20} css={css({ color: 'var(--color-on-surface-muted)' })} />}
+          />
+        </div>
+      </div>
 
       {/* Member Grid */}
       {loading ? (
-        <Grid container spacing={2.5}>
+        <Grid columns={{ xs: 2, sm: 3, md: 4 }} gap={20}>
           {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
-            <Grid size={{ xs: 6, sm: 4, md: 3 }} key={i}>
-              <Card sx={{ borderRadius: 4, boxShadow: 'none', border: '1px solid', borderColor: 'divider' }}>
-                <CardContent sx={{ textAlign: 'center', py: 3 }}>
-                  <Skeleton variant="circular" width={72} height={72} sx={{ mx: 'auto', mb: 1.5 }} />
-                  <Skeleton variant="text" width="60%" sx={{ mx: 'auto' }} />
-                  <Skeleton variant="rounded" width="40%" height={24} sx={{ mx: 'auto', mt: 1, borderRadius: 2 }} />
-                </CardContent>
-              </Card>
-            </Grid>
+            <Card key={i} css={css({ padding: 24, textAlign: 'center' })}>
+              <Skeleton variant="circular" width={72} height={72} css={css({ margin: '0 auto 12px' })} />
+              <Skeleton variant="text" width="60%" css={css({ margin: '0 auto' })} />
+              <Skeleton variant="rectangular" width="40%" height={24} css={css({ margin: '8px auto 0', borderRadius: 8 })} />
+            </Card>
           ))}
         </Grid>
       ) : members.length === 0 ? (
-        <Box sx={{ textAlign: 'center', py: 8 }}>
-          <Typography sx={{ fontSize: 48, mb: 1 }}>🔍</Typography>
-          <Typography color="text.secondary" sx={{ fontSize: 15 }}>{t('members.noResults')}</Typography>
-        </Box>
+        <div css={css({ textAlign: 'center', padding: '64px 0' })}>
+          <p css={css({ fontSize: 48, marginBottom: 8, margin: '0 0 8px' })}>🔍</p>
+          <p css={css({ color: 'var(--color-on-surface-muted)', fontSize: 15, margin: 0 })}>{t('members.noResults')}</p>
+        </div>
       ) : (
-        <Grid container spacing={2.5}>
+        <Grid columns={{ xs: 2, sm: 3, md: 4 }} gap={20}>
           {members.map((member) => (
-            <Grid size={{ xs: 6, sm: 4, md: 3 }} key={member.user_id}>
-              <MemberCard member={member} onClick={() => handleCardClick(member)} />
-            </Grid>
+            <MemberCard key={member.user_id} member={member} onClick={() => handleCardClick(member)} />
           ))}
         </Grid>
       )}

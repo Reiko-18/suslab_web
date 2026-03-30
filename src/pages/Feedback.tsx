@@ -1,18 +1,11 @@
+/** @jsxImportSource @emotion/react */
+import { css } from '@emotion/react'
 import { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../context/AuthContext'
 import { edgeFunctions } from '../services/edgeFunctions'
-import Container from '@mui/material/Container'
-import Typography from '@mui/material/Typography'
-import Box from '@mui/material/Box'
-import Chip from '@mui/material/Chip'
-import Fab from '@mui/material/Fab'
-import Stack from '@mui/material/Stack'
-import Skeleton from '@mui/material/Skeleton'
-import Card from '@mui/material/Card'
-import Snackbar from '@mui/material/Snackbar'
-import Alert from '@mui/material/Alert'
-import AddIcon from '@mui/icons-material/Add'
+import { Icon, Button, Card, Chip, Skeleton, Snackbar } from '../components/ui'
+import { Container, Stack } from '../components/layout'
 import FeedbackCard from '../components/FeedbackCard'
 import FeedbackDialog from '../components/FeedbackDialog'
 
@@ -102,31 +95,30 @@ export default function Feedback() {
   }
 
   return (
-    <Container maxWidth="md" sx={{ py: 4 }}>
-      <Typography variant="h4" gutterBottom sx={{ fontWeight: 700 }}>{t('feedback.title')}</Typography>
+    <Container maxWidth="md" css={css({ paddingTop: 32, paddingBottom: 32 })}>
+      <h1 css={css({ fontSize: 28, fontWeight: 700, color: 'var(--color-on-surface)', margin: '0 0 16px' })}>{t('feedback.title')}</h1>
 
-      <Box sx={{ display: 'flex', gap: 1, mb: 3, flexWrap: 'wrap' }}>
+      <div css={css({ display: 'flex', gap: 8, marginBottom: 24, flexWrap: 'wrap' })}>
         {CATEGORIES.map((cat) => (
           <Chip
             key={cat}
             label={t(`feedback.${cat}`)}
             onClick={() => setCategory(cat)}
-            color={category === cat ? 'primary' : 'default'}
             variant={category === cat ? 'filled' : 'outlined'}
           />
         ))}
-      </Box>
+      </div>
 
       {loading ? (
-        <Stack spacing={2}>
+        <Stack gap={16}>
           {[1, 2, 3].map((i) => <Skeleton key={i} variant="rectangular" height={120} />)}
         </Stack>
       ) : feedbacks.length === 0 ? (
-        <Card sx={{ p: 4, textAlign: 'center' }}>
-          <Typography color="text.secondary">{t('feedback.empty')}</Typography>
+        <Card css={css({ padding: 32, textAlign: 'center' })}>
+          <p css={css({ color: 'var(--color-on-surface-muted)', margin: 0 })}>{t('feedback.empty')}</p>
         </Card>
       ) : (
-        <Stack>
+        <Stack gap={0}>
           {feedbacks.map((fb) => (
             <FeedbackCard
               key={fb.id}
@@ -141,14 +133,9 @@ export default function Feedback() {
         </Stack>
       )}
 
-      <Fab
-        color="primary"
-        aria-label={t('feedback.create')}
-        sx={{ position: 'fixed', bottom: 24, right: 24 }}
-        onClick={() => setShowCreate(true)}
-      >
-        <AddIcon />
-      </Fab>
+      <Button variant="fab" onClick={() => setShowCreate(true)} aria-label={t('feedback.create')}>
+        <Icon name="add" />
+      </Button>
 
       <FeedbackDialog
         open={showCreate}
@@ -156,9 +143,11 @@ export default function Feedback() {
         onCreate={handleCreate}
       />
 
-      <Snackbar open={!!snack} autoHideDuration={4000} onClose={() => setSnack(null)}>
-        {snack && <Alert severity={snack.severity} onClose={() => setSnack(null)}>{snack.message}</Alert>}
-      </Snackbar>
+      <Snackbar
+        open={!!snack}
+        onClose={() => setSnack(null)}
+        message={snack?.message ?? ''}
+      />
     </Container>
   )
 }

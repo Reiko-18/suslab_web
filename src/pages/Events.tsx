@@ -1,28 +1,10 @@
+/** @jsxImportSource @emotion/react */
+import { css } from '@emotion/react'
 import { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { edgeFunctions } from '../services/edgeFunctions'
-import Container from '@mui/material/Container'
-import Typography from '@mui/material/Typography'
-import Grid from '@mui/material/Grid'
-import Card from '@mui/material/Card'
-import CardContent from '@mui/material/CardContent'
-import Chip from '@mui/material/Chip'
-import Stack from '@mui/material/Stack'
-import Skeleton from '@mui/material/Skeleton'
-import Box from '@mui/material/Box'
-import Button from '@mui/material/Button'
-import Collapse from '@mui/material/Collapse'
-import Avatar from '@mui/material/Avatar'
-import AvatarGroup from '@mui/material/AvatarGroup'
-import Snackbar from '@mui/material/Snackbar'
-import Alert from '@mui/material/Alert'
-import EventIcon from '@mui/icons-material/Event'
-import AccessTimeIcon from '@mui/icons-material/AccessTime'
-import LocationOnIcon from '@mui/icons-material/LocationOn'
-import PeopleIcon from '@mui/icons-material/People'
-import CheckCircleIcon from '@mui/icons-material/CheckCircle'
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
-import ExpandLessIcon from '@mui/icons-material/ExpandLess'
+import { Icon, Button, Card, Chip, Skeleton, Snackbar, Avatar } from '../components/ui'
+import { Container, Stack, Grid } from '../components/layout'
 import LevelCard from '../components/LevelCard'
 import LeaderboardDialog from '../components/LeaderboardDialog'
 
@@ -117,9 +99,9 @@ export default function Events() {
   }))
 
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Typography variant="h4" gutterBottom sx={{ fontWeight: 700 }}>{t('events.title')}</Typography>
-      <Typography color="text.secondary" sx={{ mb: 3 }}>{t('events.subtitle')}</Typography>
+    <Container maxWidth="lg" css={css({ paddingTop: 32, paddingBottom: 32 })}>
+      <h1 css={css({ fontSize: 28, fontWeight: 700, color: 'var(--color-on-surface)', margin: '0 0 8px' })}>{t('events.title')}</h1>
+      <p css={css({ color: 'var(--color-on-surface-muted)', margin: '0 0 24px' })}>{t('events.subtitle')}</p>
 
       {levelData && (
         <LevelCard
@@ -139,97 +121,109 @@ export default function Events() {
       />
 
       {loading ? (
-        <Grid container spacing={3}>
+        <Grid columns={{ xs: 1, sm: 2, md: 3 }} gap={24}>
           {[1, 2, 3].map((i) => (
-            <Grid key={i} size={{ xs: 12, sm: 6, md: 4 }}>
-              <Card><CardContent><Skeleton variant="text" width="60%" /><Skeleton variant="text" /><Skeleton variant="text" width="40%" /></CardContent></Card>
-            </Grid>
+            <Card key={i} css={css({ padding: 16 })}>
+              <Skeleton variant="text" width="60%" />
+              <Skeleton variant="text" />
+              <Skeleton variant="text" width="40%" />
+            </Card>
           ))}
         </Grid>
       ) : error ? (
-        <Card sx={{ p: 4, textAlign: 'center' }}><Typography color="text.secondary">{t('events.loadError')}</Typography></Card>
+        <Card css={css({ padding: 32, textAlign: 'center' })}>
+          <p css={css({ color: 'var(--color-on-surface-muted)', margin: 0 })}>{t('events.loadError')}</p>
+        </Card>
       ) : events.length === 0 ? (
-        <Card sx={{ p: 4, textAlign: 'center' }}><Typography color="text.secondary">{t('events.empty')}</Typography></Card>
+        <Card css={css({ padding: 32, textAlign: 'center' })}>
+          <p css={css({ color: 'var(--color-on-surface-muted)', margin: 0 })}>{t('events.empty')}</p>
+        </Card>
       ) : (
-        <Grid container spacing={3}>
+        <Grid columns={{ xs: 1, sm: 2, md: 3 }} gap={24}>
           {events.map((event) => (
-            <Grid key={event.id} size={{ xs: 12, sm: 6, md: 4 }}>
-              <Card sx={{ height: '100%' }}>
-                <CardContent>
-                  <Chip icon={<EventIcon />} label={event.date} size="small" color="primary" variant="outlined" sx={{ mb: 1 }} />
-                  <Typography variant="h6" gutterBottom>{event.title}</Typography>
-                  <Typography color="text.secondary" sx={{ mb: 2 }}>{event.description}</Typography>
-                  <Stack spacing={1}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                      <AccessTimeIcon fontSize="small" color="action" /><Typography variant="body2">{event.time}</Typography>
-                    </Box>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                      <LocationOnIcon fontSize="small" color="action" /><Typography variant="body2">{event.location}</Typography>
-                    </Box>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                      <PeopleIcon fontSize="small" color="action" />
-                      <Typography variant="body2">
-                        {t('events.attendees', { count: event.registration_count ?? event.attendees ?? 0 })}
-                      </Typography>
-                    </Box>
-                  </Stack>
+            <Card key={event.id} css={css({ height: '100%', padding: 16 })}>
+              <Chip icon="event" label={event.date} size="small" variant="outlined" />
+              <h3 css={css({ fontSize: 18, fontWeight: 600, color: 'var(--color-on-surface)', margin: '8px 0' })}>{event.title}</h3>
+              <p css={css({ color: 'var(--color-on-surface-muted)', margin: '0 0 16px', fontSize: 14 })}>{event.description}</p>
+              <Stack gap={8}>
+                <div css={css({ display: 'flex', alignItems: 'center', gap: 4 })}>
+                  <Icon name="schedule" size={18} css={css({ color: 'var(--color-on-surface-dim)' })} />
+                  <span css={css({ fontSize: 14 })}>{event.time}</span>
+                </div>
+                <div css={css({ display: 'flex', alignItems: 'center', gap: 4 })}>
+                  <Icon name="location_on" size={18} css={css({ color: 'var(--color-on-surface-dim)' })} />
+                  <span css={css({ fontSize: 14 })}>{event.location}</span>
+                </div>
+                <div css={css({ display: 'flex', alignItems: 'center', gap: 4 })}>
+                  <Icon name="group" size={18} css={css({ color: 'var(--color-on-surface-dim)' })} />
+                  <span css={css({ fontSize: 14 })}>
+                    {t('events.attendees', { count: event.registration_count ?? event.attendees ?? 0 })}
+                  </span>
+                </div>
+              </Stack>
 
-                  <Box sx={{ mt: 2 }}>
-                    {event.registered ? (
-                      <Stack direction="row" spacing={1}>
-                        <Button
-                          variant="outlined"
-                          color="success"
-                          size="small"
-                          startIcon={<CheckCircleIcon />}
-                          onClick={() => handleUnregister(event.id)}
-                        >
-                          {t('events.registered')}
-                        </Button>
-                      </Stack>
-                    ) : (
-                      <Button
-                        variant="contained"
-                        size="small"
-                        onClick={() => handleRegister(event.id)}
-                      >
-                        {t('events.register')}
-                      </Button>
-                    )}
-                  </Box>
-
+              <div css={css({ marginTop: 16 })}>
+                {event.registered ? (
+                  <div css={css({ display: 'flex', gap: 8 })}>
+                    <Button
+                      variant="secondary"
+                      size="small"
+                      startIcon="check_circle"
+                      onClick={() => handleUnregister(event.id)}
+                    >
+                      {t('events.registered')}
+                    </Button>
+                  </div>
+                ) : (
                   <Button
+                    variant="primary"
                     size="small"
-                    sx={{ mt: 1 }}
-                    onClick={() => handleToggleExpand(event.id)}
-                    endIcon={expanded[event.id] ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+                    onClick={() => handleRegister(event.id)}
                   >
-                    {t('events.registrants')}
+                    {t('events.register')}
                   </Button>
+                )}
+              </div>
 
-                  <Collapse in={!!expanded[event.id]}>
-                    <Box sx={{ mt: 1 }}>
-                      {registrants[event.id]?.length > 0 ? (
-                        <AvatarGroup max={10} sx={{ justifyContent: 'flex-start' }}>
-                          {registrants[event.id].map((r) => (
-                            <Avatar key={r.user_id} src={r.avatar_url} alt={r.display_name} sx={{ width: 28, height: 28 }} />
-                          ))}
-                        </AvatarGroup>
-                      ) : (
-                        <Typography variant="caption" color="text.secondary">{t('events.noRegistrants')}</Typography>
-                      )}
-                    </Box>
-                  </Collapse>
-                </CardContent>
-              </Card>
-            </Grid>
+              <Button
+                variant="ghost"
+                size="small"
+                endIcon={expanded[event.id] ? 'expand_less' : 'expand_more'}
+                onClick={() => handleToggleExpand(event.id)}
+                css={css({ marginTop: 8 })}
+              >
+                {t('events.registrants')}
+              </Button>
+
+              {expanded[event.id] && (
+                <div css={css({ marginTop: 8 })}>
+                  {registrants[event.id]?.length > 0 ? (
+                    <div css={css({ display: 'flex', flexWrap: 'wrap', gap: 0 })}>
+                      {registrants[event.id].map((r, idx) => (
+                        <Avatar
+                          key={r.user_id}
+                          src={r.avatar_url}
+                          alt={r.display_name}
+                          size={28}
+                          css={css({ marginLeft: idx > 0 ? -8 : 0, border: '2px solid var(--color-surface)', borderRadius: '50%' })}
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    <span css={css({ fontSize: 12, color: 'var(--color-on-surface-muted)' })}>{t('events.noRegistrants')}</span>
+                  )}
+                </div>
+              )}
+            </Card>
           ))}
         </Grid>
       )}
 
-      <Snackbar open={!!snack} autoHideDuration={4000} onClose={() => setSnack(null)}>
-        {snack && <Alert severity={snack.severity} onClose={() => setSnack(null)}>{snack.message}</Alert>}
-      </Snackbar>
+      <Snackbar
+        open={!!snack}
+        onClose={() => setSnack(null)}
+        message={snack?.message ?? ''}
+      />
     </Container>
   )
 }

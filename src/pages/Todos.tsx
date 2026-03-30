@@ -1,24 +1,11 @@
+/** @jsxImportSource @emotion/react */
+import { css } from '@emotion/react'
 import { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../context/AuthContext'
 import { edgeFunctions } from '../services/edgeFunctions'
-import Container from '@mui/material/Container'
-import Typography from '@mui/material/Typography'
-import Tabs from '@mui/material/Tabs'
-import Tab from '@mui/material/Tab'
-import Box from '@mui/material/Box'
-import TextField from '@mui/material/TextField'
-import Button from '@mui/material/Button'
-import List from '@mui/material/List'
-import Card from '@mui/material/Card'
-import CardContent from '@mui/material/CardContent'
-import Chip from '@mui/material/Chip'
-import Avatar from '@mui/material/Avatar'
-import Stack from '@mui/material/Stack'
-import Skeleton from '@mui/material/Skeleton'
-import Snackbar from '@mui/material/Snackbar'
-import Alert from '@mui/material/Alert'
-import AddIcon from '@mui/icons-material/Add'
+import { Button, Card, Chip, Avatar, Tabs, Skeleton, Snackbar, TextField } from '../components/ui'
+import { Container, Stack } from '../components/layout'
 import TodoItem from '../components/TodoItem'
 
 interface SnackState {
@@ -29,7 +16,7 @@ interface SnackState {
 export default function Todos() {
   const { t } = useTranslation()
   const { user } = useAuth()
-  const [tab, setTab] = useState(0)
+  const [tab, setTab] = useState('personal')
   const [todos, setTodos] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [newTitle, setNewTitle] = useState('')
@@ -53,7 +40,7 @@ export default function Todos() {
     const title = newTitle.trim()
     if (!title) return
     try {
-      await edgeFunctions.createTodo({ title, is_public: tab === 1 })
+      await edgeFunctions.createTodo({ title, is_public: tab === 'community' })
       setNewTitle('')
       loadTodos()
     } catch (err: any) {
@@ -101,41 +88,44 @@ export default function Todos() {
   const communityTodos = todos.filter((todo) => todo.is_public)
 
   return (
-    <Container maxWidth="md" sx={{ py: 4 }}>
-      <Typography variant="h4" gutterBottom sx={{ fontWeight: 700 }}>{t('todos.title')}</Typography>
+    <Container maxWidth="md" css={css({ paddingTop: 32, paddingBottom: 32 })}>
+      <h1 css={css({ fontSize: 28, fontWeight: 700, color: 'var(--color-on-surface)', margin: '0 0 16px' })}>{t('todos.title')}</h1>
 
-      <Tabs value={tab} onChange={(_, v: number) => setTab(v)} sx={{ mb: 3 }}>
-        <Tab label={t('todos.personal')} />
-        <Tab label={t('todos.community')} />
-      </Tabs>
+      <Tabs
+        tabs={[
+          { label: t('todos.personal'), value: 'personal' },
+          { label: t('todos.community'), value: 'community' },
+        ]}
+        value={tab}
+        onChange={setTab}
+      />
 
       {/* Add todo */}
-      <Box sx={{ display: 'flex', gap: 1, mb: 3 }}>
+      <div css={css({ display: 'flex', gap: 8, margin: '24px 0' })}>
         <TextField
-          size="small"
-          fullWidth
           placeholder={t('todos.addPlaceholder')}
           value={newTitle}
           onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewTitle(e.target.value)}
           onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => e.key === 'Enter' && handleAdd()}
-          inputProps={{ maxLength: 200 }}
+          maxLength={200}
+          fullWidth
         />
-        <Button variant="contained" startIcon={<AddIcon />} onClick={handleAdd} disabled={!newTitle.trim()}>
+        <Button variant="primary" startIcon="add" onClick={handleAdd} disabled={!newTitle.trim()}>
           {t('todos.add')}
         </Button>
-      </Box>
+      </div>
 
       {loading ? (
-        <Stack spacing={1}>
+        <Stack gap={8}>
           {[1, 2, 3].map((i) => <Skeleton key={i} variant="rectangular" height={48} />)}
         </Stack>
-      ) : tab === 0 ? (
+      ) : tab === 'personal' ? (
         personalTodos.length === 0 ? (
-          <Card sx={{ p: 4, textAlign: 'center' }}>
-            <Typography color="text.secondary">{t('todos.empty')}</Typography>
+          <Card css={css({ padding: 32, textAlign: 'center' })}>
+            <p css={css({ color: 'var(--color-on-surface-muted)', margin: 0 })}>{t('todos.empty')}</p>
           </Card>
         ) : (
-          <List>
+          <div>
             {personalTodos.map((todo) => (
               <TodoItem
                 key={todo.id}
@@ -145,15 +135,15 @@ export default function Todos() {
                 canDelete={true}
               />
             ))}
-          </List>
+          </div>
         )
       ) : (
         communityTodos.length === 0 ? (
-          <Card sx={{ p: 4, textAlign: 'center' }}>
-            <Typography color="text.secondary">{t('todos.empty')}</Typography>
+          <Card css={css({ padding: 32, textAlign: 'center' })}>
+            <p css={css({ color: 'var(--color-on-surface-muted)', margin: 0 })}>{t('todos.empty')}</p>
           </Card>
         ) : (
-          <Stack spacing={2}>
+          <Stack gap={16}>
             {communityTodos.map((todo) => {
               const isCreator: boolean = todo.user_id === user?.id
               const isAssignee: boolean = todo.assigned_to === user?.id
@@ -162,46 +152,48 @@ export default function Todos() {
                 : todo.assigned_to
                   ? t('todos.claimedBy', { name: todo.assignee_display_name ?? '' })
                   : t('todos.open')
-              const statusColor: 'success' | 'warning' | 'default' = todo.completed ? 'success' : todo.assigned_to ? 'warning' : 'default'
+              const statusColor: string | undefined = todo.completed ? 'var(--color-success)' : todo.assigned_to ? 'var(--color-warning)' : undefined
 
               return (
-                <Card key={todo.id}>
-                  <CardContent>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 1 }}>
-                      <Box>
-                        <Typography variant="subtitle1" sx={{ textDecoration: todo.completed ? 'line-through' : 'none' }}>
-                          {todo.title}
-                        </Typography>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.5 }}>
-                          <Avatar src={todo.creator_avatar_url} sx={{ width: 20, height: 20 }} />
-                          <Typography variant="caption" color="text.secondary">{todo.creator_display_name}</Typography>
-                        </Box>
-                      </Box>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Chip label={statusLabel} size="small" color={statusColor} />
-                        {!todo.completed && !todo.assigned_to && !isCreator && (
-                          <Button size="small" variant="outlined" onClick={() => handleClaim(todo.id)}>
-                            {t('todos.claim')}
+                <Card key={todo.id} css={css({ padding: 16 })}>
+                  <div css={css({ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 8 })}>
+                    <div>
+                      <p css={css({
+                        fontSize: 16, fontWeight: 500, margin: 0,
+                        textDecoration: todo.completed ? 'line-through' : 'none',
+                        color: 'var(--color-on-surface)',
+                      })}>
+                        {todo.title}
+                      </p>
+                      <div css={css({ display: 'flex', alignItems: 'center', gap: 4, marginTop: 4 })}>
+                        <Avatar src={todo.creator_avatar_url} size={20} />
+                        <span css={css({ fontSize: 12, color: 'var(--color-on-surface-muted)' })}>{todo.creator_display_name}</span>
+                      </div>
+                    </div>
+                    <div css={css({ display: 'flex', alignItems: 'center', gap: 8 })}>
+                      <Chip label={statusLabel} size="small" color={statusColor} />
+                      {!todo.completed && !todo.assigned_to && !isCreator && (
+                        <Button size="small" variant="secondary" onClick={() => handleClaim(todo.id)}>
+                          {t('todos.claim')}
+                        </Button>
+                      )}
+                      {!todo.completed && isAssignee && (
+                        <>
+                          <Button size="small" variant="secondary" onClick={() => handleUnclaim(todo.id)}>
+                            {t('todos.unclaim')}
                           </Button>
-                        )}
-                        {!todo.completed && isAssignee && (
-                          <>
-                            <Button size="small" variant="outlined" onClick={() => handleUnclaim(todo.id)}>
-                              {t('todos.unclaim')}
-                            </Button>
-                            <Button size="small" variant="contained" onClick={() => handleToggle(todo.id, true)}>
-                              {t('todos.completed')}
-                            </Button>
-                          </>
-                        )}
-                        {isCreator && (
-                          <Button size="small" color="error" onClick={() => handleDelete(todo.id)}>
-                            {t('todos.delete')}
+                          <Button size="small" variant="primary" onClick={() => handleToggle(todo.id, true)}>
+                            {t('todos.completed')}
                           </Button>
-                        )}
-                      </Box>
-                    </Box>
-                  </CardContent>
+                        </>
+                      )}
+                      {isCreator && (
+                        <Button size="small" variant="ghost" onClick={() => handleDelete(todo.id)} css={css({ color: 'var(--color-error)' })}>
+                          {t('todos.delete')}
+                        </Button>
+                      )}
+                    </div>
+                  </div>
                 </Card>
               )
             })}
@@ -209,9 +201,11 @@ export default function Todos() {
         )
       )}
 
-      <Snackbar open={!!snack} autoHideDuration={4000} onClose={() => setSnack(null)}>
-        {snack && <Alert severity={snack.severity} onClose={() => setSnack(null)}>{snack.message}</Alert>}
-      </Snackbar>
+      <Snackbar
+        open={!!snack}
+        onClose={() => setSnack(null)}
+        message={snack?.message ?? ''}
+      />
     </Container>
   )
 }

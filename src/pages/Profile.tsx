@@ -1,23 +1,11 @@
+/** @jsxImportSource @emotion/react */
+import { css } from '@emotion/react'
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../context/AuthContext'
 import { edgeFunctions } from '../services/edgeFunctions'
-import Container from '@mui/material/Container'
-import Card from '@mui/material/Card'
-import CardContent from '@mui/material/CardContent'
-import Avatar from '@mui/material/Avatar'
-import Typography from '@mui/material/Typography'
-import Button from '@mui/material/Button'
-import Stack from '@mui/material/Stack'
-import Chip from '@mui/material/Chip'
-import Divider from '@mui/material/Divider'
-import Box from '@mui/material/Box'
-import CircularProgress from '@mui/material/CircularProgress'
-import LogoutIcon from '@mui/icons-material/Logout'
-import VerifiedIcon from '@mui/icons-material/Verified'
-import CalendarMonthIcon from '@mui/icons-material/CalendarMonth'
-import EmailIcon from '@mui/icons-material/Email'
-import ShieldIcon from '@mui/icons-material/Shield'
+import { Icon, Button, Card, Chip, Avatar, CircularProgress, Divider } from '../components/ui'
+import { Container, Stack } from '../components/layout'
 import ProfileEditor from '../components/ProfileEditor'
 
 export default function Profile() {
@@ -32,7 +20,11 @@ export default function Profile() {
   }, [user])
 
   if (loading) {
-    return <Box sx={{ display: 'flex', justifyContent: 'center', py: 10 }}><CircularProgress /></Box>
+    return (
+      <div css={css({ display: 'flex', justifyContent: 'center', padding: '80px 0' })}>
+        <CircularProgress />
+      </div>
+    )
   }
 
   if (!user) return null
@@ -46,39 +38,55 @@ export default function Profile() {
   const createdAt: string = new Date(user.created_at).toLocaleDateString(i18n.language, { year: 'numeric', month: 'long', day: 'numeric' })
 
   return (
-    <Container maxWidth="md" sx={{ py: 4 }}>
-      <Card>
-        <Box sx={{ background: (theme) => `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`, p: 4, textAlign: 'center' }}>
-          <Avatar src={avatar} sx={{ width: 80, height: 80, mx: 'auto', mb: 1, border: '3px solid white', fontSize: 32 }}>
-            {displayName[0]?.toUpperCase()}
-          </Avatar>
-          <Typography variant="h5" sx={{ color: 'white', fontWeight: 700 }}>{displayName}</Typography>
-          {username && <Typography sx={{ color: 'rgba(255,255,255,0.8)' }}>@{username}</Typography>}
-        </Box>
-        <CardContent sx={{ p: 3 }}>
-          <Stack spacing={2}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-              <ShieldIcon color="primary" />
-              <Typography>{t('profile.role')}</Typography>
-              <Chip label={t(`profile.roles.${displayRole}`) || displayRole} size="small" color="primary" sx={{ ml: 'auto' }} />
-            </Box>
+    <Container maxWidth="md" css={css({ paddingTop: 32, paddingBottom: 32 })}>
+      <Card css={css({ overflow: 'hidden' })}>
+        <div css={css({
+          background: 'linear-gradient(135deg, var(--color-primary), var(--color-primary-dark, var(--color-primary)))',
+          padding: 32,
+          textAlign: 'center',
+        })}>
+          <Avatar
+            src={avatar}
+            fallback={displayName[0]?.toUpperCase()}
+            size={80}
+            css={css({ margin: '0 auto 8px', border: '3px solid white' })}
+          />
+          <h2 css={css({ color: 'white', fontWeight: 700, fontSize: 22, margin: '0 0 4px' })}>{displayName}</h2>
+          {username && <p css={css({ color: 'rgba(255,255,255,0.8)', margin: 0 })}>@{username}</p>}
+        </div>
+        <div css={css({ padding: 24 })}>
+          <Stack gap={16}>
+            <div css={css({ display: 'flex', alignItems: 'center', gap: 12 })}>
+              <Icon name="shield" size={22} css={css({ color: 'var(--color-primary)' })} />
+              <span>{t('profile.role')}</span>
+              <Chip label={t(`profile.roles.${displayRole}`) || displayRole || ''} size="small" css={css({ marginLeft: 'auto' })} />
+            </div>
             <Divider />
             {email && (
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                <EmailIcon color="action" /><Typography>{email}</Typography>
-              </Box>
+              <div css={css({ display: 'flex', alignItems: 'center', gap: 12 })}>
+                <Icon name="email" size={22} css={css({ color: 'var(--color-on-surface-dim)' })} />
+                <span>{email}</span>
+              </div>
             )}
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-              <CalendarMonthIcon color="action" /><Typography>{t('profile.joinDate')}: {createdAt}</Typography>
-            </Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-              <VerifiedIcon color="action" /><Typography>{t('profile.verifiedVia')}</Typography>
-            </Box>
+            <div css={css({ display: 'flex', alignItems: 'center', gap: 12 })}>
+              <Icon name="calendar_month" size={22} css={css({ color: 'var(--color-on-surface-dim)' })} />
+              <span>{t('profile.joinDate')}: {createdAt}</span>
+            </div>
+            <div css={css({ display: 'flex', alignItems: 'center', gap: 12 })}>
+              <Icon name="verified" size={22} css={css({ color: 'var(--color-on-surface-dim)' })} />
+              <span>{t('profile.verifiedVia')}</span>
+            </div>
           </Stack>
-          <Button variant="outlined" color="error" startIcon={<LogoutIcon />} fullWidth sx={{ mt: 3 }} onClick={signOut}>
+          <Button
+            variant="secondary"
+            startIcon="logout"
+            fullWidth
+            onClick={signOut}
+            css={css({ marginTop: 24, color: 'var(--color-error)' })}
+          >
             {t('profile.logout')}
           </Button>
-        </CardContent>
+        </div>
       </Card>
 
       <ProfileEditor />

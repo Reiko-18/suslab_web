@@ -1,24 +1,11 @@
+/** @jsxImportSource @emotion/react */
+import { css } from '@emotion/react'
 import { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../context/AuthContext'
 import { edgeFunctions } from '../services/edgeFunctions'
-import Container from '@mui/material/Container'
-import Typography from '@mui/material/Typography'
-import Box from '@mui/material/Box'
-import Stack from '@mui/material/Stack'
-import Skeleton from '@mui/material/Skeleton'
-import Card from '@mui/material/Card'
-import CardContent from '@mui/material/CardContent'
-import Fab from '@mui/material/Fab'
-import Snackbar from '@mui/material/Snackbar'
-import Alert from '@mui/material/Alert'
-import Dialog from '@mui/material/Dialog'
-import DialogTitle from '@mui/material/DialogTitle'
-import DialogContent from '@mui/material/DialogContent'
-import DialogContentText from '@mui/material/DialogContentText'
-import DialogActions from '@mui/material/DialogActions'
-import Button from '@mui/material/Button'
-import AddIcon from '@mui/icons-material/Add'
+import { Icon, Button, Card, Skeleton, Snackbar, Dialog } from '../components/ui'
+import { Container, Stack } from '../components/layout'
 import AnnouncementCard from '../components/AnnouncementCard'
 import AnnouncementDialog from '../components/AnnouncementDialog'
 
@@ -91,29 +78,27 @@ export default function Announcements() {
   }
 
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Typography variant="h4" gutterBottom sx={{ fontWeight: 700 }}>
+    <Container maxWidth="lg" css={css({ paddingTop: 32, paddingBottom: 32 })}>
+      <h1 css={css({ fontSize: 28, fontWeight: 700, color: 'var(--color-on-surface)', margin: '0 0 16px' })}>
         {t('announcements.title')}
-      </Typography>
+      </h1>
 
       {loading ? (
-        <Stack spacing={2}>
+        <Stack gap={16}>
           {[1, 2, 3].map((i) => (
-            <Card key={i}>
-              <CardContent>
-                <Skeleton variant="text" width="40%" height={32} />
-                <Skeleton variant="text" width="100%" />
-                <Skeleton variant="text" width="80%" />
-              </CardContent>
+            <Card key={i} css={css({ padding: 16 })}>
+              <Skeleton variant="text" width="40%" height={32} />
+              <Skeleton variant="text" width="100%" />
+              <Skeleton variant="text" width="80%" />
             </Card>
           ))}
         </Stack>
       ) : announcements.length === 0 ? (
-        <Box sx={{ textAlign: 'center', py: 6 }}>
-          <Typography color="text.secondary">{t('announcements.empty')}</Typography>
-        </Box>
+        <div css={css({ textAlign: 'center', padding: '48px 0' })}>
+          <p css={css({ color: 'var(--color-on-surface-muted)', margin: 0 })}>{t('announcements.empty')}</p>
+        </div>
       ) : (
-        <Stack spacing={0}>
+        <Stack gap={0}>
           {announcements.map((ann) => (
             <AnnouncementCard
               key={ann.id}
@@ -128,14 +113,9 @@ export default function Announcements() {
       )}
 
       {canManage && (
-        <Fab
-          color="primary"
-          aria-label={t('announcements.create')}
-          sx={{ position: 'fixed', bottom: 24, right: 24 }}
-          onClick={handleCreate}
-        >
-          <AddIcon />
-        </Fab>
+        <Button variant="fab" onClick={handleCreate} aria-label={t('announcements.create')}>
+          <Icon name="add" />
+        </Button>
       )}
 
       <AnnouncementDialog
@@ -145,31 +125,29 @@ export default function Announcements() {
         onSave={handleSave}
       />
 
-      <Dialog open={!!deleteTarget} onClose={() => setDeleteTarget(null)}>
-        <DialogTitle>{t('announcements.delete')}</DialogTitle>
-        <DialogContent>
-          <DialogContentText>{t('announcements.confirmDelete')}</DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDeleteTarget(null)}>
-            {t('common.cancel')}
-          </Button>
-          <Button color="error" variant="contained" onClick={handleDeleteConfirm}>
-            {t('announcements.delete')}
-          </Button>
-        </DialogActions>
+      <Dialog
+        open={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        title={t('announcements.delete')}
+        actions={
+          <>
+            <Button variant="ghost" onClick={() => setDeleteTarget(null)}>
+              {t('common.cancel')}
+            </Button>
+            <Button variant="primary" onClick={handleDeleteConfirm} css={css({ background: 'var(--color-error)' })}>
+              {t('announcements.delete')}
+            </Button>
+          </>
+        }
+      >
+        <p css={css({ margin: 0, color: 'var(--color-on-surface-muted)' })}>{t('announcements.confirmDelete')}</p>
       </Dialog>
 
       <Snackbar
         open={snackbar.open}
-        autoHideDuration={4000}
         onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-      >
-        <Alert severity={snackbar.severity} variant="filled" onClose={() => setSnackbar((s) => ({ ...s, open: false }))}>
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
+        message={snackbar.message}
+      />
     </Container>
   )
 }

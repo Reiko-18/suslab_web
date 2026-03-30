@@ -1,20 +1,11 @@
+/** @jsxImportSource @emotion/react */
+import { css } from '@emotion/react'
 import { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../context/AuthContext'
 import { edgeFunctions } from '../services/edgeFunctions'
-import Container from '@mui/material/Container'
-import Typography from '@mui/material/Typography'
-import Tabs from '@mui/material/Tabs'
-import Tab from '@mui/material/Tab'
-import Box from '@mui/material/Box'
-import Button from '@mui/material/Button'
-import Grid from '@mui/material/Grid'
-import Fab from '@mui/material/Fab'
-import Snackbar from '@mui/material/Snackbar'
-import Alert from '@mui/material/Alert'
-import Skeleton from '@mui/material/Skeleton'
-import Card from '@mui/material/Card'
-import AddIcon from '@mui/icons-material/Add'
+import { Icon, Button, Card, Tabs, Skeleton, Snackbar } from '../components/ui'
+import { Container, Grid } from '../components/layout'
 import GameBoard2048 from '../components/GameBoard2048'
 import GameInviteCard from '../components/GameInviteCard'
 import GameInviteDialog from '../components/GameInviteDialog'
@@ -28,7 +19,7 @@ interface SnackState {
 export default function Games() {
   const { t } = useTranslation()
   const { user } = useAuth()
-  const [tab, setTab] = useState(0)
+  const [tab, setTab] = useState('2048')
   const [snack, setSnack] = useState<SnackState | null>(null)
 
   const [bestScore, setBestScore] = useState(0)
@@ -63,7 +54,7 @@ export default function Games() {
   }, [])
 
   useEffect(() => { loadLeaderboard() }, [loadLeaderboard])
-  useEffect(() => { if (tab === 1) loadInvites() }, [tab, loadInvites])
+  useEffect(() => { if (tab === 'invites') loadInvites() }, [tab, loadInvites])
 
   const handleGameOver = async (score: number) => {
     setLastGameScore(score)
@@ -129,16 +120,20 @@ export default function Games() {
   }))
 
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Typography variant="h4" gutterBottom sx={{ fontWeight: 700 }}>{t('games.title')}</Typography>
+    <Container maxWidth="lg" css={css({ paddingTop: 32, paddingBottom: 32 })}>
+      <h1 css={css({ fontSize: 28, fontWeight: 700, color: 'var(--color-on-surface)', margin: '0 0 16px' })}>{t('games.title')}</h1>
 
-      <Tabs value={tab} onChange={(_, v: number) => setTab(v)} sx={{ mb: 3 }}>
-        <Tab label={t('games.tab2048')} />
-        <Tab label={t('games.tabInvites')} />
-      </Tabs>
+      <Tabs
+        tabs={[
+          { label: t('games.tab2048'), value: '2048' },
+          { label: t('games.tabInvites'), value: 'invites' },
+        ]}
+        value={tab}
+        onChange={setTab}
+      />
 
-      {tab === 0 && (
-        <Box>
+      {tab === '2048' && (
+        <div css={css({ marginTop: 24 })}>
           <GameBoard2048
             bestScore={bestScore}
             onGameOver={handleGameOver}
@@ -146,21 +141,21 @@ export default function Games() {
           />
 
           {lastGameScore != null && !scoreSubmitted && (
-            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
-              <Button variant="contained" onClick={handleSubmitScore}>
+            <div css={css({ display: 'flex', justifyContent: 'center', marginTop: 16 })}>
+              <Button variant="primary" onClick={handleSubmitScore}>
                 {t('games.submitScore')}
               </Button>
-            </Box>
+            </div>
           )}
 
-          <Box sx={{ mt: 4 }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-              <Typography variant="h6">{t('games.leaderboard')}</Typography>
-              <Button size="small" onClick={() => setShowLeaderboard(true)}>
+          <div css={css({ marginTop: 32 })}>
+            <div css={css({ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 })}>
+              <h2 css={css({ fontSize: 18, fontWeight: 600, color: 'var(--color-on-surface)', margin: 0 })}>{t('games.leaderboard')}</h2>
+              <Button variant="ghost" size="small" onClick={() => setShowLeaderboard(true)}>
                 {t('games.leaderboard')}
               </Button>
-            </Box>
-          </Box>
+            </div>
+          </div>
 
           <LeaderboardDialog
             open={showLeaderboard}
@@ -169,59 +164,53 @@ export default function Games() {
             rows={leaderboardRows}
             valueLabel={t('games.score')}
           />
-        </Box>
+        </div>
       )}
 
-      {tab === 1 && (
-        <Box sx={{ position: 'relative' }}>
+      {tab === 'invites' && (
+        <div css={css({ position: 'relative', marginTop: 24 })}>
           {invitesLoading ? (
-            <Grid container spacing={2}>
+            <Grid columns={{ xs: 1, sm: 2, md: 3 }} gap={16}>
               {[1, 2, 3].map((i) => (
-                <Grid key={i} size={{ xs: 12, sm: 6, md: 4 }}>
-                  <Skeleton variant="rectangular" height={180} />
-                </Grid>
+                <Skeleton key={i} variant="rectangular" height={180} />
               ))}
             </Grid>
           ) : invites.length === 0 ? (
-            <Card sx={{ p: 4, textAlign: 'center' }}>
-              <Typography color="text.secondary">{t('games.invites.empty')}</Typography>
+            <Card css={css({ padding: 32, textAlign: 'center' })}>
+              <p css={css({ color: 'var(--color-on-surface-muted)', margin: 0 })}>{t('games.invites.empty')}</p>
             </Card>
           ) : (
-            <Grid container spacing={2}>
+            <Grid columns={{ xs: 1, sm: 2, md: 3 }} gap={16}>
               {invites.map((invite) => (
-                <Grid key={invite.id} size={{ xs: 12, sm: 6, md: 4 }}>
-                  <GameInviteCard
-                    invite={invite}
-                    userId={user?.id}
-                    onJoin={handleJoin}
-                    onLeave={handleLeave}
-                    onClose={handleCloseInvite}
-                  />
-                </Grid>
+                <GameInviteCard
+                  key={invite.id}
+                  invite={invite}
+                  userId={user?.id}
+                  onJoin={handleJoin}
+                  onLeave={handleLeave}
+                  onClose={handleCloseInvite}
+                />
               ))}
             </Grid>
           )}
 
-          <Fab
-            color="primary"
-            aria-label={t('games.invites.create')}
-            sx={{ position: 'fixed', bottom: 24, right: 24 }}
-            onClick={() => setShowCreateInvite(true)}
-          >
-            <AddIcon />
-          </Fab>
+          <Button variant="fab" onClick={() => setShowCreateInvite(true)} aria-label={t('games.invites.create')}>
+            <Icon name="add" />
+          </Button>
 
           <GameInviteDialog
             open={showCreateInvite}
             onClose={() => setShowCreateInvite(false)}
             onCreate={handleCreateInvite}
           />
-        </Box>
+        </div>
       )}
 
-      <Snackbar open={!!snack} autoHideDuration={4000} onClose={() => setSnack(null)}>
-        {snack && <Alert severity={snack.severity} onClose={() => setSnack(null)}>{snack.message}</Alert>}
-      </Snackbar>
+      <Snackbar
+        open={!!snack}
+        onClose={() => setSnack(null)}
+        message={snack?.message ?? ''}
+      />
     </Container>
   )
 }
