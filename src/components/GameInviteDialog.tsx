@@ -1,13 +1,9 @@
+/** @jsxImportSource @emotion/react */
+import { css } from '@emotion/react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import Dialog from '@mui/material/Dialog'
-import DialogTitle from '@mui/material/DialogTitle'
-import DialogContent from '@mui/material/DialogContent'
-import DialogActions from '@mui/material/DialogActions'
-import Button from '@mui/material/Button'
-import TextField from '@mui/material/TextField'
-import MenuItem from '@mui/material/MenuItem'
-import Stack from '@mui/material/Stack'
+import { Dialog, TextField, Select, Button } from './ui'
+import { Stack } from './layout'
 
 interface GameInvitePayload {
   game_type: string
@@ -45,53 +41,52 @@ export default function GameInviteDialog({ open, onClose, onCreate }: GameInvite
   }
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle>{t('games.invites.create')}</DialogTitle>
-      <DialogContent>
-        <Stack spacing={2} sx={{ mt: 1 }}>
-          <TextField
-            select
-            label={t('games.invites.gameType')}
-            value={gameType}
-            onChange={(e) => setGameType(e.target.value)}
-            fullWidth
-          >
-            <MenuItem value="2048">2048</MenuItem>
-            <MenuItem value="external">{t('games.invites.external')}</MenuItem>
-          </TextField>
-          <TextField
-            label={t('games.invites.titleLabel')}
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            fullWidth
-            required
-            inputProps={{ maxLength: 100 }}
-          />
-          <TextField
-            label={t('games.invites.description')}
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            fullWidth
-            multiline
-            rows={2}
-            inputProps={{ maxLength: 500 }}
-          />
-          <TextField
-            label={t('games.invites.maxPlayers')}
-            type="number"
-            value={maxPlayers}
-            onChange={(e) => setMaxPlayers(Math.max(1, parseInt(e.target.value) || 1))}
-            fullWidth
-            inputProps={{ min: 1 }}
-          />
-        </Stack>
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose}>{t('common.cancel')}</Button>
-        <Button variant="contained" onClick={handleCreate} disabled={!title.trim()}>
-          {t('games.invites.create')}
-        </Button>
-      </DialogActions>
+    <Dialog
+      open={open}
+      onClose={onClose}
+      title={t('games.invites.create')}
+      actions={
+        <>
+          <Button variant="ghost" onClick={onClose}>{t('common.cancel')}</Button>
+          <Button variant="primary" onClick={handleCreate} disabled={!title.trim()}>
+            {t('games.invites.create')}
+          </Button>
+        </>
+      }
+    >
+      <Stack gap="var(--spacing-3)">
+        <Select
+          label={t('games.invites.gameType')}
+          value={gameType}
+          onChange={(value) => setGameType(value)}
+          options={[
+            { value: '2048', label: '2048' },
+            { value: 'external', label: t('games.invites.external') },
+          ]}
+          fullWidth
+        />
+        <TextField
+          label={t('games.invites.titleLabel')}
+          value={title}
+          onChange={(e) => setTitle((e.target as HTMLInputElement).value)}
+          fullWidth
+        />
+        <TextField
+          label={t('games.invites.description')}
+          value={description}
+          onChange={(e) => setDescription((e.target as HTMLTextAreaElement).value)}
+          fullWidth
+          multiline
+          rows={2}
+        />
+        <TextField
+          label={t('games.invites.maxPlayers')}
+          type="number"
+          value={String(maxPlayers)}
+          onChange={(e) => setMaxPlayers(Math.max(1, parseInt((e.target as HTMLInputElement).value) || 1))}
+          fullWidth
+        />
+      </Stack>
     </Dialog>
   )
 }

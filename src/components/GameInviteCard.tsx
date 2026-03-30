@@ -1,13 +1,7 @@
+/** @jsxImportSource @emotion/react */
+import { css } from '@emotion/react'
 import { useTranslation } from 'react-i18next'
-import Card from '@mui/material/Card'
-import CardContent from '@mui/material/CardContent'
-import CardActions from '@mui/material/CardActions'
-import Typography from '@mui/material/Typography'
-import Chip from '@mui/material/Chip'
-import Button from '@mui/material/Button'
-import Avatar from '@mui/material/Avatar'
-import Box from '@mui/material/Box'
-import PeopleIcon from '@mui/icons-material/People'
+import { Card, Chip, Avatar, Button, Icon } from './ui'
 
 interface GameInvite {
   id: string
@@ -38,46 +32,54 @@ export default function GameInviteCard({ invite, userId, onJoin, onLeave, onClos
   const isClosed = invite.status === 'closed'
 
   return (
-    <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <CardContent sx={{ flexGrow: 1 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-          <Chip label={invite.game_type} size="small" color="primary" variant="outlined" />
-          {isClosed && <Chip label={t('games.invites.closed')} size="small" color="default" />}
-        </Box>
-        <Typography variant="h6" gutterBottom>{invite.title}</Typography>
+    <Card
+      css={css`
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+      `}
+    >
+      <div css={css`flex-grow: 1;`}>
+        <div css={css`display: flex; align-items: center; gap: 8px; margin-bottom: 8px;`}>
+          <Chip label={invite.game_type} size="small" variant="outlined" bg="var(--color-primary)" color="var(--color-primary)" />
+          {isClosed && <Chip label={t('games.invites.closed')} size="small" />}
+        </div>
+        <h3 css={css`font-size: 18px; font-weight: 600; color: var(--color-on-surface); margin: 0 0 4px 0;`}>
+          {invite.title}
+        </h3>
         {invite.description && (
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+          <p css={css`font-size: 13px; color: var(--color-on-surface-muted); margin: 0 0 8px 0;`}>
             {invite.description}
-          </Typography>
+          </p>
         )}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 1 }}>
-          <Avatar src={invite.host_avatar_url} sx={{ width: 20, height: 20 }} />
-          <Typography variant="caption" color="text.secondary">{invite.host_display_name}</Typography>
-        </Box>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-          <PeopleIcon fontSize="small" color="action" />
-          <Typography variant="body2">
+        <div css={css`display: flex; align-items: center; gap: 4px; margin-bottom: 8px;`}>
+          <Avatar src={invite.host_avatar_url} size={20} />
+          <span css={css`font-size: 12px; color: var(--color-on-surface-muted);`}>{invite.host_display_name}</span>
+        </div>
+        <div css={css`display: flex; align-items: center; gap: 4px;`}>
+          <Icon name="group" size={18} style={{ color: 'var(--color-on-surface-dim)' }} />
+          <span css={css`font-size: 13px; color: var(--color-on-surface);`}>
             {t('games.invites.players', { current: invite.participant_count, max: invite.max_players })}
-          </Typography>
-        </Box>
-      </CardContent>
-      <CardActions>
+          </span>
+        </div>
+      </div>
+      <div css={css`display: flex; gap: 8px; margin-top: var(--spacing-3);`}>
         {!isClosed && !isHost && !isParticipant && (
-          <Button size="small" variant="contained" onClick={() => onJoin(invite.id)}>
+          <Button size="small" variant="primary" onClick={() => onJoin(invite.id)}>
             {t('games.invites.join')}
           </Button>
         )}
         {!isClosed && isParticipant && !isHost && (
-          <Button size="small" variant="outlined" onClick={() => onLeave(invite.id)}>
+          <Button size="small" variant="secondary" onClick={() => onLeave(invite.id)}>
             {t('games.invites.leave')}
           </Button>
         )}
         {!isClosed && isHost && (
-          <Button size="small" color="warning" variant="outlined" onClick={() => onClose(invite.id)}>
+          <Button size="small" variant="secondary" onClick={() => onClose(invite.id)}>
             {t('games.invites.close')}
           </Button>
         )}
-      </CardActions>
+      </div>
     </Card>
   )
 }

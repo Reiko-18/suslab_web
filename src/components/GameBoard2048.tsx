@@ -1,9 +1,8 @@
+/** @jsxImportSource @emotion/react */
+import { css } from '@emotion/react'
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
-import Box from '@mui/material/Box'
-import Typography from '@mui/material/Typography'
-import Button from '@mui/material/Button'
-import { useTheme } from '@mui/material/styles'
+import { Button } from './ui'
 
 const GRID_SIZE = 4
 
@@ -131,7 +130,6 @@ interface GameBoard2048Props {
 
 export default function GameBoard2048({ bestScore = 0, onGameOver, onScoreUpdate }: GameBoard2048Props) {
   const { t } = useTranslation()
-  const theme = useTheme()
   const [board, setBoard] = useState<Board>(() => initBoard())
   const [score, setScore] = useState(0)
   const [gameOver, setGameOver] = useState(false)
@@ -230,91 +228,90 @@ export default function GameBoard2048({ bestScore = 0, onGameOver, onScoreUpdate
     setGameOver(false)
   }
 
-  const cellSize = { xs: 64, sm: 80 }
   const gap = 8
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
-      <Box sx={{ display: 'flex', gap: 3, alignItems: 'center', width: '100%', justifyContent: 'center' }}>
-        <Box sx={{ textAlign: 'center' }}>
-          <Typography variant="caption" color="text.secondary">{t('games.score')}</Typography>
-          <Typography variant="h5" fontWeight={700}>{score}</Typography>
-        </Box>
-        <Box sx={{ textAlign: 'center' }}>
-          <Typography variant="caption" color="text.secondary">{t('games.bestScore')}</Typography>
-          <Typography variant="h5" fontWeight={700}>{Math.max(bestScore, score)}</Typography>
-        </Box>
-        <Button variant="outlined" size="small" onClick={handleNewGame}>{t('games.newGame')}</Button>
-      </Box>
+    <div css={css`display: flex; flex-direction: column; align-items: center; gap: 16px;`}>
+      {/* 分數列 */}
+      <div css={css`display: flex; gap: 24px; align-items: center; width: 100%; justify-content: center;`}>
+        <div css={css`text-align: center;`}>
+          <span css={css`font-size: 12px; color: var(--color-on-surface-muted);`}>{t('games.score')}</span>
+          <p css={css`font-size: 20px; font-weight: 700; color: var(--color-on-surface); margin: 0;`}>{score}</p>
+        </div>
+        <div css={css`text-align: center;`}>
+          <span css={css`font-size: 12px; color: var(--color-on-surface-muted);`}>{t('games.bestScore')}</span>
+          <p css={css`font-size: 20px; font-weight: 700; color: var(--color-on-surface); margin: 0;`}>{Math.max(bestScore, score)}</p>
+        </div>
+        <Button variant="secondary" size="small" onClick={handleNewGame}>{t('games.newGame')}</Button>
+      </div>
 
-      <Box
+      {/* 棋盤 */}
+      <div
         ref={boardRef}
-        sx={{
-          position: 'relative',
-          display: 'grid',
-          gridTemplateColumns: `repeat(${GRID_SIZE}, 1fr)`,
-          gap: `${gap}px`,
-          p: `${gap}px`,
-          borderRadius: 2,
-          bgcolor: theme.palette.mode === 'dark' ? 'grey.800' : '#bbada0',
-          touchAction: 'none',
-          userSelect: 'none',
-        }}
+        css={css`
+          position: relative;
+          display: grid;
+          grid-template-columns: repeat(${GRID_SIZE}, 1fr);
+          gap: ${gap}px;
+          padding: ${gap}px;
+          border-radius: 8px;
+          background: var(--color-surface-container);
+          touch-action: none;
+          user-select: none;
+        `}
       >
         {board.flat().map((value, idx) => {
-          const colors = TILE_COLORS[value] || { bg: theme.palette.primary.main, text: '#f9f6f2' }
+          const colors = TILE_COLORS[value] || { bg: 'var(--color-primary)', text: '#f9f6f2' }
           const isEmpty = value === 0
           return (
-            <Box
+            <div
               key={idx}
-              sx={{
-                width: cellSize,
-                height: cellSize,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                borderRadius: 1,
-                bgcolor: isEmpty
-                  ? (theme.palette.mode === 'dark' ? 'grey.700' : '#cdc1b4')
-                  : colors.bg,
-                transition: 'background-color 0.15s ease',
-              }}
+              css={css`
+                width: clamp(64px, 15vw, 80px);
+                height: clamp(64px, 15vw, 80px);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border-radius: 4px;
+                background: ${isEmpty ? 'var(--color-surface-dim)' : colors.bg};
+                transition: background-color 0.15s ease;
+              `}
             >
               {!isEmpty && (
-                <Typography
-                  sx={{
-                    fontWeight: 700,
-                    fontSize: value >= 1024 ? '1rem' : value >= 128 ? '1.2rem' : '1.5rem',
-                    color: colors.text,
-                    lineHeight: 1,
-                  }}
+                <span
+                  css={css`
+                    font-weight: 700;
+                    font-size: ${value >= 1024 ? '1rem' : value >= 128 ? '1.2rem' : '1.5rem'};
+                    color: ${colors.text};
+                    line-height: 1;
+                  `}
                 >
                   {value}
-                </Typography>
+                </span>
               )}
-            </Box>
+            </div>
           )
         })}
 
         {gameOver && (
-          <Box
-            sx={{
-              position: 'absolute',
-              inset: 0,
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              bgcolor: 'rgba(0,0,0,0.5)',
-              borderRadius: 2,
-              gap: 1,
-            }}
+          <div
+            css={css`
+              position: absolute;
+              inset: 0;
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              justify-content: center;
+              background: rgba(0, 0, 0, 0.5);
+              border-radius: 8px;
+              gap: 8px;
+            `}
           >
-            <Typography variant="h5" color="white" fontWeight={700}>{t('games.gameOver')}</Typography>
-            <Typography variant="h6" color="white">{t('games.score')}: {score}</Typography>
-          </Box>
+            <span css={css`font-size: 20px; font-weight: 700; color: #fff;`}>{t('games.gameOver')}</span>
+            <span css={css`font-size: 16px; color: #fff;`}>{t('games.score')}: {score}</span>
+          </div>
         )}
-      </Box>
-    </Box>
+      </div>
+    </div>
   )
 }
