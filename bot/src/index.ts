@@ -32,9 +32,23 @@ client.once(Events.ClientReady, async (c) => {
   console.log(`Bot ready as ${c.user.tag}`)
   console.log(`Serving ${c.guilds.cache.size} guilds`)
   await registerCommands().catch(err => console.error('Slash command 自動註冊失敗:', err))
-  await fullSync(client)
+  await fullSync(client).catch(err => console.error('Guild 同步失敗:', err))
   startActionQueueWorker(client)
   console.log('All systems operational')
+})
+
+// Discord client 錯誤處理 — 防止未捕獲的錯誤導致 process 崩潰
+client.on(Events.Error, (err) => {
+  console.error('Discord client error:', err)
+})
+
+// 全域未捕獲錯誤處理
+process.on('unhandledRejection', (err) => {
+  console.error('Unhandled rejection:', err)
+})
+
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught exception:', err)
 })
 
 process.on('SIGINT', () => {
