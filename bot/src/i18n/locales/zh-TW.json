@@ -199,5 +199,11 @@
   "bot.cmd.mod.timeout.reasonOpt.desc": "禁言原因",
   "bot.cmd.mod.kick.desc": "踢除成員",
   "bot.cmd.mod.kick.userOpt.desc": "要踢除的使用者",
-  "bot.cmd.mod.kick.reasonOpt.desc": "踢除原因"
+  "bot.cmd.mod.kick.reasonOpt.desc": "踢除原因",
+
+  "bot.settings.languageUpdated": "✅ 偏好語言已更新為 **{{language}}**。",
+  "bot.settings.currentLanguage": "目前語言",
+  "bot.settings.linkRequired": "請先前往 SusLab Dashboard 完成帳號綁定，才能儲存語言偏好。",
+  "bot.settings.languageLabel": "語言",
+  "bot.settings.viewTitle": "⚙️ 我的設定"
 }

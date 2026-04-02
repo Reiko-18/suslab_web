@@ -199,5 +199,11 @@
   "bot.cmd.mod.timeout.reasonOpt.desc": "タイムアウトの理由",
   "bot.cmd.mod.kick.desc": "メンバーをキックする",
   "bot.cmd.mod.kick.userOpt.desc": "キックするユーザー",
-  "bot.cmd.mod.kick.reasonOpt.desc": "キックの理由"
+  "bot.cmd.mod.kick.reasonOpt.desc": "キックの理由",
+
+  "bot.settings.languageUpdated": "✅ 言語設定を **{{language}}** に更新しました。",
+  "bot.settings.currentLanguage": "現在の言語",
+  "bot.settings.linkRequired": "言語設定を保存する前に、SusLab ダッシュボードでアカウントを連携してください。",
+  "bot.settings.languageLabel": "言語",
+  "bot.settings.viewTitle": "⚙️ 設定"
 }

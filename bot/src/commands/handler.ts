@@ -6,6 +6,8 @@ import {
   Interaction,
 } from 'discord.js'
 
+import { getT, type TFunction } from '../i18n/index.js'
+import { getUserLocale } from '../services/userSettings.js'
 import { handleTicketCreate, handleTicketStatus, handleTicketReply, handleTicketClose } from './ticket.js'
 import { handleFeedbackSubmit, handleFeedbackList, handleFeedbackVote } from './feedback.js'
 import { handleProfileView, handleProfileEdit, handleProfileEditSubmit } from './profile.js'
@@ -18,6 +20,7 @@ import {
   handleModTimeout,
   handleModKick,
 } from './mod.js'
+import { handleSettingsCommand } from './settings.js'
 
 /**
  * 路由 ChatInputCommandInteraction 到對應的 handler
@@ -26,57 +29,82 @@ async function routeCommand(interaction: ChatInputCommandInteraction): Promise<v
   const { commandName } = interaction
   const sub = interaction.options.getSubcommand(false)
 
+  // 解析使用者語言，取得 t() 函式
+  const locale = await getUserLocale(interaction.user.id, interaction.locale)
+  const t: TFunction = getT(locale)
+
   switch (commandName) {
     case 'ticket':
       switch (sub) {
-        case 'create':  return handleTicketCreate(interaction)
-        case 'status':  return handleTicketStatus(interaction)
-        case 'reply':   return handleTicketReply(interaction)
-        case 'close':   return handleTicketClose(interaction)
-        default: await interaction.reply({ content: '未知的子指令。', ephemeral: true })
+        // @ts-expect-error - t 參數將在 Task 6 新增至 handler 簽名
+        case 'create':  return handleTicketCreate(interaction, t)
+        // @ts-expect-error - t 參數將在 Task 6 新增至 handler 簽名
+        case 'status':  return handleTicketStatus(interaction, t)
+        // @ts-expect-error - t 參數將在 Task 6 新增至 handler 簽名
+        case 'reply':   return handleTicketReply(interaction, t)
+        // @ts-expect-error - t 參數將在 Task 6 新增至 handler 簽名
+        case 'close':   return handleTicketClose(interaction, t)
+        default: await interaction.reply({ content: t('bot.common.unknownSubcommand'), ephemeral: true })
       }
       break
 
     case 'feedback':
       switch (sub) {
-        case 'submit':  return handleFeedbackSubmit(interaction)
-        case 'list':    return handleFeedbackList(interaction)
-        case 'vote':    return handleFeedbackVote(interaction)
-        default: await interaction.reply({ content: '未知的子指令。', ephemeral: true })
+        // @ts-expect-error - t 參數將在 Task 6 新增至 handler 簽名
+        case 'submit':  return handleFeedbackSubmit(interaction, t)
+        // @ts-expect-error - t 參數將在 Task 6 新增至 handler 簽名
+        case 'list':    return handleFeedbackList(interaction, t)
+        // @ts-expect-error - t 參數將在 Task 6 新增至 handler 簽名
+        case 'vote':    return handleFeedbackVote(interaction, t)
+        default: await interaction.reply({ content: t('bot.common.unknownSubcommand'), ephemeral: true })
       }
       break
 
     case 'profile':
       switch (sub) {
-        case 'view':    return handleProfileView(interaction)
-        case 'edit':    return handleProfileEdit(interaction)
-        default: await interaction.reply({ content: '未知的子指令。', ephemeral: true })
+        // @ts-expect-error - t 參數將在 Task 6 新增至 handler 簽名
+        case 'view':    return handleProfileView(interaction, t)
+        // @ts-expect-error - t 參數將在 Task 6 新增至 handler 簽名
+        case 'edit':    return handleProfileEdit(interaction, t)
+        default: await interaction.reply({ content: t('bot.common.unknownSubcommand'), ephemeral: true })
       }
       break
 
     case 'event':
       switch (sub) {
-        case 'list':    return handleEventList(interaction)
-        case 'join':    return handleEventJoin(interaction)
-        case 'leave':   return handleEventLeave(interaction)
-        default: await interaction.reply({ content: '未知的子指令。', ephemeral: true })
+        // @ts-expect-error - t 參數將在 Task 6 新增至 handler 簽名
+        case 'list':    return handleEventList(interaction, t)
+        // @ts-expect-error - t 參數將在 Task 6 新增至 handler 簽名
+        case 'join':    return handleEventJoin(interaction, t)
+        // @ts-expect-error - t 參數將在 Task 6 新增至 handler 簽名
+        case 'leave':   return handleEventLeave(interaction, t)
+        default: await interaction.reply({ content: t('bot.common.unknownSubcommand'), ephemeral: true })
       }
       break
 
     case 'mod':
       switch (sub) {
-        case 'ticket-status':   return handleModTicketStatus(interaction)
-        case 'ticket-assign':   return handleModTicketAssign(interaction)
-        case 'feedback-review': return handleModFeedbackReview(interaction)
-        case 'warn':            return handleModWarn(interaction)
-        case 'timeout':         return handleModTimeout(interaction)
-        case 'kick':            return handleModKick(interaction)
-        default: await interaction.reply({ content: '未知的子指令。', ephemeral: true })
+        // @ts-expect-error - t 參數將在 Task 6 新增至 handler 簽名
+        case 'ticket-status':   return handleModTicketStatus(interaction, t)
+        // @ts-expect-error - t 參數將在 Task 6 新增至 handler 簽名
+        case 'ticket-assign':   return handleModTicketAssign(interaction, t)
+        // @ts-expect-error - t 參數將在 Task 6 新增至 handler 簽名
+        case 'feedback-review': return handleModFeedbackReview(interaction, t)
+        // @ts-expect-error - t 參數將在 Task 6 新增至 handler 簽名
+        case 'warn':            return handleModWarn(interaction, t)
+        // @ts-expect-error - t 參數將在 Task 6 新增至 handler 簽名
+        case 'timeout':         return handleModTimeout(interaction, t)
+        // @ts-expect-error - t 參數將在 Task 6 新增至 handler 簽名
+        case 'kick':            return handleModKick(interaction, t)
+        default: await interaction.reply({ content: t('bot.common.unknownSubcommand'), ephemeral: true })
       }
       break
 
+    case 'settings':
+      return handleSettingsCommand(interaction, t)
+
     default:
-      await interaction.reply({ content: '未知的指令。', ephemeral: true })
+      await interaction.reply({ content: t('bot.common.unknownCommand'), ephemeral: true })
   }
 }
 
@@ -86,11 +114,16 @@ async function routeCommand(interaction: ChatInputCommandInteraction): Promise<v
 async function routeModal(interaction: ModalSubmitInteraction): Promise<void> {
   const { customId } = interaction
 
+  // 解析使用者語言，取得 t() 函式
+  const locale = await getUserLocale(interaction.user.id, interaction.locale)
+  const t: TFunction = getT(locale)
+
   if (customId.startsWith('profile-edit:')) {
-    return handleProfileEditSubmit(interaction)
+    // @ts-expect-error - t 參數將在 Task 6 新增至 handler 簽名
+    return handleProfileEditSubmit(interaction, t)
   }
 
-  await interaction.reply({ content: '未知的表單提交。', ephemeral: true })
+  await interaction.reply({ content: t('bot.common.unknownModal'), ephemeral: true })
 }
 
 /**

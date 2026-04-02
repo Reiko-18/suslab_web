@@ -199,5 +199,11 @@
   "bot.cmd.mod.timeout.reasonOpt.desc": "Reason for timeout",
   "bot.cmd.mod.kick.desc": "Kick a member",
   "bot.cmd.mod.kick.userOpt.desc": "User to kick",
-  "bot.cmd.mod.kick.reasonOpt.desc": "Reason for kick"
+  "bot.cmd.mod.kick.reasonOpt.desc": "Reason for kick",
+
+  "bot.settings.languageUpdated": "✅ Language preference updated to **{{language}}**.",
+  "bot.settings.currentLanguage": "Current Language",
+  "bot.settings.linkRequired": "Please link your account on the SusLab Dashboard before saving language preferences.",
+  "bot.settings.languageLabel": "Language",
+  "bot.settings.viewTitle": "⚙️ My Settings"
 }

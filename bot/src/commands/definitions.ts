@@ -256,4 +256,27 @@ const modCommand = new SlashCommandBuilder()
       ),
   )
 
-export const commands = [ticketCommand, feedbackCommand, profileCommand, eventCommand, modCommand]
+// ── /settings ────────────────────────────────────────────────────────────────
+const settingsCommand = new SlashCommandBuilder()
+  .setName('settings')
+  .setDescription('管理個人偏好設定')
+  .addSubcommand((sub) =>
+    sub
+      .setName('language')
+      .setDescription('設定偏好語言')
+      .addStringOption((opt) =>
+        opt
+          .setName('language')
+          .setDescription('選擇語言')
+          .setRequired(true)
+          .addChoices(
+            { name: 'English', value: 'en' },
+            { name: '日本語', value: 'ja' },
+            { name: '简体中文', value: 'zh-CN' },
+            { name: '繁體中文', value: 'zh-TW' },
+          ),
+      ),
+  )
+  .addSubcommand((sub) => sub.setName('view').setDescription('查看目前設定'))
+
+export const commands = [ticketCommand, feedbackCommand, profileCommand, eventCommand, modCommand, settingsCommand]
