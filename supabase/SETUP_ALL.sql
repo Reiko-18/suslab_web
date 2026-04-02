@@ -4,7 +4,7 @@
 -- recreating them so it won't fail on "already exists".
 -- Run this ENTIRE script in the Supabase SQL Editor (one shot)
 -- ================================================================
--- Order: 001 → 001b → 002 → 003 → 004 → 005 → 006 → 007 → 008 → 009 → 010 → 018 → 019 → 020
+-- Order: 001 → 001b → 002 → 003 → 004 → 005 → 006 → 007 → 008 → 009 → 010 → 018 → 019 → 020 → 022
 
 -- ============================================
 -- 001: user_roles table, triggers, JWT hook
@@ -1064,8 +1064,19 @@ END;
 $$;
 
 
+-- ============================================
+-- 022: per-user settings column
+-- ============================================
+
+ALTER TABLE public.member_profiles
+  ADD COLUMN IF NOT EXISTS settings jsonb NOT NULL DEFAULT '{}';
+
+COMMENT ON COLUMN public.member_profiles.settings IS
+  'Per-user preferences. Shape: { language?: "en"|"ja"|"zh-CN"|"zh-TW" }';
+
+
 -- ================================================================
--- DONE! All tables (001–020), triggers, functions, indexes, RLS,
+-- DONE! All tables (001–022), triggers, functions, indexes, RLS,
 -- and backfills have been created. This script is idempotent —
 -- safe to run multiple times.
 -- ================================================================

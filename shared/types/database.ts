@@ -58,6 +58,10 @@ export interface BotAction {
   processed_at: string | null
 }
 
+export interface UserSettings {
+  language?: 'en' | 'ja' | 'zh-CN' | 'zh-TW'
+}
+
 export const DEFAULT_SERVER_SETTINGS: ServerSettings = {
   ticket_channels: [],
   notification_webhook_url: '',
