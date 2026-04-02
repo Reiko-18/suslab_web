@@ -1,6 +1,6 @@
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { corsHeaders } from '../_shared/cors.ts'
-import { verifyAuth, errorResponse, jsonResponse } from '../_shared/auth.ts'
+import { verifyAuth, verifyAuthWithServer, errorResponse, jsonResponse } from '../_shared/auth.ts'
 import { resolveUserDisplayNames } from '../_shared/users.ts'
 
 Deno.serve(async (req: Request) => {
@@ -9,9 +9,20 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
-    const { user, role, supabaseClient } = await verifyAuth(req, 'member')
     const body = await req.json().catch(() => ({}))
-    const { action } = body
+    const { action, server_id } = body
+
+    let user: Awaited<ReturnType<typeof verifyAuth>>['user']
+    let role: string
+    let supabaseClient: Awaited<ReturnType<typeof verifyAuth>>['supabaseClient']
+
+    if (server_id) {
+      const auth = await verifyAuthWithServer(req, 'member', server_id)
+      user = auth.user; role = auth.serverRole; supabaseClient = auth.supabaseClient
+    } else {
+      const auth = await verifyAuth(req, 'member')
+      user = auth.user; role = auth.role; supabaseClient = auth.supabaseClient
+    }
 
     if (action === 'list') {
       const { page = 1, pageSize = 20 } = body
@@ -20,12 +31,18 @@ Deno.serve(async (req: Request) => {
       const clampedPage = Math.max(1, page)
       const offset = (clampedPage - 1) * clampedPageSize
 
-      const { data: announcements, error: annError, count } = await supabaseClient
+      let query = supabaseClient
         .from('announcements')
         .select('*', { count: 'exact' })
         .order('pinned', { ascending: false })
         .order('created_at', { ascending: false })
         .range(offset, offset + clampedPageSize - 1)
+
+      if (server_id) {
+        query = query.eq('server_id', server_id)
+      }
+
+      const { data: announcements, error: annError, count } = await query
 
       if (annError) return errorResponse(annError.message, 500)
 
@@ -74,6 +91,7 @@ Deno.serve(async (req: Request) => {
           author_id: user.id,
           source: 'web',
           pinned: !!pinned,
+          server_id: server_id ?? null,
         })
         .select()
         .single()
@@ -112,12 +130,16 @@ Deno.serve(async (req: Request) => {
         return errorResponse('No valid fields to update', 400)
       }
 
-      const { data, error } = await supabaseClient
+      let updateQuery = supabaseClient
         .from('announcements')
         .update(updates)
         .eq('id', id)
-        .select()
-        .single()
+
+      if (server_id) {
+        updateQuery = updateQuery.eq('server_id', server_id)
+      }
+
+      const { data, error } = await updateQuery.select().single()
 
       if (error) return errorResponse(error.message, 500)
       return jsonResponse(data)
@@ -132,10 +154,16 @@ Deno.serve(async (req: Request) => {
 
       if (!id) return errorResponse('Missing announcement id', 400)
 
-      const { error } = await supabaseClient
+      let deleteQuery = supabaseClient
         .from('announcements')
         .delete()
         .eq('id', id)
+
+      if (server_id) {
+        deleteQuery = deleteQuery.eq('server_id', server_id)
+      }
+
+      const { error } = await deleteQuery
 
       if (error) return errorResponse(error.message, 500)
       return jsonResponse({ success: true })

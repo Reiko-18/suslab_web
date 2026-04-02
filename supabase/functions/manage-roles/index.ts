@@ -1,7 +1,7 @@
 // supabase/functions/manage-roles/index.ts
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { corsHeaders } from '../_shared/cors.ts'
-import { verifyAuth, errorResponse, jsonResponse } from '../_shared/auth.ts'
+import { verifyAuth, verifyAuthWithServer, errorResponse, jsonResponse } from '../_shared/auth.ts'
 
 function serviceClient() {
   return createClient(
@@ -19,6 +19,7 @@ async function logAudit(
   targetId: string | null,
   targetName: string | null,
   details: Record<string, unknown> = {},
+  serverId?: string | null,
 ) {
   await client.from('admin_audit_logs').insert({
     actor_id: actorId,
@@ -28,6 +29,7 @@ async function logAudit(
     target_id: targetId,
     target_name: targetName,
     details,
+    server_id: serverId ?? null,
   })
 }
 
@@ -50,18 +52,35 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
-    const { user, role, supabaseClient } = await verifyAuth(req, 'moderator')
     const body = await req.json()
-    const { action } = body
+    const { action, server_id } = body
     const sc = serviceClient()
+
+    let user: Awaited<ReturnType<typeof verifyAuth>>['user']
+    let role: string
+    let supabaseClient: Awaited<ReturnType<typeof verifyAuth>>['supabaseClient']
+
+    if (server_id) {
+      const auth = await verifyAuthWithServer(req, 'moderator', server_id)
+      user = auth.user; role = auth.serverRole; supabaseClient = auth.supabaseClient
+    } else {
+      const auth = await verifyAuth(req, 'moderator')
+      user = auth.user; role = auth.role; supabaseClient = auth.supabaseClient
+    }
+
     const actorName = (user.user_metadata?.full_name ?? user.user_metadata?.user_name ?? 'Unknown') as string
 
     if (action === 'list') {
-      const { data, error } = await supabaseClient
+      let query = supabaseClient
         .from('discord_roles')
         .select('*')
         .order('position', { ascending: true })
 
+      if (server_id) {
+        query = query.eq('server_id', server_id)
+      }
+
+      const { data, error } = await query
       if (error) return errorResponse(error.message, 500)
       return jsonResponse(data)
     }
@@ -80,13 +99,14 @@ Deno.serve(async (req: Request) => {
           permissions: permissions ?? {},
           position: position ?? 0,
           created_by: user.id,
+          server_id: server_id ?? null,
         })
         .select()
         .single()
 
       if (error) return errorResponse(error.message, 500)
 
-      await logAudit(sc, user.id, actorName, 'role_create', 'role', data.id, name, { color })
+      await logAudit(sc, user.id, actorName, 'role_create', 'role', data.id, name, { color }, server_id)
       await queueBotAction(sc, 'create_role', { name, color, permissions }, user.id)
 
       return jsonResponse(data, 201)
@@ -104,16 +124,20 @@ Deno.serve(async (req: Request) => {
       if (permissions !== undefined) updates.permissions = permissions
       if (position !== undefined) updates.position = position
 
-      const { data, error } = await supabaseClient
+      let updateQuery = supabaseClient
         .from('discord_roles')
         .update(updates)
         .eq('id', id)
-        .select()
-        .single()
+
+      if (server_id) {
+        updateQuery = updateQuery.eq('server_id', server_id)
+      }
+
+      const { data, error } = await updateQuery.select().single()
 
       if (error) return errorResponse(error.message, 500)
 
-      await logAudit(sc, user.id, actorName, 'role_update', 'role', id, data.name, updates)
+      await logAudit(sc, user.id, actorName, 'role_update', 'role', id, data.name, updates, server_id)
       if (data.discord_role_id) {
         await queueBotAction(sc, 'update_role', { discord_role_id: data.discord_role_id, ...updates }, user.id)
       }
@@ -128,20 +152,31 @@ Deno.serve(async (req: Request) => {
       if (!id) return errorResponse('Missing role id', 400)
 
       // Get role before deleting for audit
-      const { data: existing } = await supabaseClient
+      let selectQuery = supabaseClient
         .from('discord_roles')
         .select('name, discord_role_id')
         .eq('id', id)
-        .single()
 
-      const { error } = await supabaseClient
+      if (server_id) {
+        selectQuery = selectQuery.eq('server_id', server_id)
+      }
+
+      const { data: existing } = await selectQuery.single()
+
+      let deleteQuery = supabaseClient
         .from('discord_roles')
         .delete()
         .eq('id', id)
 
+      if (server_id) {
+        deleteQuery = deleteQuery.eq('server_id', server_id)
+      }
+
+      const { error } = await deleteQuery
+
       if (error) return errorResponse(error.message, 500)
 
-      await logAudit(sc, user.id, actorName, 'role_delete', 'role', id, existing?.name ?? 'Unknown', {})
+      await logAudit(sc, user.id, actorName, 'role_delete', 'role', id, existing?.name ?? 'Unknown', {}, server_id)
       if (existing?.discord_role_id) {
         await queueBotAction(sc, 'delete_role', { discord_role_id: existing.discord_role_id }, user.id)
       }

@@ -1,7 +1,7 @@
 // supabase/functions/manage-users/index.ts
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { corsHeaders } from '../_shared/cors.ts'
-import { verifyAuth, errorResponse, jsonResponse } from '../_shared/auth.ts'
+import { verifyAuth, verifyAuthWithServer, errorResponse, jsonResponse } from '../_shared/auth.ts'
 
 function serviceClient() {
   return createClient(
@@ -16,10 +16,23 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
-    const { user, role, supabaseClient } = await verifyAuth(req, 'moderator')
     const body = await req.json()
-    const { action } = body
+    const { action, server_id } = body
     const sc = serviceClient()
+
+    let user: Awaited<ReturnType<typeof verifyAuth>>['user']
+    let role: string
+    let supabaseClient: Awaited<ReturnType<typeof verifyAuth>>['supabaseClient']
+
+    if (server_id) {
+      // manage-users minimum role is moderator — keep that requirement at server level
+      const auth = await verifyAuthWithServer(req, 'moderator', server_id)
+      user = auth.user; role = auth.serverRole; supabaseClient = auth.supabaseClient
+    } else {
+      const auth = await verifyAuth(req, 'moderator')
+      user = auth.user; role = auth.role; supabaseClient = auth.supabaseClient
+    }
+
     const actorName = (user.user_metadata?.full_name ?? user.user_metadata?.user_name ?? 'Unknown') as string
 
     if (action === 'list') {
@@ -28,9 +41,15 @@ Deno.serve(async (req: Request) => {
       const { data: { users }, error: usersError } = await sc.auth.admin.listUsers()
       if (usersError) return errorResponse(usersError.message, 500)
 
-      const { data: roles, error: rolesError } = await sc
+      let rolesQuery = sc
         .from('user_roles')
         .select('user_id, role, updated_at')
+
+      if (server_id) {
+        rolesQuery = rolesQuery.eq('server_id', server_id)
+      }
+
+      const { data: roles, error: rolesError } = await rolesQuery
 
       if (rolesError) return errorResponse(rolesError.message, 500)
 
@@ -62,18 +81,25 @@ Deno.serve(async (req: Request) => {
       }
       if (user_id === user.id) return errorResponse('Cannot change your own role', 400)
 
+      const upsertData: Record<string, unknown> = { user_id, role: newRole }
+      if (server_id) {
+        upsertData.server_id = server_id
+      }
+
       const { data, error } = await sc
         .from('user_roles')
-        .upsert({ user_id, role: newRole }, { onConflict: 'user_id' })
+        .upsert(upsertData, { onConflict: server_id ? 'user_id,server_id' : 'user_id' })
         .select()
         .single()
 
       if (error) return errorResponse(error.message, 500)
 
-      // Sync role into auth.users raw_app_meta_data so JWT includes it
-      await sc.auth.admin.updateUserById(user_id, {
-        app_metadata: { role: newRole },
-      })
+      // Sync role into auth.users raw_app_meta_data so JWT includes it (global role only)
+      if (!server_id) {
+        await sc.auth.admin.updateUserById(user_id, {
+          app_metadata: { role: newRole },
+        })
+      }
 
       // Get target user name for audit
       const { data: { user: targetUser } } = await sc.auth.admin.getUserById(user_id)
@@ -87,12 +113,13 @@ Deno.serve(async (req: Request) => {
         target_id: user_id,
         target_name: targetName,
         details: { new_role: newRole },
+        server_id: server_id ?? null,
       })
 
       // Queue bot action for Discord role sync
       await sc.from('pending_bot_actions').insert({
         action_type: 'sync_role',
-        payload: { user_id, new_role: newRole },
+        payload: { user_id, new_role: newRole, server_id: server_id ?? null },
         created_by: user.id,
       })
 
@@ -121,11 +148,12 @@ Deno.serve(async (req: Request) => {
         target_id: user_id,
         target_name: targetName,
         details: { reason },
+        server_id: server_id ?? null,
       })
 
       await sc.from('pending_bot_actions').insert({
         action_type: 'ban_user',
-        payload: { user_id, reason },
+        payload: { user_id, reason, server_id: server_id ?? null },
         created_by: user.id,
       })
 
@@ -152,11 +180,12 @@ Deno.serve(async (req: Request) => {
         target_id: user_id,
         target_name: targetName,
         details: {},
+        server_id: server_id ?? null,
       })
 
       await sc.from('pending_bot_actions').insert({
         action_type: 'unban_user',
-        payload: { user_id },
+        payload: { user_id, server_id: server_id ?? null },
         created_by: user.id,
       })
 
@@ -179,11 +208,12 @@ Deno.serve(async (req: Request) => {
         target_id: user_id,
         target_name: targetName,
         details: { reason },
+        server_id: server_id ?? null,
       })
 
       await sc.from('pending_bot_actions').insert({
         action_type: 'kick_user',
-        payload: { user_id, reason },
+        payload: { user_id, reason, server_id: server_id ?? null },
         created_by: user.id,
       })
 
@@ -214,11 +244,12 @@ Deno.serve(async (req: Request) => {
         target_id: user_id,
         target_name: targetName,
         details: { duration_minutes, timeout_until: timeoutUntil, reason },
+        server_id: server_id ?? null,
       })
 
       await sc.from('pending_bot_actions').insert({
         action_type: 'timeout_user',
-        payload: { user_id, duration_minutes, reason },
+        payload: { user_id, duration_minutes, reason, server_id: server_id ?? null },
         created_by: user.id,
       })
 
@@ -235,6 +266,10 @@ Deno.serve(async (req: Request) => {
         .select('*')
         .order('created_at', { ascending: false })
         .range(from, from + pageSize - 1)
+
+      if (server_id) {
+        query = query.eq('server_id', server_id)
+      }
 
       if (body.action_filter) {
         query = query.eq('action', body.action_filter)
