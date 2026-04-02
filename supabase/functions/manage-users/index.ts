@@ -151,11 +151,41 @@ Deno.serve(async (req: Request) => {
         server_id: server_id ?? null,
       })
 
-      await sc.from('pending_bot_actions').insert({
-        action_type: 'ban_user',
-        payload: { user_id, reason, server_id: server_id ?? null },
-        created_by: user.id,
-      })
+      // 解析目標用戶的 Discord 身分，以取得 Discord user ID 和 guild_id
+      const { data: banTargetData } = await sc.auth.admin.getUserById(body.user_id)
+      const banDiscordIdentity = banTargetData?.user?.identities?.find(
+        (i: { provider: string }) => i.provider === 'discord'
+      )
+
+      if (banDiscordIdentity && body.server_id) {
+        const { data: banServer } = await sc
+          .from('servers')
+          .select('discord_guild_id')
+          .eq('id', body.server_id)
+          .single()
+
+        if (banServer) {
+          await sc.from('pending_bot_actions').insert({
+            action_type: 'ban_user',
+            payload: {
+              user_id: banDiscordIdentity.id,
+              guild_id: banServer.discord_guild_id,
+              reason: body.reason,
+            },
+            status: 'pending',
+            created_by: user.id,
+            server_id: body.server_id,
+          })
+        }
+      } else if (!body.server_id) {
+        // 無 server_id 時仍佇列（bot 端可全域處理）
+        await sc.from('pending_bot_actions').insert({
+          action_type: 'ban_user',
+          payload: { user_id: banDiscordIdentity?.id ?? user_id, reason, server_id: null },
+          status: 'pending',
+          created_by: user.id,
+        })
+      }
 
       return jsonResponse({ success: true, action: 'banned' })
     }
@@ -183,11 +213,39 @@ Deno.serve(async (req: Request) => {
         server_id: server_id ?? null,
       })
 
-      await sc.from('pending_bot_actions').insert({
-        action_type: 'unban_user',
-        payload: { user_id, server_id: server_id ?? null },
-        created_by: user.id,
-      })
+      // 解析目標用戶的 Discord 身分
+      const { data: unbanTargetData } = await sc.auth.admin.getUserById(body.user_id)
+      const unbanDiscordIdentity = unbanTargetData?.user?.identities?.find(
+        (i: { provider: string }) => i.provider === 'discord'
+      )
+
+      if (unbanDiscordIdentity && body.server_id) {
+        const { data: unbanServer } = await sc
+          .from('servers')
+          .select('discord_guild_id')
+          .eq('id', body.server_id)
+          .single()
+
+        if (unbanServer) {
+          await sc.from('pending_bot_actions').insert({
+            action_type: 'unban_user',
+            payload: {
+              user_id: unbanDiscordIdentity.id,
+              guild_id: unbanServer.discord_guild_id,
+            },
+            status: 'pending',
+            created_by: user.id,
+            server_id: body.server_id,
+          })
+        }
+      } else if (!body.server_id) {
+        await sc.from('pending_bot_actions').insert({
+          action_type: 'unban_user',
+          payload: { user_id: unbanDiscordIdentity?.id ?? user_id, server_id: null },
+          status: 'pending',
+          created_by: user.id,
+        })
+      }
 
       return jsonResponse({ success: true, action: 'unbanned' })
     }
@@ -211,11 +269,40 @@ Deno.serve(async (req: Request) => {
         server_id: server_id ?? null,
       })
 
-      await sc.from('pending_bot_actions').insert({
-        action_type: 'kick_user',
-        payload: { user_id, reason, server_id: server_id ?? null },
-        created_by: user.id,
-      })
+      // 解析目標用戶的 Discord 身分
+      const { data: kickTargetData } = await sc.auth.admin.getUserById(body.user_id)
+      const kickDiscordIdentity = kickTargetData?.user?.identities?.find(
+        (i: { provider: string }) => i.provider === 'discord'
+      )
+
+      if (kickDiscordIdentity && body.server_id) {
+        const { data: kickServer } = await sc
+          .from('servers')
+          .select('discord_guild_id')
+          .eq('id', body.server_id)
+          .single()
+
+        if (kickServer) {
+          await sc.from('pending_bot_actions').insert({
+            action_type: 'kick_user',
+            payload: {
+              user_id: kickDiscordIdentity.id,
+              guild_id: kickServer.discord_guild_id,
+              reason: body.reason,
+            },
+            status: 'pending',
+            created_by: user.id,
+            server_id: body.server_id,
+          })
+        }
+      } else if (!body.server_id) {
+        await sc.from('pending_bot_actions').insert({
+          action_type: 'kick_user',
+          payload: { user_id: kickDiscordIdentity?.id ?? user_id, reason, server_id: null },
+          status: 'pending',
+          created_by: user.id,
+        })
+      }
 
       return jsonResponse({ success: true, action: 'kick_queued' })
     }
@@ -247,11 +334,41 @@ Deno.serve(async (req: Request) => {
         server_id: server_id ?? null,
       })
 
-      await sc.from('pending_bot_actions').insert({
-        action_type: 'timeout_user',
-        payload: { user_id, duration_minutes, reason, server_id: server_id ?? null },
-        created_by: user.id,
-      })
+      // 解析目標用戶的 Discord 身分
+      const { data: timeoutTargetData } = await sc.auth.admin.getUserById(body.user_id)
+      const timeoutDiscordIdentity = timeoutTargetData?.user?.identities?.find(
+        (i: { provider: string }) => i.provider === 'discord'
+      )
+
+      if (timeoutDiscordIdentity && body.server_id) {
+        const { data: timeoutServer } = await sc
+          .from('servers')
+          .select('discord_guild_id')
+          .eq('id', body.server_id)
+          .single()
+
+        if (timeoutServer) {
+          await sc.from('pending_bot_actions').insert({
+            action_type: 'timeout_user',
+            payload: {
+              user_id: timeoutDiscordIdentity.id,
+              guild_id: timeoutServer.discord_guild_id,
+              duration_minutes: body.duration_minutes,
+              reason: body.reason,
+            },
+            status: 'pending',
+            created_by: user.id,
+            server_id: body.server_id,
+          })
+        }
+      } else if (!body.server_id) {
+        await sc.from('pending_bot_actions').insert({
+          action_type: 'timeout_user',
+          payload: { user_id: timeoutDiscordIdentity?.id ?? user_id, duration_minutes, reason, server_id: null },
+          status: 'pending',
+          created_by: user.id,
+        })
+      }
 
       return jsonResponse({ success: true, action: 'timed_out', timeout_until: timeoutUntil })
     }

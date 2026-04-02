@@ -157,6 +157,20 @@ Deno.serve(async (req: Request) => {
         server_id: server_id ?? null,
       })
 
+      // 若 ticket 有關聯 Discord thread，佇列狀態更新通知
+      if (data.discord_thread_id && status) {
+        await sc.from('pending_bot_actions').insert({
+          action_type: 'update_thread',
+          payload: {
+            thread_id: data.discord_thread_id,
+            content: `Status changed to **${status}** by ${actorName}`,
+          },
+          status: 'pending',
+          created_by: user.id,
+          server_id: body.server_id ?? null,
+        })
+      }
+
       return jsonResponse(data)
     }
 
@@ -219,6 +233,27 @@ Deno.serve(async (req: Request) => {
         .single()
 
       if (error) return errorResponse(error.message, 500)
+
+      // 查詢父 ticket 的 discord_thread_id，若存在則佇列回覆通知
+      const { data: parentTicket } = await sc
+        .from('tickets')
+        .select('discord_thread_id')
+        .eq('id', ticket_id)
+        .single()
+
+      if (parentTicket?.discord_thread_id) {
+        await sc.from('pending_bot_actions').insert({
+          action_type: 'update_thread',
+          payload: {
+            thread_id: parentTicket.discord_thread_id,
+            content: `**${actorName}:** ${content}`,
+          },
+          status: 'pending',
+          created_by: user.id,
+          server_id: body.server_id ?? null,
+        })
+      }
+
       return jsonResponse({ ...data, author_name: actorName })
     }
 
