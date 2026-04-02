@@ -6,23 +6,34 @@ import {
 } from 'discord.js'
 import { supabase } from '../services/supabase.js'
 import { resolveSupabaseUserId, getServerIdFromGuild } from '../services/discord.js'
+import { type TFunction } from '../i18n/index.js'
 
 const EMBED_COLOR = 0x7c9070
 
-// 票券狀態中文對應
-const STATUS_LABELS: Record<string, string> = {
-  open: '🟢 開放中',
-  in_progress: '🟡 處理中',
-  resolved: '✅ 已解決',
-  closed: '🔒 已關閉',
+/**
+ * 根據票券狀態取得本地化標籤
+ */
+function getStatusLabel(status: string, t: TFunction): string {
+  const map: Record<string, string> = {
+    open:        t('bot.ticket.statusOpen'),
+    in_progress: t('bot.ticket.statusInProgress'),
+    resolved:    t('bot.ticket.statusResolved'),
+    closed:      t('bot.ticket.statusClosed'),
+  }
+  return map[status] ?? status
 }
 
-// 優先度中文對應
-const PRIORITY_LABELS: Record<string, string> = {
-  low: '🔵 低',
-  normal: '⚪ 普通',
-  high: '🟠 高',
-  urgent: '🔴 緊急',
+/**
+ * 根據優先度取得本地化標籤
+ */
+function getPriorityLabel(priority: string, t: TFunction): string {
+  const map: Record<string, string> = {
+    low:    t('bot.ticket.priorityLow'),
+    normal: t('bot.ticket.priorityNormal'),
+    high:   t('bot.ticket.priorityHigh'),
+    urgent: t('bot.ticket.priorityUrgent'),
+  }
+  return map[priority] ?? priority
 }
 
 /**
@@ -47,26 +58,29 @@ async function findTicketByPrefix(ticketIdPrefix: string, userId?: string) {
 /**
  * /ticket create
  */
-export async function handleTicketCreate(interaction: ChatInputCommandInteraction): Promise<void> {
+export async function handleTicketCreate(
+  interaction: ChatInputCommandInteraction,
+  t: TFunction,
+): Promise<void> {
   await interaction.deferReply({ ephemeral: true })
 
   const discordUserId = interaction.user.id
   const guildId = interaction.guildId
 
   if (!guildId) {
-    await interaction.editReply('此指令只能在伺服器中使用。')
+    await interaction.editReply(t('bot.common.guildOnly'))
     return
   }
 
   const userId = await resolveSupabaseUserId(discordUserId)
   if (!userId) {
-    await interaction.editReply('請先前往 SusLab Dashboard 完成帳號綁定，才能使用此功能。')
+    await interaction.editReply(t('bot.common.linkRequired'))
     return
   }
 
   const serverId = await getServerIdFromGuild(guildId)
   if (!serverId) {
-    await interaction.editReply('此伺服器尚未在 SusLab 系統中設定。')
+    await interaction.editReply(t('bot.common.serverNotSetup'))
     return
   }
 
@@ -90,7 +104,7 @@ export async function handleTicketCreate(interaction: ChatInputCommandInteractio
 
   if (error || !ticket) {
     console.error('[ticket] 建立票券失敗:', error)
-    await interaction.editReply('建立票券時發生錯誤，請稍後再試。')
+    await interaction.editReply(t('bot.ticket.createError'))
     return
   }
 
@@ -118,14 +132,14 @@ export async function handleTicketCreate(interaction: ChatInputCommandInteractio
         embeds: [
           new EmbedBuilder()
             .setColor(EMBED_COLOR)
-            .setTitle(`票券 #${shortId}`)
+            .setTitle(t('bot.ticket.embedTitle', { shortId }))
             .setDescription(`**${title}**`)
             .addFields(
-              { name: '分類', value: category, inline: true },
-              { name: '優先度', value: PRIORITY_LABELS[priority] ?? priority, inline: true },
-              { name: '狀態', value: STATUS_LABELS['open'], inline: true },
+              { name: t('bot.ticket.fieldCategory'), value: category, inline: true },
+              { name: t('bot.ticket.fieldPriority'), value: getPriorityLabel(priority, t), inline: true },
+              { name: t('bot.ticket.fieldStatus'), value: getStatusLabel('open', t), inline: true },
             )
-            .setFooter({ text: `由 ${interaction.user.tag} 建立` })
+            .setFooter({ text: t('bot.ticket.footerCreatedBy', { tag: interaction.user.tag }) })
             .setTimestamp(),
         ],
       })
@@ -138,12 +152,12 @@ export async function handleTicketCreate(interaction: ChatInputCommandInteractio
 
   const embed = new EmbedBuilder()
     .setColor(EMBED_COLOR)
-    .setTitle('✅ 票券已建立')
+    .setTitle(t('bot.ticket.createSuccess'))
     .addFields(
-      { name: 'ID', value: `\`${shortId}\``, inline: true },
-      { name: '標題', value: title, inline: true },
-      { name: '分類', value: category, inline: true },
-      { name: '優先度', value: PRIORITY_LABELS[priority] ?? priority, inline: true },
+      { name: t('bot.ticket.fieldId'), value: `\`${shortId}\``, inline: true },
+      { name: t('bot.ticket.fieldTitle'), value: title, inline: true },
+      { name: t('bot.ticket.fieldCategory'), value: category, inline: true },
+      { name: t('bot.ticket.fieldPriority'), value: getPriorityLabel(priority, t), inline: true },
     )
     .setTimestamp()
 
@@ -153,14 +167,17 @@ export async function handleTicketCreate(interaction: ChatInputCommandInteractio
 /**
  * /ticket status
  */
-export async function handleTicketStatus(interaction: ChatInputCommandInteraction): Promise<void> {
+export async function handleTicketStatus(
+  interaction: ChatInputCommandInteraction,
+  t: TFunction,
+): Promise<void> {
   await interaction.deferReply({ ephemeral: true })
 
   const discordUserId = interaction.user.id
   const userId = await resolveSupabaseUserId(discordUserId)
 
   if (!userId) {
-    await interaction.editReply('請先前往 SusLab Dashboard 完成帳號綁定。')
+    await interaction.editReply(t('bot.common.linkRequiredSimple'))
     return
   }
 
@@ -170,18 +187,20 @@ export async function handleTicketStatus(interaction: ChatInputCommandInteractio
     // 查詢指定票券
     const ticket = await findTicketByPrefix(ticketIdPrefix, userId)
     if (!ticket) {
-      await interaction.editReply('找不到對應的票券，或您沒有此票券的存取權限。')
+      await interaction.editReply(t('bot.ticket.notFoundOrNoAccess'))
       return
     }
 
+    const shortId = (ticket.id as string).slice(0, 8)
+
     const embed = new EmbedBuilder()
       .setColor(EMBED_COLOR)
-      .setTitle(`票券 #${(ticket.id as string).slice(0, 8)}`)
+      .setTitle(t('bot.ticket.embedTitle', { shortId }))
       .setDescription(`**${ticket.title as string}**`)
       .addFields(
-        { name: '狀態', value: STATUS_LABELS[ticket.status as string] ?? ticket.status as string, inline: true },
-        { name: '優先度', value: PRIORITY_LABELS[ticket.priority as string] ?? ticket.priority as string, inline: true },
-        { name: '分類', value: ticket.category as string, inline: true },
+        { name: t('bot.ticket.fieldStatus'), value: getStatusLabel(ticket.status as string, t), inline: true },
+        { name: t('bot.ticket.fieldPriority'), value: getPriorityLabel(ticket.priority as string, t), inline: true },
+        { name: t('bot.ticket.fieldCategory'), value: ticket.category as string, inline: true },
       )
       .setTimestamp(new Date(ticket.created_at as string))
 
@@ -196,18 +215,18 @@ export async function handleTicketStatus(interaction: ChatInputCommandInteractio
       .limit(5)
 
     if (error || !tickets?.length) {
-      await interaction.editReply('你目前沒有任何票券。')
+      await interaction.editReply(t('bot.ticket.noTickets'))
       return
     }
 
     const embed = new EmbedBuilder()
       .setColor(EMBED_COLOR)
-      .setTitle('📋 你的最近票券')
+      .setTitle(t('bot.ticket.myTicketsTitle'))
       .setDescription(
         tickets
           .map(
-            (t) =>
-              `**\`${(t.id as string).slice(0, 8)}\`** ${t.title as string}\n${STATUS_LABELS[t.status as string] ?? t.status as string} • ${t.category as string}`,
+            (tk) =>
+              `**\`${(tk.id as string).slice(0, 8)}\`** ${tk.title as string}\n${getStatusLabel(tk.status as string, t)} • ${tk.category as string}`,
           )
           .join('\n\n'),
       )
@@ -220,14 +239,17 @@ export async function handleTicketStatus(interaction: ChatInputCommandInteractio
 /**
  * /ticket reply
  */
-export async function handleTicketReply(interaction: ChatInputCommandInteraction): Promise<void> {
+export async function handleTicketReply(
+  interaction: ChatInputCommandInteraction,
+  t: TFunction,
+): Promise<void> {
   await interaction.deferReply({ ephemeral: true })
 
   const discordUserId = interaction.user.id
   const userId = await resolveSupabaseUserId(discordUserId)
 
   if (!userId) {
-    await interaction.editReply('請先前往 SusLab Dashboard 完成帳號綁定。')
+    await interaction.editReply(t('bot.common.linkRequiredSimple'))
     return
   }
 
@@ -236,12 +258,12 @@ export async function handleTicketReply(interaction: ChatInputCommandInteraction
 
   const ticket = await findTicketByPrefix(ticketIdPrefix)
   if (!ticket) {
-    await interaction.editReply('找不到對應的票券。')
+    await interaction.editReply(t('bot.ticket.notFound'))
     return
   }
 
   if (ticket.status === 'closed') {
-    await interaction.editReply('此票券已關閉，無法回覆。')
+    await interaction.editReply(t('bot.ticket.alreadyClosed'))
     return
   }
 
@@ -253,7 +275,7 @@ export async function handleTicketReply(interaction: ChatInputCommandInteraction
 
   if (error) {
     console.error('[ticket] 新增回覆失敗:', error)
-    await interaction.editReply('回覆失敗，請稍後再試。')
+    await interaction.editReply(t('bot.ticket.replyError'))
     return
   }
 
@@ -277,20 +299,24 @@ export async function handleTicketReply(interaction: ChatInputCommandInteraction
     }
   }
 
-  await interaction.editReply(`✅ 已回覆票券 \`${(ticket.id as string).slice(0, 8)}\`。`)
+  const shortId = (ticket.id as string).slice(0, 8)
+  await interaction.editReply(t('bot.ticket.replySuccess', { shortId }))
 }
 
 /**
  * /ticket close
  */
-export async function handleTicketClose(interaction: ChatInputCommandInteraction): Promise<void> {
+export async function handleTicketClose(
+  interaction: ChatInputCommandInteraction,
+  t: TFunction,
+): Promise<void> {
   await interaction.deferReply({ ephemeral: true })
 
   const discordUserId = interaction.user.id
   const userId = await resolveSupabaseUserId(discordUserId)
 
   if (!userId) {
-    await interaction.editReply('請先前往 SusLab Dashboard 完成帳號綁定。')
+    await interaction.editReply(t('bot.common.linkRequiredSimple'))
     return
   }
 
@@ -298,12 +324,12 @@ export async function handleTicketClose(interaction: ChatInputCommandInteraction
   const ticket = await findTicketByPrefix(ticketIdPrefix, userId)
 
   if (!ticket) {
-    await interaction.editReply('找不到對應的票券，或您沒有此票券的存取權限。')
+    await interaction.editReply(t('bot.ticket.notFoundOrNoAccess'))
     return
   }
 
   if (ticket.status === 'closed') {
-    await interaction.editReply('此票券已經是關閉狀態。')
+    await interaction.editReply(t('bot.ticket.alreadyClosedState'))
     return
   }
 
@@ -314,9 +340,10 @@ export async function handleTicketClose(interaction: ChatInputCommandInteraction
 
   if (error) {
     console.error('[ticket] 關閉票券失敗:', error)
-    await interaction.editReply('關閉票券時發生錯誤，請稍後再試。')
+    await interaction.editReply(t('bot.ticket.closeError'))
     return
   }
 
-  await interaction.editReply(`🔒 票券 \`${(ticket.id as string).slice(0, 8)}\` 已關閉。`)
+  const shortId = (ticket.id as string).slice(0, 8)
+  await interaction.editReply(t('bot.ticket.closedSuccess', { shortId }))
 }

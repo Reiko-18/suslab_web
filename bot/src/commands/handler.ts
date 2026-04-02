@@ -36,13 +36,9 @@ async function routeCommand(interaction: ChatInputCommandInteraction): Promise<v
   switch (commandName) {
     case 'ticket':
       switch (sub) {
-        // @ts-expect-error - t 參數將在 Task 6 新增至 handler 簽名
         case 'create':  return handleTicketCreate(interaction, t)
-        // @ts-expect-error - t 參數將在 Task 6 新增至 handler 簽名
         case 'status':  return handleTicketStatus(interaction, t)
-        // @ts-expect-error - t 參數將在 Task 6 新增至 handler 簽名
         case 'reply':   return handleTicketReply(interaction, t)
-        // @ts-expect-error - t 參數將在 Task 6 新增至 handler 簽名
         case 'close':   return handleTicketClose(interaction, t)
         default: await interaction.reply({ content: t('bot.common.unknownSubcommand'), ephemeral: true })
       }
@@ -50,11 +46,8 @@ async function routeCommand(interaction: ChatInputCommandInteraction): Promise<v
 
     case 'feedback':
       switch (sub) {
-        // @ts-expect-error - t 參數將在 Task 6 新增至 handler 簽名
         case 'submit':  return handleFeedbackSubmit(interaction, t)
-        // @ts-expect-error - t 參數將在 Task 6 新增至 handler 簽名
         case 'list':    return handleFeedbackList(interaction, t)
-        // @ts-expect-error - t 參數將在 Task 6 新增至 handler 簽名
         case 'vote':    return handleFeedbackVote(interaction, t)
         default: await interaction.reply({ content: t('bot.common.unknownSubcommand'), ephemeral: true })
       }
@@ -62,9 +55,7 @@ async function routeCommand(interaction: ChatInputCommandInteraction): Promise<v
 
     case 'profile':
       switch (sub) {
-        // @ts-expect-error - t 參數將在 Task 6 新增至 handler 簽名
         case 'view':    return handleProfileView(interaction, t)
-        // @ts-expect-error - t 參數將在 Task 6 新增至 handler 簽名
         case 'edit':    return handleProfileEdit(interaction, t)
         default: await interaction.reply({ content: t('bot.common.unknownSubcommand'), ephemeral: true })
       }
@@ -72,11 +63,8 @@ async function routeCommand(interaction: ChatInputCommandInteraction): Promise<v
 
     case 'event':
       switch (sub) {
-        // @ts-expect-error - t 參數將在 Task 6 新增至 handler 簽名
         case 'list':    return handleEventList(interaction, t)
-        // @ts-expect-error - t 參數將在 Task 6 新增至 handler 簽名
         case 'join':    return handleEventJoin(interaction, t)
-        // @ts-expect-error - t 參數將在 Task 6 新增至 handler 簽名
         case 'leave':   return handleEventLeave(interaction, t)
         default: await interaction.reply({ content: t('bot.common.unknownSubcommand'), ephemeral: true })
       }
@@ -84,17 +72,11 @@ async function routeCommand(interaction: ChatInputCommandInteraction): Promise<v
 
     case 'mod':
       switch (sub) {
-        // @ts-expect-error - t 參數將在 Task 6 新增至 handler 簽名
         case 'ticket-status':   return handleModTicketStatus(interaction, t)
-        // @ts-expect-error - t 參數將在 Task 6 新增至 handler 簽名
         case 'ticket-assign':   return handleModTicketAssign(interaction, t)
-        // @ts-expect-error - t 參數將在 Task 6 新增至 handler 簽名
         case 'feedback-review': return handleModFeedbackReview(interaction, t)
-        // @ts-expect-error - t 參數將在 Task 6 新增至 handler 簽名
         case 'warn':            return handleModWarn(interaction, t)
-        // @ts-expect-error - t 參數將在 Task 6 新增至 handler 簽名
         case 'timeout':         return handleModTimeout(interaction, t)
-        // @ts-expect-error - t 參數將在 Task 6 新增至 handler 簽名
         case 'kick':            return handleModKick(interaction, t)
         default: await interaction.reply({ content: t('bot.common.unknownSubcommand'), ephemeral: true })
       }
@@ -119,7 +101,6 @@ async function routeModal(interaction: ModalSubmitInteraction): Promise<void> {
   const t: TFunction = getT(locale)
 
   if (customId.startsWith('profile-edit:')) {
-    // @ts-expect-error - t 參數將在 Task 6 新增至 handler 簽名
     return handleProfileEditSubmit(interaction, t)
   }
 

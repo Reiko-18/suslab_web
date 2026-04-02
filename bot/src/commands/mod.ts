@@ -9,6 +9,8 @@ import {
   getServerIdFromGuild,
   getUserRoleInServer,
 } from '../services/discord.js'
+import { type TFunction, getT } from '../i18n/index.js'
+import { getUserLocale } from '../services/userSettings.js'
 
 const EMBED_COLOR = 0x7c9070
 
@@ -19,28 +21,29 @@ const MODERATOR_ROLES = new Set(['moderator', 'admin'])
  */
 async function assertModerator(
   interaction: ChatInputCommandInteraction,
+  t: TFunction,
 ): Promise<{ actorUserId: string; serverId: string } | null> {
   const guildId = interaction.guildId
   if (!guildId) {
-    await interaction.editReply('此指令只能在伺服器中使用。')
+    await interaction.editReply(t('bot.common.guildOnly'))
     return null
   }
 
   const actorUserId = await resolveSupabaseUserId(interaction.user.id)
   if (!actorUserId) {
-    await interaction.editReply('請先前往 SusLab Dashboard 完成帳號綁定。')
+    await interaction.editReply(t('bot.common.linkRequiredSimple'))
     return null
   }
 
   const serverId = await getServerIdFromGuild(guildId)
   if (!serverId) {
-    await interaction.editReply('此伺服器尚未在 SusLab 系統中設定。')
+    await interaction.editReply(t('bot.common.serverNotSetup'))
     return null
   }
 
   const role = await getUserRoleInServer(actorUserId, serverId)
   if (!MODERATOR_ROLES.has(role)) {
-    await interaction.editReply('你沒有足夠的權限使用此指令。')
+    await interaction.editReply(t('bot.common.noPermission'))
     return null
   }
 
@@ -81,10 +84,11 @@ async function writeAuditLog(params: {
  */
 export async function handleModTicketStatus(
   interaction: ChatInputCommandInteraction,
+  t: TFunction,
 ): Promise<void> {
   await interaction.deferReply({ ephemeral: true })
 
-  const auth = await assertModerator(interaction)
+  const auth = await assertModerator(interaction, t)
   if (!auth) return
 
   const ticketIdPrefix = interaction.options.getString('ticket-id', true)
@@ -98,7 +102,7 @@ export async function handleModTicketStatus(
     .single()
 
   if (fetchError || !ticket) {
-    await interaction.editReply('找不到對應的票券。')
+    await interaction.editReply(t('bot.mod.ticketNotFound'))
     return
   }
 
@@ -109,7 +113,7 @@ export async function handleModTicketStatus(
 
   if (updateError) {
     console.error('[mod] 更新票券狀態失敗:', updateError)
-    await interaction.editReply('更新票券狀態時發生錯誤，請稍後再試。')
+    await interaction.editReply(t('bot.mod.ticketStatusError'))
     return
   }
 
@@ -122,9 +126,14 @@ export async function handleModTicketStatus(
           embeds: [
             new EmbedBuilder()
               .setColor(EMBED_COLOR)
-              .setTitle('票券狀態更新')
-              .setDescription(`狀態已由 **${ticket.status as string}** 更新為 **${newStatus}**`)
-              .setFooter({ text: `由 ${interaction.user.tag} 操作` })
+              .setTitle(t('bot.mod.ticketStatusUpdateTitle'))
+              .setDescription(
+                t('bot.mod.ticketStatusUpdateDesc', {
+                  from: ticket.status as string,
+                  to: newStatus,
+                }),
+              )
+              .setFooter({ text: t('bot.mod.ticketStatusUpdateFooter', { tag: interaction.user.tag }) })
               .setTimestamp(),
           ],
         })
@@ -145,8 +154,9 @@ export async function handleModTicketStatus(
     serverId: auth.serverId,
   })
 
+  const shortId = (ticket.id as string).slice(0, 8)
   await interaction.editReply(
-    `✅ 票券 \`${(ticket.id as string).slice(0, 8)}\` 狀態已更新為 **${newStatus}**。`,
+    t('bot.mod.ticketStatusSuccess', { shortId, status: newStatus }),
   )
 }
 
@@ -155,10 +165,11 @@ export async function handleModTicketStatus(
  */
 export async function handleModTicketAssign(
   interaction: ChatInputCommandInteraction,
+  t: TFunction,
 ): Promise<void> {
   await interaction.deferReply({ ephemeral: true })
 
-  const auth = await assertModerator(interaction)
+  const auth = await assertModerator(interaction, t)
   if (!auth) return
 
   const ticketIdPrefix = interaction.options.getString('ticket-id', true)
@@ -172,13 +183,13 @@ export async function handleModTicketAssign(
     .single()
 
   if (fetchError || !ticket) {
-    await interaction.editReply('找不到對應的票券。')
+    await interaction.editReply(t('bot.mod.ticketNotFound'))
     return
   }
 
   const assigneeUserId = await resolveSupabaseUserId(targetDiscordUser.id)
   if (!assigneeUserId) {
-    await interaction.editReply('該使用者尚未綁定 SusLab 帳號。')
+    await interaction.editReply(t('bot.mod.ticketAssignUserNotBound'))
     return
   }
 
@@ -189,7 +200,7 @@ export async function handleModTicketAssign(
 
   if (updateError) {
     console.error('[mod] 指派票券失敗:', updateError)
-    await interaction.editReply('指派票券時發生錯誤，請稍後再試。')
+    await interaction.editReply(t('bot.mod.ticketAssignError'))
     return
   }
 
@@ -204,8 +215,9 @@ export async function handleModTicketAssign(
     serverId: auth.serverId,
   })
 
+  const shortId = (ticket.id as string).slice(0, 8)
   await interaction.editReply(
-    `✅ 票券 \`${(ticket.id as string).slice(0, 8)}\` 已指派給 ${targetDiscordUser.toString()}。`,
+    t('bot.mod.ticketAssignSuccess', { shortId, user: targetDiscordUser.toString() }),
   )
 }
 
@@ -214,10 +226,11 @@ export async function handleModTicketAssign(
  */
 export async function handleModFeedbackReview(
   interaction: ChatInputCommandInteraction,
+  t: TFunction,
 ): Promise<void> {
   await interaction.deferReply({ ephemeral: true })
 
-  const auth = await assertModerator(interaction)
+  const auth = await assertModerator(interaction, t)
   if (!auth) return
 
   const feedbackIdPrefix = interaction.options.getString('feedback-id', true)
@@ -231,7 +244,7 @@ export async function handleModFeedbackReview(
     .single()
 
   if (fetchError || !feedback) {
-    await interaction.editReply('找不到對應的回饋項目。')
+    await interaction.editReply(t('bot.mod.feedbackNotFound'))
     return
   }
 
@@ -242,7 +255,7 @@ export async function handleModFeedbackReview(
 
   if (updateError) {
     console.error('[mod] 更新回饋狀態失敗:', updateError)
-    await interaction.editReply('更新回饋狀態時發生錯誤，請稍後再試。')
+    await interaction.editReply(t('bot.mod.feedbackStatusError'))
     return
   }
 
@@ -257,18 +270,22 @@ export async function handleModFeedbackReview(
     serverId: auth.serverId,
   })
 
+  const shortId = (feedback.id as string).slice(0, 8)
   await interaction.editReply(
-    `✅ 回饋 \`${(feedback.id as string).slice(0, 8)}\` 狀態已更新為 **${newStatus}**。`,
+    t('bot.mod.feedbackStatusSuccess', { shortId, status: newStatus }),
   )
 }
 
 /**
  * /mod warn
  */
-export async function handleModWarn(interaction: ChatInputCommandInteraction): Promise<void> {
+export async function handleModWarn(
+  interaction: ChatInputCommandInteraction,
+  t: TFunction,
+): Promise<void> {
   await interaction.deferReply({ ephemeral: true })
 
-  const auth = await assertModerator(interaction)
+  const auth = await assertModerator(interaction, t)
   if (!auth) return
 
   const targetDiscordUser = interaction.options.getUser('user', true)
@@ -288,16 +305,18 @@ export async function handleModWarn(interaction: ChatInputCommandInteraction): P
     serverId: auth.serverId,
   })
 
-  // 嘗試 DM 使用者
+  // 嘗試 DM 使用者 — 使用目標使用者的語言
   try {
+    const targetLocale = await getUserLocale(targetDiscordUser.id, undefined)
+    const targetT = getT(targetLocale)
     const dmChannel = await targetDiscordUser.createDM()
     await dmChannel.send({
       embeds: [
         new EmbedBuilder()
           .setColor(0xff6b6b)
-          .setTitle('⚠️ 你收到一則警告')
-          .setDescription(`**原因：** ${reason}`)
-          .setFooter({ text: `來自 ${interaction.guild?.name ?? '未知伺服器'}` })
+          .setTitle(targetT('bot.mod.warnDmTitle'))
+          .setDescription(targetT('bot.mod.warnDmReason', { reason }))
+          .setFooter({ text: targetT('bot.mod.warnDmFooter', { guild: interaction.guild?.name ?? targetT('bot.mod.warnUnknownGuild') }) })
           .setTimestamp(),
       ],
     })
@@ -305,31 +324,34 @@ export async function handleModWarn(interaction: ChatInputCommandInteraction): P
     console.error('[mod] 無法發送 DM 警告:', dmErr)
   }
 
-  const logNote = targetUserId ? '' : '（使用者未綁定帳號，未記錄至 Supabase）'
+  const logNote = targetUserId ? '' : t('bot.mod.warnLogNote')
   await interaction.editReply(
-    `✅ 已警告 ${targetDiscordUser.toString()}。原因：${reason} ${logNote}`,
+    t('bot.mod.warnSuccess', { user: targetDiscordUser.toString(), reason, logNote }),
   )
 }
 
 /**
  * /mod timeout
  */
-export async function handleModTimeout(interaction: ChatInputCommandInteraction): Promise<void> {
+export async function handleModTimeout(
+  interaction: ChatInputCommandInteraction,
+  t: TFunction,
+): Promise<void> {
   await interaction.deferReply({ ephemeral: true })
 
-  const auth = await assertModerator(interaction)
+  const auth = await assertModerator(interaction, t)
   if (!auth) return
 
   const targetDiscordUser = interaction.options.getUser('user', true)
   const durationMinutes = interaction.options.getInteger('duration', true)
-  const reason = interaction.options.getString('reason') ?? '未說明原因'
+  const reason = interaction.options.getString('reason') ?? t('bot.mod.timeoutDefaultReason')
 
   const guildMember = interaction.guild?.members.cache.get(targetDiscordUser.id) as
     | GuildMember
     | undefined
 
   if (!guildMember) {
-    await interaction.editReply('找不到此伺服器成員。')
+    await interaction.editReply(t('bot.common.memberNotFound'))
     return
   }
 
@@ -337,7 +359,7 @@ export async function handleModTimeout(interaction: ChatInputCommandInteraction)
     await guildMember.timeout(durationMinutes * 60 * 1000, reason)
   } catch (timeoutErr) {
     console.error('[mod] 禁言失敗:', timeoutErr)
-    await interaction.editReply('禁言失敗，可能是因為機器人權限不足或目標為管理員。')
+    await interaction.editReply(t('bot.mod.timeoutFailed'))
     return
   }
 
@@ -353,28 +375,31 @@ export async function handleModTimeout(interaction: ChatInputCommandInteraction)
   })
 
   await interaction.editReply(
-    `✅ 已禁言 ${targetDiscordUser.toString()} **${durationMinutes} 分鐘**。原因：${reason}`,
+    t('bot.mod.timeoutSuccess', { user: targetDiscordUser.toString(), duration: durationMinutes, reason }),
   )
 }
 
 /**
  * /mod kick
  */
-export async function handleModKick(interaction: ChatInputCommandInteraction): Promise<void> {
+export async function handleModKick(
+  interaction: ChatInputCommandInteraction,
+  t: TFunction,
+): Promise<void> {
   await interaction.deferReply({ ephemeral: true })
 
-  const auth = await assertModerator(interaction)
+  const auth = await assertModerator(interaction, t)
   if (!auth) return
 
   const targetDiscordUser = interaction.options.getUser('user', true)
-  const reason = interaction.options.getString('reason') ?? '未說明原因'
+  const reason = interaction.options.getString('reason') ?? t('bot.mod.kickDefaultReason')
 
   const guildMember = interaction.guild?.members.cache.get(targetDiscordUser.id) as
     | GuildMember
     | undefined
 
   if (!guildMember) {
-    await interaction.editReply('找不到此伺服器成員。')
+    await interaction.editReply(t('bot.common.memberNotFound'))
     return
   }
 
@@ -382,7 +407,7 @@ export async function handleModKick(interaction: ChatInputCommandInteraction): P
     await guildMember.kick(reason)
   } catch (kickErr) {
     console.error('[mod] 踢除失敗:', kickErr)
-    await interaction.editReply('踢除失敗，可能是因為機器人權限不足或目標為管理員。')
+    await interaction.editReply(t('bot.mod.kickFailed'))
     return
   }
 
@@ -398,6 +423,6 @@ export async function handleModKick(interaction: ChatInputCommandInteraction): P
   })
 
   await interaction.editReply(
-    `✅ 已踢除 **${targetDiscordUser.tag}**。原因：${reason}`,
+    t('bot.mod.kickSuccess', { tag: targetDiscordUser.tag, reason }),
   )
 }

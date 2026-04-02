@@ -1,24 +1,28 @@
 import { ChatInputCommandInteraction, EmbedBuilder } from 'discord.js'
 import { supabase } from '../services/supabase.js'
 import { resolveSupabaseUserId, getServerIdFromGuild } from '../services/discord.js'
+import { type TFunction } from '../i18n/index.js'
 
 const EMBED_COLOR = 0x7c9070
 
 /**
  * /event list
  */
-export async function handleEventList(interaction: ChatInputCommandInteraction): Promise<void> {
+export async function handleEventList(
+  interaction: ChatInputCommandInteraction,
+  t: TFunction,
+): Promise<void> {
   await interaction.deferReply({ ephemeral: true })
 
   const guildId = interaction.guildId
   if (!guildId) {
-    await interaction.editReply('此指令只能在伺服器中使用。')
+    await interaction.editReply(t('bot.common.guildOnly'))
     return
   }
 
   const serverId = await getServerIdFromGuild(guildId)
   if (!serverId) {
-    await interaction.editReply('此伺服器尚未在 SusLab 系統中設定。')
+    await interaction.editReply(t('bot.common.serverNotSetup'))
     return
   }
 
@@ -34,18 +38,18 @@ export async function handleEventList(interaction: ChatInputCommandInteraction):
 
   if (error) {
     console.error('[event] 查詢活動失敗:', error)
-    await interaction.editReply('查詢活動時發生錯誤，請稍後再試。')
+    await interaction.editReply(t('bot.event.listError'))
     return
   }
 
   if (!events?.length) {
-    await interaction.editReply('目前沒有即將舉辦的活動。')
+    await interaction.editReply(t('bot.event.noEvents'))
     return
   }
 
   const embed = new EmbedBuilder()
     .setColor(EMBED_COLOR)
-    .setTitle('📅 即將舉辦的活動')
+    .setTitle(t('bot.event.listTitle'))
     .setDescription(
       events
         .map((e) => {
@@ -57,7 +61,7 @@ export async function handleEventList(interaction: ChatInputCommandInteraction):
         })
         .join('\n\n'),
     )
-    .setFooter({ text: '使用 /event join <id> 報名活動' })
+    .setFooter({ text: t('bot.event.listFooter') })
     .setTimestamp()
 
   await interaction.editReply({ embeds: [embed] })
@@ -66,20 +70,23 @@ export async function handleEventList(interaction: ChatInputCommandInteraction):
 /**
  * /event join
  */
-export async function handleEventJoin(interaction: ChatInputCommandInteraction): Promise<void> {
+export async function handleEventJoin(
+  interaction: ChatInputCommandInteraction,
+  t: TFunction,
+): Promise<void> {
   await interaction.deferReply({ ephemeral: true })
 
   const discordUserId = interaction.user.id
   const guildId = interaction.guildId
 
   if (!guildId) {
-    await interaction.editReply('此指令只能在伺服器中使用。')
+    await interaction.editReply(t('bot.common.guildOnly'))
     return
   }
 
   const userId = await resolveSupabaseUserId(discordUserId)
   if (!userId) {
-    await interaction.editReply('請先前往 SusLab Dashboard 完成帳號綁定，才能報名活動。')
+    await interaction.editReply(t('bot.common.linkRequiredEvent'))
     return
   }
 
@@ -94,7 +101,7 @@ export async function handleEventJoin(interaction: ChatInputCommandInteraction):
     .single()
 
   if (fetchError || !event) {
-    await interaction.editReply('找不到對應的活動。')
+    await interaction.editReply(t('bot.event.notFound'))
     return
   }
 
@@ -107,7 +114,7 @@ export async function handleEventJoin(interaction: ChatInputCommandInteraction):
     .single()
 
   if (existing) {
-    await interaction.editReply('你已經報名此活動了。')
+    await interaction.editReply(t('bot.event.alreadyJoined'))
     return
   }
 
@@ -118,7 +125,7 @@ export async function handleEventJoin(interaction: ChatInputCommandInteraction):
 
   if (regError) {
     console.error('[event] 報名活動失敗:', regError)
-    await interaction.editReply('報名活動時發生錯誤，請稍後再試。')
+    await interaction.editReply(t('bot.event.joinError'))
     return
   }
 
@@ -131,14 +138,14 @@ export async function handleEventJoin(interaction: ChatInputCommandInteraction):
 
   const embed = new EmbedBuilder()
     .setColor(EMBED_COLOR)
-    .setTitle('✅ 報名成功')
-    .setDescription(`你已成功報名「**${event.title as string}**」！`)
+    .setTitle(t('bot.event.joinSuccessTitle'))
+    .setDescription(t('bot.event.joinSuccessDesc', { title: event.title as string }))
     .addFields(
-      { name: '日期', value: `${event.date as string}${event.time ? ` ${event.time as string}` : ''}`, inline: true },
+      { name: t('bot.event.fieldDate'), value: `${event.date as string}${event.time ? ` ${event.time as string}` : ''}`, inline: true },
     )
 
   if (event.location) {
-    embed.addFields({ name: '地點', value: event.location as string, inline: true })
+    embed.addFields({ name: t('bot.event.fieldLocation'), value: event.location as string, inline: true })
   }
 
   embed.setTimestamp()
@@ -148,14 +155,17 @@ export async function handleEventJoin(interaction: ChatInputCommandInteraction):
 /**
  * /event leave
  */
-export async function handleEventLeave(interaction: ChatInputCommandInteraction): Promise<void> {
+export async function handleEventLeave(
+  interaction: ChatInputCommandInteraction,
+  t: TFunction,
+): Promise<void> {
   await interaction.deferReply({ ephemeral: true })
 
   const discordUserId = interaction.user.id
   const userId = await resolveSupabaseUserId(discordUserId)
 
   if (!userId) {
-    await interaction.editReply('請先前往 SusLab Dashboard 完成帳號綁定。')
+    await interaction.editReply(t('bot.common.linkRequiredSimple'))
     return
   }
 
@@ -170,7 +180,7 @@ export async function handleEventLeave(interaction: ChatInputCommandInteraction)
     .single()
 
   if (fetchError || !event) {
-    await interaction.editReply('找不到對應的活動。')
+    await interaction.editReply(t('bot.event.notFound'))
     return
   }
 
@@ -183,12 +193,12 @@ export async function handleEventLeave(interaction: ChatInputCommandInteraction)
 
   if (deleteError) {
     console.error('[event] 取消報名失敗:', deleteError)
-    await interaction.editReply('取消報名時發生錯誤，請稍後再試。')
+    await interaction.editReply(t('bot.event.leaveError'))
     return
   }
 
   if (!count || count === 0) {
-    await interaction.editReply('你並未報名此活動。')
+    await interaction.editReply(t('bot.event.notJoined'))
     return
   }
 
@@ -199,5 +209,5 @@ export async function handleEventLeave(interaction: ChatInputCommandInteraction)
     .update({ attendees: Math.max(0, currentAttendees - 1) })
     .eq('id', event.id)
 
-  await interaction.editReply(`✅ 已取消報名「**${event.title as string}**」。`)
+  await interaction.editReply(t('bot.event.leaveSuccess', { title: event.title as string }))
 }

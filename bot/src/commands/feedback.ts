@@ -1,38 +1,48 @@
 import { ChatInputCommandInteraction, EmbedBuilder } from 'discord.js'
 import { supabase } from '../services/supabase.js'
 import { resolveSupabaseUserId, getServerIdFromGuild } from '../services/discord.js'
+import { type TFunction } from '../i18n/index.js'
 
 const EMBED_COLOR = 0x7c9070
 
-const CATEGORY_LABELS: Record<string, string> = {
-  feature: '💡 功能建議',
-  event: '🎉 活動建議',
-  bug: '🐛 錯誤回報',
+/**
+ * 根據分類取得本地化標籤
+ */
+function getCategoryLabel(category: string, t: TFunction): string {
+  const map: Record<string, string> = {
+    feature: t('bot.feedback.categoryFeature'),
+    event:   t('bot.feedback.categoryEvent'),
+    bug:     t('bot.feedback.categoryBug'),
+  }
+  return map[category] ?? category
 }
 
 /**
  * /feedback submit
  */
-export async function handleFeedbackSubmit(interaction: ChatInputCommandInteraction): Promise<void> {
+export async function handleFeedbackSubmit(
+  interaction: ChatInputCommandInteraction,
+  t: TFunction,
+): Promise<void> {
   await interaction.deferReply({ ephemeral: true })
 
   const discordUserId = interaction.user.id
   const guildId = interaction.guildId
 
   if (!guildId) {
-    await interaction.editReply('此指令只能在伺服器中使用。')
+    await interaction.editReply(t('bot.common.guildOnly'))
     return
   }
 
   const userId = await resolveSupabaseUserId(discordUserId)
   if (!userId) {
-    await interaction.editReply('請先前往 SusLab Dashboard 完成帳號綁定，才能提交回饋。')
+    await interaction.editReply(t('bot.common.linkRequiredFeedback'))
     return
   }
 
   const serverId = await getServerIdFromGuild(guildId)
   if (!serverId) {
-    await interaction.editReply('此伺服器尚未在 SusLab 系統中設定。')
+    await interaction.editReply(t('bot.common.serverNotSetup'))
     return
   }
 
@@ -56,7 +66,7 @@ export async function handleFeedbackSubmit(interaction: ChatInputCommandInteract
 
   if (error || !feedback) {
     console.error('[feedback] 提交回饋失敗:', error)
-    await interaction.editReply('提交回饋時發生錯誤，請稍後再試。')
+    await interaction.editReply(t('bot.feedback.submitError'))
     return
   }
 
@@ -64,12 +74,12 @@ export async function handleFeedbackSubmit(interaction: ChatInputCommandInteract
 
   const embed = new EmbedBuilder()
     .setColor(EMBED_COLOR)
-    .setTitle('✅ 回饋已提交')
+    .setTitle(t('bot.feedback.submitSuccess'))
     .addFields(
-      { name: 'ID', value: `\`${shortId}\``, inline: true },
-      { name: '分類', value: CATEGORY_LABELS[category] ?? category, inline: true },
-      { name: '標題', value: title },
-      { name: '描述', value: description },
+      { name: t('bot.feedback.fieldId'), value: `\`${shortId}\``, inline: true },
+      { name: t('bot.feedback.fieldCategory'), value: getCategoryLabel(category, t), inline: true },
+      { name: t('bot.feedback.fieldTitle'), value: title },
+      { name: t('bot.feedback.fieldDescription'), value: description },
     )
     .setTimestamp()
 
@@ -79,18 +89,21 @@ export async function handleFeedbackSubmit(interaction: ChatInputCommandInteract
 /**
  * /feedback list
  */
-export async function handleFeedbackList(interaction: ChatInputCommandInteraction): Promise<void> {
+export async function handleFeedbackList(
+  interaction: ChatInputCommandInteraction,
+  t: TFunction,
+): Promise<void> {
   await interaction.deferReply({ ephemeral: true })
 
   const guildId = interaction.guildId
   if (!guildId) {
-    await interaction.editReply('此指令只能在伺服器中使用。')
+    await interaction.editReply(t('bot.common.guildOnly'))
     return
   }
 
   const serverId = await getServerIdFromGuild(guildId)
   if (!serverId) {
-    await interaction.editReply('此伺服器尚未在 SusLab 系統中設定。')
+    await interaction.editReply(t('bot.common.serverNotSetup'))
     return
   }
 
@@ -111,23 +124,23 @@ export async function handleFeedbackList(interaction: ChatInputCommandInteractio
 
   if (error) {
     console.error('[feedback] 查詢回饋列表失敗:', error)
-    await interaction.editReply('查詢回饋列表時發生錯誤，請稍後再試。')
+    await interaction.editReply(t('bot.feedback.listError'))
     return
   }
 
   if (!feedbacks?.length) {
-    await interaction.editReply('目前沒有任何回饋。')
+    await interaction.editReply(t('bot.feedback.noFeedbacks'))
     return
   }
 
   const embed = new EmbedBuilder()
     .setColor(EMBED_COLOR)
-    .setTitle('📊 回饋列表（依票數排序）')
+    .setTitle(t('bot.feedback.listTitle'))
     .setDescription(
       feedbacks
         .map(
           (f) =>
-            `**\`${(f.id as string).slice(0, 8)}\`** ${f.title as string}\n${CATEGORY_LABELS[f.category as string] ?? f.category as string} • 👍 ${f.vote_count as number} 票 • ${f.status as string}`,
+            `**\`${(f.id as string).slice(0, 8)}\`** ${f.title as string}\n${getCategoryLabel(f.category as string, t)} • 👍 ${f.vote_count as number} 票 • ${f.status as string}`,
         )
         .join('\n\n'),
     )
@@ -139,14 +152,17 @@ export async function handleFeedbackList(interaction: ChatInputCommandInteractio
 /**
  * /feedback vote
  */
-export async function handleFeedbackVote(interaction: ChatInputCommandInteraction): Promise<void> {
+export async function handleFeedbackVote(
+  interaction: ChatInputCommandInteraction,
+  t: TFunction,
+): Promise<void> {
   await interaction.deferReply({ ephemeral: true })
 
   const discordUserId = interaction.user.id
   const userId = await resolveSupabaseUserId(discordUserId)
 
   if (!userId) {
-    await interaction.editReply('請先前往 SusLab Dashboard 完成帳號綁定，才能投票。')
+    await interaction.editReply(t('bot.common.linkRequiredVote'))
     return
   }
 
@@ -161,7 +177,7 @@ export async function handleFeedbackVote(interaction: ChatInputCommandInteractio
     .single()
 
   if (fetchError || !feedback) {
-    await interaction.editReply('找不到對應的回饋項目。')
+    await interaction.editReply(t('bot.feedback.notFound'))
     return
   }
 
@@ -174,7 +190,7 @@ export async function handleFeedbackVote(interaction: ChatInputCommandInteractio
     .single()
 
   if (existingVote) {
-    await interaction.editReply('你已經為此回饋投過票了。')
+    await interaction.editReply(t('bot.feedback.alreadyVoted'))
     return
   }
 
@@ -185,7 +201,7 @@ export async function handleFeedbackVote(interaction: ChatInputCommandInteractio
 
   if (voteError) {
     console.error('[feedback] 投票失敗:', voteError)
-    await interaction.editReply('投票時發生錯誤，請稍後再試。')
+    await interaction.editReply(t('bot.feedback.voteError'))
     return
   }
 
@@ -197,6 +213,6 @@ export async function handleFeedbackVote(interaction: ChatInputCommandInteractio
     .eq('id', feedback.id)
 
   await interaction.editReply(
-    `👍 已為「**${feedback.title as string}**」投票！目前共 ${currentVotes + 1} 票。`,
+    t('bot.feedback.voteSuccess', { title: feedback.title as string, count: currentVotes + 1 }),
   )
 }

@@ -9,13 +9,17 @@ import {
 } from 'discord.js'
 import { supabase } from '../services/supabase.js'
 import { resolveSupabaseUserId } from '../services/discord.js'
+import { type TFunction } from '../i18n/index.js'
 
 const EMBED_COLOR = 0x7c9070
 
 /**
  * /profile view
  */
-export async function handleProfileView(interaction: ChatInputCommandInteraction): Promise<void> {
+export async function handleProfileView(
+  interaction: ChatInputCommandInteraction,
+  t: TFunction,
+): Promise<void> {
   await interaction.deferReply({ ephemeral: true })
 
   // 判斷要查看的使用者
@@ -26,8 +30,8 @@ export async function handleProfileView(interaction: ChatInputCommandInteraction
     const isSelf = targetDiscordUser.id === interaction.user.id
     await interaction.editReply(
       isSelf
-        ? '請先前往 SusLab Dashboard 完成帳號綁定，才能查看個人資料。'
-        : `此使用者尚未綁定 SusLab 帳號。`,
+        ? t('bot.common.linkRequiredProfile')
+        : t('bot.profile.notBound'),
     )
     return
   }
@@ -39,7 +43,7 @@ export async function handleProfileView(interaction: ChatInputCommandInteraction
     .single()
 
   if (error || !profile) {
-    await interaction.editReply('找不到此使用者的個人資料。')
+    await interaction.editReply(t('bot.profile.notFound'))
     return
   }
 
@@ -51,9 +55,9 @@ export async function handleProfileView(interaction: ChatInputCommandInteraction
   if (isPrivate && !isSelf) {
     const embed = new EmbedBuilder()
       .setColor(EMBED_COLOR)
-      .setTitle(`${targetDiscordUser.username} 的個人資料`)
+      .setTitle(t('bot.profile.embedTitle', { username: targetDiscordUser.username }))
       .setThumbnail(targetDiscordUser.displayAvatarURL())
-      .setDescription('此使用者的個人資料為私人。')
+      .setDescription(t('bot.profile.isPrivate'))
       .setTimestamp()
 
     await interaction.editReply({ embeds: [embed] })
@@ -67,7 +71,7 @@ export async function handleProfileView(interaction: ChatInputCommandInteraction
 
   const embed = new EmbedBuilder()
     .setColor(EMBED_COLOR)
-    .setTitle(`${targetDiscordUser.username} 的個人資料`)
+    .setTitle(t('bot.profile.embedTitle', { username: targetDiscordUser.username }))
     .setThumbnail(targetDiscordUser.displayAvatarURL())
     .setTimestamp()
 
@@ -78,7 +82,7 @@ export async function handleProfileView(interaction: ChatInputCommandInteraction
   if (showSkills && profile.skill_tags) {
     const tags = profile.skill_tags as string[]
     if (tags.length > 0) {
-      embed.addFields({ name: '🛠 技能標籤', value: tags.join(', ') })
+      embed.addFields({ name: t('bot.profile.fieldSkills'), value: tags.join(', ') })
     }
   }
 
@@ -90,7 +94,7 @@ export async function handleProfileView(interaction: ChatInputCommandInteraction
       .join(' • ')
 
     if (linkText) {
-      embed.addFields({ name: '🔗 社群連結', value: linkText })
+      embed.addFields({ name: t('bot.profile.fieldSocial'), value: linkText })
     }
   }
 
@@ -100,13 +104,16 @@ export async function handleProfileView(interaction: ChatInputCommandInteraction
 /**
  * /profile edit — 顯示 Modal
  */
-export async function handleProfileEdit(interaction: ChatInputCommandInteraction): Promise<void> {
+export async function handleProfileEdit(
+  interaction: ChatInputCommandInteraction,
+  t: TFunction,
+): Promise<void> {
   const discordUserId = interaction.user.id
   const userId = await resolveSupabaseUserId(discordUserId)
 
   if (!userId) {
     await interaction.reply({
-      content: '請先前往 SusLab Dashboard 完成帳號綁定，才能編輯個人資料。',
+      content: t('bot.common.linkRequiredEdit'),
       ephemeral: true,
     })
     return
@@ -121,15 +128,15 @@ export async function handleProfileEdit(interaction: ChatInputCommandInteraction
 
   const modal = new ModalBuilder()
     .setCustomId(`profile-edit:${userId}`)
-    .setTitle('編輯個人資料')
+    .setTitle(t('bot.profile.modalTitle'))
 
   const bioInput = new TextInputBuilder()
     .setCustomId('bio')
-    .setLabel('自我介紹')
+    .setLabel(t('bot.profile.bioLabel'))
     .setStyle(TextInputStyle.Paragraph)
     .setRequired(false)
     .setMaxLength(500)
-    .setPlaceholder('簡單介紹一下自己吧～')
+    .setPlaceholder(t('bot.profile.bioPlaceholder'))
 
   if (profile?.bio) {
     bioInput.setValue(profile.bio as string)
@@ -137,11 +144,11 @@ export async function handleProfileEdit(interaction: ChatInputCommandInteraction
 
   const skillsInput = new TextInputBuilder()
     .setCustomId('skill_tags')
-    .setLabel('技能標籤（以逗號分隔）')
+    .setLabel(t('bot.profile.skillsLabel'))
     .setStyle(TextInputStyle.Short)
     .setRequired(false)
     .setMaxLength(200)
-    .setPlaceholder('例：TypeScript, React, Rust')
+    .setPlaceholder(t('bot.profile.skillsPlaceholder'))
 
   if (profile?.skill_tags) {
     const tags = profile.skill_tags as string[]
@@ -159,14 +166,17 @@ export async function handleProfileEdit(interaction: ChatInputCommandInteraction
 /**
  * Modal submit handler — 儲存個人資料
  */
-export async function handleProfileEditSubmit(interaction: ModalSubmitInteraction): Promise<void> {
+export async function handleProfileEditSubmit(
+  interaction: ModalSubmitInteraction,
+  t: TFunction,
+): Promise<void> {
   await interaction.deferReply({ ephemeral: true })
 
   // customId 格式: profile-edit:<userId>
   const userId = interaction.customId.split(':')[1]
 
   if (!userId) {
-    await interaction.editReply('無法識別使用者身份，請重試。')
+    await interaction.editReply(t('bot.profile.unknownIdentity'))
     return
   }
 
@@ -185,9 +195,9 @@ export async function handleProfileEditSubmit(interaction: ModalSubmitInteractio
 
   if (error) {
     console.error('[profile] 更新個人資料失敗:', error)
-    await interaction.editReply('更新個人資料時發生錯誤，請稍後再試。')
+    await interaction.editReply(t('bot.profile.updateError'))
     return
   }
 
-  await interaction.editReply('✅ 個人資料已更新！')
+  await interaction.editReply(t('bot.profile.updateSuccess'))
 }
