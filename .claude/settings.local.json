@@ -1,0 +1,12 @@
+﻿{
+  "permissions": {
+    "allow": [
+      "Bash(grep -h \"^import.*@mui\" /c/coding_place/suslab_web/src/**/*.tsx)",
+      "Bash(find /c/coding_place/suslab_web -type f -name *.pen -o -name *figma*)",
+      "Bash(done)",
+      "Bash(npx -p typescript tsc --noEmit --pretty)",
+      "Bash(npm uninstall:*)",
+      "Bash(git stash:*)"
+    ]
+  }
+}
