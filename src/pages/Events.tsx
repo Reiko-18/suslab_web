@@ -202,13 +202,13 @@ export default function Events() {
                   {registrants[event.id]?.length > 0 ? (
                     <div css={css({ display: 'flex', flexWrap: 'wrap', gap: 0 })}>
                       {registrants[event.id].map((r, idx) => (
-                        <Avatar
-                          key={r.user_id}
-                          src={r.avatar_url}
-                          alt={r.display_name}
-                          size={28}
-                          css={css({ marginLeft: idx > 0 ? -8 : 0, border: '2px solid var(--color-surface)', borderRadius: '50%' })}
-                        />
+                        <div key={r.user_id} style={{ marginLeft: idx > 0 ? -8 : 0, display: 'inline-block' }}>
+                          <Avatar
+                            src={r.avatar_url}
+                            alt={r.display_name}
+                            size={28}
+                          />
+                        </div>
                       ))}
                     </div>
                   ) : (
