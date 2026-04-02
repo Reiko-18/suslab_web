@@ -10,6 +10,32 @@ import { registerMessageCreate } from './listeners/messageCreate.js'
 import { startActionQueueWorker } from './workers/actionQueue.js'
 import { registerCommands } from './commands/register.js'
 
+// Health check HTTP server — 必須最先啟動，Render 需要在啟動時偵測到開放的 port
+const PORT = parseInt(process.env.PORT ?? '3001', 10)
+const RENDER_URL = process.env.RENDER_EXTERNAL_URL ?? ''
+let botReady = false
+
+const server = http.createServer((_req, res) => {
+  res.writeHead(botReady ? 200 : 503, { 'Content-Type': 'application/json' })
+  res.end(JSON.stringify({
+    status: botReady ? 'ok' : 'starting',
+    uptime: process.uptime(),
+  }))
+})
+
+server.listen(PORT, () => {
+  console.log(`Health check server listening on port ${PORT}`)
+
+  if (RENDER_URL) {
+    const INTERVAL = 14 * 60 * 1000
+    setInterval(() => {
+      fetch(RENDER_URL).catch(() => {})
+    }, INTERVAL)
+    console.log(`Self-ping enabled: ${RENDER_URL} every 14 minutes`)
+  }
+})
+
+// 初始化 i18n
 await initI18n()
 
 const client = new Client({
@@ -21,14 +47,10 @@ const client = new Client({
   ],
 })
 
-// 註冊成員事件監聽器
+// 註冊事件監聽器
 registerGuildMemberAdd(client)
 registerGuildMemberRemove(client)
-
-// 註冊 Slash Command 處理器
 registerCommandHandler(client)
-
-// 註冊訊息建立監聽器（ticket 頻道自動建立票券）
 registerMessageCreate(client)
 
 client.once(Events.ClientReady, async (c) => {
@@ -37,15 +59,15 @@ client.once(Events.ClientReady, async (c) => {
   await registerCommands().catch(err => console.error('Slash command 自動註冊失敗:', err))
   await fullSync(client).catch(err => console.error('Guild 同步失敗:', err))
   startActionQueueWorker(client)
+  botReady = true
   console.log('All systems operational')
 })
 
-// Discord client 錯誤處理 — 防止未捕獲的錯誤導致 process 崩潰
+// 錯誤處理
 client.on(Events.Error, (err) => {
   console.error('Discord client error:', err)
 })
 
-// 全域未捕獲錯誤處理
 process.on('unhandledRejection', (err) => {
   console.error('Unhandled rejection:', err)
 })
@@ -64,33 +86,6 @@ process.on('SIGTERM', () => {
   console.log('Shutting down...')
   client.destroy()
   process.exit(0)
-})
-
-// Health check HTTP server (keeps Render free Web Service alive)
-const PORT = parseInt(process.env.PORT ?? '3001', 10)
-const RENDER_URL = process.env.RENDER_EXTERNAL_URL ?? ''
-
-const server = http.createServer((_req, res) => {
-  const isReady = client.isReady()
-  res.writeHead(isReady ? 200 : 503, { 'Content-Type': 'application/json' })
-  res.end(JSON.stringify({
-    status: isReady ? 'ok' : 'starting',
-    uptime: process.uptime(),
-    guilds: client.guilds?.cache.size ?? 0,
-  }))
-})
-
-server.listen(PORT, () => {
-  console.log(`Health check server listening on port ${PORT}`)
-
-  // Self-ping every 14 minutes to prevent Render free tier from sleeping
-  if (RENDER_URL) {
-    const INTERVAL = 14 * 60 * 1000
-    setInterval(() => {
-      fetch(RENDER_URL).catch(() => {})
-    }, INTERVAL)
-    console.log(`Self-ping enabled: ${RENDER_URL} every 14 minutes`)
-  }
 })
 
 client.login(config.discord.token)
