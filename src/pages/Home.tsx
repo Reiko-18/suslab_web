@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { edgeFunctions } from '../services/edgeFunctions'
+import { useActiveServer } from '../hooks/useActiveServer'
 import { Icon, Button, Skeleton } from '../components/ui'
 
 interface Announcement {
@@ -30,6 +31,7 @@ const EVENTS_PER_PAGE = 10
 export default function Home() {
   const { t, i18n } = useTranslation()
   const navigate = useNavigate()
+  const serverId = useActiveServer()
   const [announcements, setAnnouncements] = useState<Announcement[]>([])
   const [events, setEvents] = useState<EventItem[]>([])
   const [loadingAnn, setLoadingAnn] = useState(true)
@@ -39,19 +41,19 @@ export default function Home() {
   const [currentPage, setCurrentPage] = useState(1)
 
   useEffect(() => {
-    edgeFunctions.listAnnouncements({ page: 1, pageSize: 5 })
+    edgeFunctions.listAnnouncements({ page: 1, pageSize: 5, server_id: serverId })
       .then((data: { announcements?: Announcement[] }) => setAnnouncements(data.announcements ?? []))
       .catch((err: unknown) => console.error('Failed to load announcements:', err))
       .finally(() => setLoadingAnn(false))
 
-    edgeFunctions.getEvents()
+    edgeFunctions.getEvents(serverId)
       .then((data: EventItem[] | { events?: EventItem[] }) => {
         const items = Array.isArray(data) ? data : (data.events ?? [])
         setEvents(items)
       })
       .catch((err: unknown) => console.error('Failed to load events:', err))
       .finally(() => setLoadingEvents(false))
-  }, [])
+  }, [serverId])
 
   // Carousel auto-advance
   const carouselItems = announcements.length > 0 ? announcements : []

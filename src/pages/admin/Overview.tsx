@@ -3,6 +3,7 @@ import { css } from '@emotion/react'
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { edgeFunctions } from '../../services/edgeFunctions'
+import { useActiveServer } from '../../hooks/useActiveServer'
 import { Icon, Card, Alert, CircularProgress } from '../../components/ui'
 import { Container, Grid } from '../../components/layout'
 import AuditLogTable from '../../components/admin/AuditLogTable'
@@ -16,16 +17,17 @@ interface StatCardItem {
 
 export default function Overview() {
   const { t } = useTranslation()
+  const serverId = useActiveServer()
   const [stats, setStats] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    edgeFunctions.getAdminOverview()
+    edgeFunctions.getAdminOverview(serverId)
       .then(setStats)
       .catch((err: any) => setError(err.message))
       .finally(() => setLoading(false))
-  }, [])
+  }, [serverId])
 
   if (loading) {
     return (

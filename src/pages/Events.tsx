@@ -3,6 +3,7 @@ import { css } from '@emotion/react'
 import { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { edgeFunctions } from '../services/edgeFunctions'
+import { useActiveServer } from '../hooks/useActiveServer'
 import { Icon, Button, Card, Chip, Skeleton, Snackbar, Avatar } from '../components/ui'
 import { Container, Stack, Grid } from '../components/layout'
 import LevelCard from '../components/LevelCard'
@@ -15,6 +16,7 @@ interface SnackState {
 
 export default function Events() {
   const { t } = useTranslation()
+  const serverId = useActiveServer()
   const [events, setEvents] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -30,14 +32,14 @@ export default function Events() {
   const loadEvents = useCallback(async () => {
     try {
       setLoading(true)
-      const data = await edgeFunctions.getEvents()
+      const data = await edgeFunctions.getEvents(serverId)
       setEvents(data ?? [])
     } catch (err: any) {
       setError(err.message)
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [serverId])
 
   const loadLevel = useCallback(async () => {
     try {

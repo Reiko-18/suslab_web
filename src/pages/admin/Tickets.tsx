@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { edgeFunctions } from '../../services/edgeFunctions'
 import { useAuth } from '../../context/AuthContext'
+import { useActiveServer } from '../../hooks/useActiveServer'
 import { Icon, Button, Chip, Avatar, Alert, CircularProgress, Tabs, Table } from '../../components/ui'
 import { Container } from '../../components/layout'
 import TicketDetailDialog from '../../components/admin/TicketDetailDialog'
@@ -34,18 +35,19 @@ export default function Tickets() {
   const [detailTicket, setDetailTicket] = useState<any>(null)
   const [createOpen, setCreateOpen] = useState(false)
 
+  const serverId = useActiveServer()
   const isAdmin: boolean = hasRole('admin')
 
   useEffect(() => {
     let cancelled = false
-    edgeFunctions.listTickets({ status: statusFilter === 'all' ? undefined : statusFilter })
+    edgeFunctions.listTickets({ status: statusFilter === 'all' ? undefined : statusFilter, server_id: serverId })
       .then((data: any) => { if (!cancelled) { setTickets(data ?? []); setLoading(false) } })
       .catch((err: any) => { if (!cancelled) { setError(err.message); setLoading(false) } })
     return () => { cancelled = true }
-  }, [statusFilter])
+  }, [statusFilter, serverId])
 
   const handleCreate = async (ticketData: any) => {
-    const created = await edgeFunctions.createTicket(ticketData)
+    const created = await edgeFunctions.createTicket({ ...ticketData, server_id: serverId })
     setTickets((prev) => [created, ...prev])
     setNotice(t('admin.tickets.created'))
   }
@@ -57,7 +59,7 @@ export default function Tickets() {
   const handleDelete = async (id: string) => {
     if (!confirm(t('admin.tickets.confirmDelete'))) return
     try {
-      await edgeFunctions.deleteTicket(id)
+      await edgeFunctions.deleteTicket(id, serverId)
       setTickets((prev) => prev.filter((ticket) => ticket.id !== id))
       setNotice(t('admin.tickets.deleted'))
     } catch (err: any) {

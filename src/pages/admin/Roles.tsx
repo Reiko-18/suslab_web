@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../context/AuthContext'
 import { edgeFunctions } from '../../services/edgeFunctions'
+import { useActiveServer } from '../../hooks/useActiveServer'
 import { Icon, Button, Chip, Alert, CircularProgress, Table } from '../../components/ui'
 import { Container } from '../../components/layout'
 import RoleDialog from '../../components/admin/RoleDialog'
@@ -11,6 +12,7 @@ import RoleDialog from '../../components/admin/RoleDialog'
 export default function Roles() {
   const { t } = useTranslation()
   const { hasRole } = useAuth()
+  const serverId = useActiveServer()
   const [roles, setRoles] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -21,19 +23,19 @@ export default function Roles() {
   const isAdmin: boolean = hasRole('admin')
 
   useEffect(() => {
-    edgeFunctions.listRoles()
+    edgeFunctions.listRoles(serverId)
       .then((data: any) => setRoles(data ?? []))
       .catch((err: any) => setError(err.message))
       .finally(() => setLoading(false))
-  }, [])
+  }, [serverId])
 
   const handleSave = async ({ id, name, color, position }: { id?: string; name: string; color: string; position: number }) => {
     if (id) {
-      const updated = await edgeFunctions.updateRole(id, { name, color, position })
+      const updated = await edgeFunctions.updateRole(id, { name, color, position, server_id: serverId })
       setRoles((prev) => prev.map((r) => (r.id === id ? updated : r)))
       setNotice(t('admin.roles.updated'))
     } else {
-      const created = await edgeFunctions.createRole({ name, color, position })
+      const created = await edgeFunctions.createRole({ name, color, position, server_id: serverId })
       setRoles((prev) => [...prev, created])
       setNotice(t('admin.roles.created'))
     }
@@ -42,7 +44,7 @@ export default function Roles() {
   const handleDelete = async (id: string) => {
     if (!confirm(t('admin.roles.confirmDelete'))) return
     try {
-      await edgeFunctions.deleteRole(id)
+      await edgeFunctions.deleteRole(id, serverId)
       setRoles((prev) => prev.filter((r) => r.id !== id))
       setNotice(t('admin.roles.deleted'))
     } catch (err: any) {

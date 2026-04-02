@@ -6,6 +6,7 @@ import { edgeFunctions } from '../services/edgeFunctions'
 import { Card, TextField, Switch, Button, Snackbar, Icon, Divider, CircularProgress } from './ui'
 import { Stack } from './layout'
 
+// ── Skill tag presets ──────────────────────────────────────────────────────────
 const SKILL_PRESETS = [
   'Gaming',
   'Music Production',
@@ -19,6 +20,7 @@ const SKILL_PRESETS = [
   'UI/UX Design',
 ]
 
+// ── Social link fields ─────────────────────────────────────────────────────────
 interface SocialField {
   key: string
   icon: string
@@ -33,17 +35,77 @@ const SOCIAL_FIELDS: SocialField[] = [
   { key: 'other', icon: 'link', label: 'Other' },
 ]
 
-const VISIBILITY_FIELDS = [
-  'avatar',
+// ── Visibility presets ─────────────────────────────────────────────────────────
+type VisibilityFields = {
+  bio: boolean
+  skill_tags: boolean
+  social_links: boolean
+  email: boolean
+  discord_id: boolean
+  xp_level: boolean
+  badges: boolean
+  joined_servers: boolean
+}
+
+const VISIBILITY_FIELD_KEYS: (keyof VisibilityFields)[] = [
   'bio',
-  'email',
-  'role',
-  'join_date',
   'skill_tags',
   'social_links',
-] as const
+  'email',
+  'discord_id',
+  'xp_level',
+  'badges',
+  'joined_servers',
+]
 
-type VisibilityField = typeof VISIBILITY_FIELDS[number]
+const PRESETS: Record<string, VisibilityFields> = {
+  public: {
+    bio: true,
+    skill_tags: true,
+    social_links: true,
+    email: true,
+    discord_id: true,
+    xp_level: true,
+    badges: true,
+    joined_servers: true,
+  },
+  members_only: {
+    bio: true,
+    skill_tags: true,
+    social_links: true,
+    email: false,
+    discord_id: true,
+    xp_level: true,
+    badges: true,
+    joined_servers: false,
+  },
+  private: {
+    bio: false,
+    skill_tags: false,
+    social_links: false,
+    email: false,
+    discord_id: false,
+    xp_level: false,
+    badges: false,
+    joined_servers: false,
+  },
+}
+
+type PresetKey = keyof typeof PRESETS | 'custom'
+
+function detectPreset(fields: VisibilityFields): PresetKey {
+  for (const [key, preset] of Object.entries(PRESETS) as [PresetKey, VisibilityFields][]) {
+    if (VISIBILITY_FIELD_KEYS.every((f) => preset[f] === fields[f])) return key
+  }
+  return 'custom'
+}
+
+// ── Legacy fields kept for backward-compat with old visibility data ────────────
+interface LegacyVisibility {
+  avatar?: boolean
+  role?: boolean
+  join_date?: boolean
+}
 
 interface SocialLinks {
   twitter: string
@@ -51,16 +113,6 @@ interface SocialLinks {
   pixiv: string
   youtube: string
   other: string
-}
-
-interface Visibility {
-  bio: boolean
-  email: boolean
-  skill_tags: boolean
-  social_links: boolean
-  avatar: boolean
-  role: boolean
-  join_date: boolean
 }
 
 type SnackSeverity = 'success' | 'error' | 'warning' | 'info'
@@ -71,6 +123,7 @@ interface SnackbarState {
   message: string
 }
 
+// ── Component ─────────────────────────────────────────────────────────────────
 export default function ProfileEditor() {
   const { t } = useTranslation()
   const [loading, setLoading] = useState(true)
@@ -85,17 +138,13 @@ export default function ProfileEditor() {
     youtube: '',
     other: '',
   })
-  const [visibility, setVisibility] = useState<Visibility>({
-    bio: true,
-    email: true,
-    skill_tags: true,
-    social_links: true,
-    avatar: true,
-    role: true,
-    join_date: true,
-  })
+
+  const [visibilityFields, setVisibilityFields] = useState<VisibilityFields>(PRESETS.public)
+  const [preset, setPreset] = useState<PresetKey>('public')
+
   const [snackbar, setSnackbar] = useState<SnackbarState>({ open: false, severity: 'success', message: '' })
 
+  // Load profile
   useEffect(() => {
     const load = async () => {
       try {
@@ -103,7 +152,7 @@ export default function ProfileEditor() {
           bio?: string
           skill_tags?: string[]
           social_links?: Partial<SocialLinks>
-          visibility?: Partial<Visibility>
+          visibility?: Partial<VisibilityFields & LegacyVisibility> | { preset?: string; fields?: Partial<VisibilityFields> }
         }
         setBio(data.bio ?? '')
         setSkillTags(data.skill_tags ?? [])
@@ -114,15 +163,29 @@ export default function ProfileEditor() {
           youtube: data.social_links?.youtube ?? '',
           other: data.social_links?.other ?? '',
         })
-        setVisibility({
-          bio: data.visibility?.bio ?? true,
-          email: data.visibility?.email ?? true,
-          skill_tags: data.visibility?.skill_tags ?? true,
-          social_links: data.visibility?.social_links ?? true,
-          avatar: data.visibility?.avatar ?? true,
-          role: data.visibility?.role ?? true,
-          join_date: data.visibility?.join_date ?? true,
-        })
+
+        // Support both new format { preset, fields } and legacy flat format
+        let loadedFields: VisibilityFields = { ...PRESETS.public }
+        const vis = data.visibility as any
+        if (vis?.fields && typeof vis.fields === 'object') {
+          // New format
+          loadedFields = { ...PRESETS.public, ...vis.fields }
+        } else if (vis && typeof vis === 'object') {
+          // Legacy flat format — map known keys
+          loadedFields = {
+            bio: vis.bio ?? true,
+            skill_tags: vis.skill_tags ?? true,
+            social_links: vis.social_links ?? true,
+            email: vis.email ?? true,
+            discord_id: vis.discord_id ?? true,
+            xp_level: vis.xp_level ?? true,
+            badges: vis.badges ?? true,
+            joined_servers: vis.joined_servers ?? true,
+          }
+        }
+
+        setVisibilityFields(loadedFields)
+        setPreset(detectPreset(loadedFields))
       } catch (err) {
         console.error('Failed to load profile:', err)
       } finally {
@@ -132,21 +195,20 @@ export default function ProfileEditor() {
     load()
   }, [])
 
+  // ── Save ────────────────────────────────────────────────────────────────────
   const handleSave = async () => {
     setSaving(true)
     try {
       const filteredLinks: Partial<SocialLinks> = {}
       for (const [key, val] of Object.entries(socialLinks)) {
-        if (val.trim()) {
-          filteredLinks[key as keyof SocialLinks] = val.trim()
-        }
+        if (val.trim()) filteredLinks[key as keyof SocialLinks] = val.trim()
       }
 
       await edgeFunctions.updateProfile({
         bio,
         skill_tags: skillTags,
         social_links: filteredLinks as Record<string, string>,
-        visibility: visibility as unknown as string,
+        visibility: JSON.stringify({ preset, fields: visibilityFields }),
       })
       setSnackbar({ open: true, severity: 'success', message: t('profile.saved') })
     } catch (err) {
@@ -157,14 +219,12 @@ export default function ProfileEditor() {
     }
   }
 
+  // ── Social link change ──────────────────────────────────────────────────────
   const handleSocialChange = (key: string, value: string) => {
     setSocialLinks((prev) => ({ ...prev, [key]: value }))
   }
 
-  const handleVisibilityChange = (key: VisibilityField) => {
-    setVisibility((prev) => ({ ...prev, [key]: !prev[key] }))
-  }
-
+  // ── Skill tag helpers ───────────────────────────────────────────────────────
   const handleAddSkillTag = (tag: string) => {
     const trimmed = tag.trim()
     if (trimmed && !skillTags.includes(trimmed) && skillTags.length < 10) {
@@ -177,6 +237,23 @@ export default function ProfileEditor() {
     setSkillTags((prev) => prev.filter((t) => t !== tag))
   }
 
+  // ── Visibility preset selection ─────────────────────────────────────────────
+  const handlePresetChange = (newPreset: PresetKey) => {
+    setPreset(newPreset)
+    if (newPreset !== 'custom' && PRESETS[newPreset]) {
+      setVisibilityFields({ ...PRESETS[newPreset] })
+    }
+  }
+
+  // ── Individual toggle change → auto-detect preset ──────────────────────────
+  const handleFieldToggle = (field: keyof VisibilityFields) => {
+    setVisibilityFields((prev) => {
+      const next = { ...prev, [field]: !prev[field] }
+      setPreset(detectPreset(next))
+      return next
+    })
+  }
+
   if (loading) {
     return (
       <Card css={css`margin-top: var(--spacing-4);`}>
@@ -186,6 +263,8 @@ export default function ProfileEditor() {
       </Card>
     )
   }
+
+  const ALL_PRESETS: PresetKey[] = ['public', 'members_only', 'private', 'custom']
 
   return (
     <Card css={css`margin-top: var(--spacing-4);`}>
@@ -207,7 +286,7 @@ export default function ProfileEditor() {
         helperText={`${bio.length}/500`}
       />
 
-      {/* 技能標籤 */}
+      {/* Skill tags */}
       <p css={css`font-size: 13px; font-weight: 600; color: var(--color-on-surface); margin: 16px 0 4px 0;`}>
         {t('profile.skillTags')}
       </p>
@@ -258,7 +337,6 @@ export default function ProfileEditor() {
             }
           }}
         />
-        {/* datalist 建議 */}
         {skillInput && (
           <div
             css={css`
@@ -306,7 +384,7 @@ export default function ProfileEditor() {
 
       <Divider spacing="var(--spacing-4)" />
 
-      {/* 社交連結 */}
+      {/* Social links */}
       <p css={css`font-size: 13px; font-weight: 600; color: var(--color-on-surface); margin: 0 0 8px 0;`}>
         {t('profile.socialLinks')}
       </p>
@@ -326,28 +404,74 @@ export default function ProfileEditor() {
 
       <Divider spacing="var(--spacing-4)" />
 
-      {/* 公開設定 */}
+      {/* Visibility section */}
       <p css={css`font-size: 13px; font-weight: 600; color: var(--color-on-surface); margin: 0 0 4px 0;`}>
         {t('profile.visibility')}
       </p>
-      <p css={css`font-size: 13px; color: var(--color-on-surface-muted); margin: 0 0 8px 0;`}>
+      <p css={css`font-size: 13px; color: var(--color-on-surface-muted); margin: 0 0 12px 0;`}>
         {t('profile.visibilityDesc')}
       </p>
+
+      {/* Preset selector pills */}
+      <div css={css`
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 16px;
+      `}>
+        {ALL_PRESETS.map((p) => (
+          <button
+            key={p}
+            type="button"
+            onClick={() => handlePresetChange(p)}
+            css={css`
+              padding: 6px 14px;
+              border-radius: var(--radius-full);
+              border: 1.5px solid ${preset === p ? 'var(--md-sys-color-primary, var(--color-primary))' : 'var(--color-divider)'};
+              background: ${preset === p ? 'var(--md-sys-color-primary-container, var(--color-surface-container))' : 'transparent'};
+              color: ${preset === p ? 'var(--md-sys-color-on-primary-container, var(--color-on-surface))' : 'var(--color-on-surface-muted)'};
+              font-size: 13px;
+              font-weight: ${preset === p ? 600 : 400};
+              cursor: ${p === 'custom' && preset !== 'custom' ? 'not-allowed' : 'pointer'};
+              opacity: ${p === 'custom' && preset !== 'custom' ? 0.45 : 1};
+              transition: all 0.15s;
+            `}
+            disabled={p === 'custom' && preset !== 'custom'}
+            title={p === 'custom' && preset !== 'custom' ? t('profile.visibilityPreset.custom') : undefined}
+          >
+            {t(`profile.visibilityPreset.${p}`)}
+          </button>
+        ))}
+      </div>
+
+      {/* Per-field toggles */}
       <Stack gap={0}>
-        {VISIBILITY_FIELDS.map((field) => {
-          const fieldKey = field === 'join_date' ? 'joinDate' : field === 'skill_tags' ? 'skillTags' : field === 'social_links' ? 'socialLinks' : field
+        {VISIBILITY_FIELD_KEYS.map((field) => {
+          // Map field key to i18n key
+          const i18nKey = field === 'skill_tags'
+            ? 'skillTags'
+            : field === 'social_links'
+            ? 'socialLinks'
+            : field === 'discord_id'
+            ? 'discord_id'
+            : field === 'xp_level'
+            ? 'xp_level'
+            : field === 'joined_servers'
+            ? 'joined_servers'
+            : field
+
           return (
             <Switch
               key={field}
-              checked={visibility[field]}
-              onChange={() => handleVisibilityChange(field)}
-              label={t(`profile.fields.${fieldKey}`)}
+              checked={visibilityFields[field]}
+              onChange={() => handleFieldToggle(field)}
+              label={t(`profile.fields.${i18nKey}`)}
             />
           )
         })}
       </Stack>
 
-      {/* 儲存按鈕 */}
+      {/* Save button */}
       <Button
         variant="primary"
         fullWidth

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { edgeFunctions } from '../../services/edgeFunctions'
 import { useAuth } from '../../context/AuthContext'
+import { useActiveServer } from '../../hooks/useActiveServer'
 import { Icon, Button, Chip, Select, Alert, CircularProgress, Tabs, Table } from '../../components/ui'
 import { Container } from '../../components/layout'
 
@@ -29,19 +30,20 @@ export default function FeedbackReview() {
   const [notice, setNotice] = useState<string | null>(null)
   const [categoryTab, setCategoryTab] = useState('all')
 
+  const serverId = useActiveServer()
   const isAdmin: boolean = hasRole('admin')
 
   useEffect(() => {
     let cancelled = false
-    edgeFunctions.listFeedbacks({ category: categoryTab === 'all' ? undefined : categoryTab })
+    edgeFunctions.listFeedbacks({ category: categoryTab === 'all' ? undefined : categoryTab, server_id: serverId })
       .then((data: any) => { if (!cancelled) { setFeedbacks(data?.feedbacks ?? []); setLoading(false) } })
       .catch((err: any) => { if (!cancelled) { setError(err.message); setLoading(false) } })
     return () => { cancelled = true }
-  }, [categoryTab])
+  }, [categoryTab, serverId])
 
   const handleStatusChange = async (id: string, newStatus: string) => {
     try {
-      await edgeFunctions.updateFeedbackStatus(id, newStatus)
+      await edgeFunctions.updateFeedbackStatus(id, newStatus, serverId)
       setFeedbacks((prev) => prev.map((f) => (f.id === id ? { ...f, status: newStatus } : f)))
       setNotice(t('admin.feedbackReview.statusUpdated'))
     } catch (err: any) {
@@ -52,7 +54,7 @@ export default function FeedbackReview() {
   const handleDelete = async (id: string) => {
     if (!confirm(t('feedback.confirmDelete'))) return
     try {
-      await edgeFunctions.deleteFeedback(id)
+      await edgeFunctions.deleteFeedback(id, serverId)
       setFeedbacks((prev) => prev.filter((f) => f.id !== id))
       setNotice(t('feedback.deleted'))
     } catch (err: any) {

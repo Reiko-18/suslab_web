@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../context/AuthContext'
 import { edgeFunctions } from '../services/edgeFunctions'
+import { useActiveServer } from '../hooks/useActiveServer'
 import { Icon, Button, Card, Skeleton, Snackbar, Dialog } from '../components/ui'
 import { Container, Stack } from '../components/layout'
 import AnnouncementCard from '../components/AnnouncementCard'
@@ -25,20 +26,21 @@ export default function Announcements() {
   const [deleteTarget, setDeleteTarget] = useState<any>(null)
   const [snackbar, setSnackbar] = useState<SnackbarState>({ open: false, severity: 'success', message: '' })
 
+  const serverId = useActiveServer()
   const canManage: boolean = hasRole('moderator')
   const canDelete: boolean = hasRole('admin')
 
   const loadAnnouncements = useCallback(async () => {
     setLoading(true)
     try {
-      const data = await edgeFunctions.listAnnouncements({ pageSize: 50 })
+      const data = await edgeFunctions.listAnnouncements({ pageSize: 50, server_id: serverId })
       setAnnouncements(data.announcements ?? [])
     } catch (err) {
       console.error('Failed to load announcements:', err)
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [serverId])
 
   useEffect(() => {
     loadAnnouncements()
@@ -46,10 +48,10 @@ export default function Announcements() {
 
   const handleSave = async (formData: any, id?: string) => {
     if (id) {
-      await edgeFunctions.updateAnnouncement(id, formData)
+      await edgeFunctions.updateAnnouncement(id, { ...formData, server_id: serverId })
       setSnackbar({ open: true, severity: 'success', message: t('announcements.updated') })
     } else {
-      await edgeFunctions.createAnnouncement(formData)
+      await edgeFunctions.createAnnouncement({ ...formData, server_id: serverId })
       setSnackbar({ open: true, severity: 'success', message: t('announcements.created') })
     }
     await loadAnnouncements()

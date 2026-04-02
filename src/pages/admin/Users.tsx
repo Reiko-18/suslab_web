@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { edgeFunctions } from '../../services/edgeFunctions'
 import { useAuth } from '../../context/AuthContext'
+import { useActiveServer } from '../../hooks/useActiveServer'
 import { Icon, Button, Chip, Avatar, Select, Alert, CircularProgress, Tabs, Tooltip, Table } from '../../components/ui'
 import { Container } from '../../components/layout'
 import UserActionDialog from '../../components/admin/UserActionDialog'
@@ -18,6 +19,7 @@ interface ActionDialogState {
 export default function AdminUsers() {
   const { t } = useTranslation()
   const { user: currentUser } = useAuth()
+  const serverId = useActiveServer()
   const [users, setUsers] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -27,16 +29,16 @@ export default function AdminUsers() {
   const [actionDialog, setActionDialog] = useState<ActionDialogState>({ open: false, type: null, user: null })
 
   useEffect(() => {
-    edgeFunctions.getUsers()
+    edgeFunctions.getUsers(serverId)
       .then((data: any) => setUsers(data ?? []))
       .catch((err: any) => setError(err.message))
       .finally(() => setLoading(false))
-  }, [])
+  }, [serverId])
 
   async function handleRoleChange(userId: string, newRole: string) {
     try {
       setNotice(null)
-      await edgeFunctions.updateUserRole(userId, newRole)
+      await edgeFunctions.updateUserRole(userId, newRole, serverId)
       setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, role: newRole } : u)))
       setNotice(t('admin.users.roleUpdated'))
     } catch (err: any) {
@@ -51,14 +53,14 @@ export default function AdminUsers() {
     durationMinutes?: number
   }) {
     if (actionType === 'ban') {
-      await edgeFunctions.banUser(userId, reason)
+      await edgeFunctions.banUser(userId, reason, serverId)
       setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, is_banned: true, ban_reason: reason } : u)))
       setNotice(t('admin.users.actions.banned'))
     } else if (actionType === 'kick') {
-      await edgeFunctions.kickUser(userId, reason)
+      await edgeFunctions.kickUser(userId, reason, serverId)
       setNotice(t('admin.users.actions.kicked'))
     } else if (actionType === 'timeout') {
-      const result = await edgeFunctions.timeoutUser(userId, durationMinutes, reason)
+      const result = await edgeFunctions.timeoutUser(userId, durationMinutes, reason, serverId)
       setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, timeout_until: result.timeout_until } : u)))
       setNotice(t('admin.users.actions.timedOut'))
     }
@@ -66,7 +68,7 @@ export default function AdminUsers() {
 
   async function handleUnban(userId: string) {
     try {
-      await edgeFunctions.unbanUser(userId)
+      await edgeFunctions.unbanUser(userId, serverId)
       setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, is_banned: false, ban_reason: null } : u)))
       setNotice(t('admin.users.actions.unbanned'))
     } catch (err: any) {

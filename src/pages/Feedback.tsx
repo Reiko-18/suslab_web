@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../context/AuthContext'
 import { edgeFunctions } from '../services/edgeFunctions'
+import { useActiveServer } from '../hooks/useActiveServer'
 import { Icon, Button, Card, Chip, Skeleton, Snackbar } from '../components/ui'
 import { Container, Stack } from '../components/layout'
 import FeedbackCard from '../components/FeedbackCard'
@@ -20,6 +21,7 @@ interface SnackState {
 export default function Feedback() {
   const { t } = useTranslation()
   const { user, hasRole } = useAuth()
+  const serverId = useActiveServer()
   const isModerator: boolean = hasRole('moderator')
   const [category, setCategory] = useState<Category>('all')
   const [feedbacks, setFeedbacks] = useState<any[]>([])
@@ -30,7 +32,7 @@ export default function Feedback() {
   const loadFeedbacks = useCallback(async () => {
     try {
       setLoading(true)
-      const params: Record<string, any> = { pageSize: 50 }
+      const params: Record<string, any> = { pageSize: 50, server_id: serverId }
       if (category !== 'all') params.category = category
       const data = await edgeFunctions.listFeedbacks(params)
       setFeedbacks(data.feedbacks ?? [])
@@ -39,7 +41,7 @@ export default function Feedback() {
     } finally {
       setLoading(false)
     }
-  }, [category])
+  }, [category, serverId])
 
   useEffect(() => { loadFeedbacks() }, [loadFeedbacks])
 
@@ -66,7 +68,7 @@ export default function Feedback() {
 
   const handleStatusChange = async (id: string, status: string) => {
     try {
-      await edgeFunctions.updateFeedbackStatus(id, status)
+      await edgeFunctions.updateFeedbackStatus(id, status, serverId)
       setFeedbacks((prev) => prev.map((f) => (f.id === id ? { ...f, status } : f)))
     } catch (err: any) {
       setSnack({ severity: 'error', message: err.message })
@@ -76,7 +78,7 @@ export default function Feedback() {
   const handleDelete = async (id: string) => {
     if (!window.confirm(t('feedback.confirmDelete'))) return
     try {
-      await edgeFunctions.deleteFeedback(id)
+      await edgeFunctions.deleteFeedback(id, serverId)
       setSnack({ severity: 'success', message: t('feedback.deleted') })
       loadFeedbacks()
     } catch (err: any) {
@@ -86,7 +88,7 @@ export default function Feedback() {
 
   const handleCreate = async (data: any) => {
     try {
-      await edgeFunctions.createFeedback(data)
+      await edgeFunctions.createFeedback({ ...data, server_id: serverId })
       setSnack({ severity: 'success', message: t('feedback.created') })
       loadFeedbacks()
     } catch (err: any) {
