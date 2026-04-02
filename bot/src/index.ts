@@ -7,6 +7,7 @@ import { registerGuildMemberRemove } from './listeners/guildMemberRemove.js'
 import { registerCommandHandler } from './commands/handler.js'
 import { registerMessageCreate } from './listeners/messageCreate.js'
 import { startActionQueueWorker } from './workers/actionQueue.js'
+import { registerCommands } from './commands/register.js'
 
 const client = new Client({
   intents: [
@@ -30,6 +31,7 @@ registerMessageCreate(client)
 client.once(Events.ClientReady, async (c) => {
   console.log(`Bot ready as ${c.user.tag}`)
   console.log(`Serving ${c.guilds.cache.size} guilds`)
+  await registerCommands().catch(err => console.error('Slash command 自動註冊失敗:', err))
   await fullSync(client)
   startActionQueueWorker(client)
   console.log('All systems operational')
