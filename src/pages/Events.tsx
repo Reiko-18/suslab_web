@@ -78,7 +78,7 @@ export default function Events() {
     if (!isExpanded && !registrants[eventId]) {
       try {
         const data = await edgeFunctions.getEventRegistrations(eventId)
-        setRegistrants((prev) => ({ ...prev, [eventId]: data ?? [] }))
+        setRegistrants((prev) => ({ ...prev, [eventId]: Array.isArray(data) ? data : [] }))
       } catch (err) { console.error('Failed to load registrations:', err) }
     }
   }
