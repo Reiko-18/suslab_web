@@ -4,6 +4,7 @@ import { fullSync } from './services/guildSync.js'
 import { registerGuildMemberAdd } from './listeners/guildMemberAdd.js'
 import { registerGuildMemberRemove } from './listeners/guildMemberRemove.js'
 import { registerCommandHandler } from './commands/handler.js'
+import { registerMessageCreate } from './listeners/messageCreate.js'
 
 const client = new Client({
   intents: [
@@ -20,6 +21,9 @@ registerGuildMemberRemove(client)
 
 // 註冊 Slash Command 處理器
 registerCommandHandler(client)
+
+// 註冊訊息建立監聽器（ticket 頻道自動建立票券）
+registerMessageCreate(client)
 
 client.once(Events.ClientReady, async (c) => {
   console.log(`Bot ready as ${c.user.tag}`)
