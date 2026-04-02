@@ -35,6 +35,7 @@ export interface EventParams {
   end_at?: string
   location?: string
   max_participants?: number
+  server_id?: string
 }
 
 export interface ProfileUpdateParams {
@@ -51,17 +52,20 @@ export interface PaginationParams {
 
 export interface MembersParams extends PaginationParams {
   search?: string
+  server_id?: string
 }
 
 export interface AnnouncementParams {
   title: string
   content: string
   pinned?: boolean
+  server_id?: string
 }
 
 export interface AuditLogParams extends PaginationParams {
   actionFilter?: string
   targetType?: string
+  server_id?: string
 }
 
 export interface RoleParams {
@@ -69,10 +73,12 @@ export interface RoleParams {
   color?: string
   permissions?: string[]
   position?: number
+  server_id?: string
 }
 
 export interface TicketParams extends PaginationParams {
   status?: string
+  server_id?: string
 }
 
 export interface TicketCreateParams {
@@ -80,6 +86,7 @@ export interface TicketCreateParams {
   content: string
   category?: string
   priority?: string
+  server_id?: string
 }
 
 export interface TicketUpdateParams {
@@ -91,6 +98,7 @@ export interface TicketUpdateParams {
 export interface TodoCreateParams {
   title: string
   is_public?: boolean
+  server_id?: string
 }
 
 export interface TodoUpdateParams {
@@ -103,36 +111,42 @@ export interface GameInviteParams {
   title: string
   description?: string
   max_players?: number
+  server_id?: string
 }
 
 export interface FeedbackParams extends PaginationParams {
   category?: string
+  server_id?: string
 }
 
 export interface FeedbackCreateParams {
   category: string
   title: string
   content: string
+  server_id?: string
 }
 
 export const edgeFunctions = {
   // Events
-  getEvents: () => invoke('get-events'),
+  getEvents: (server_id?: string) => invoke('get-events', { server_id }),
 
-  createEvent: (event: EventParams) => invoke('manage-events', {
+  createEvent: ({ server_id, ...event }: EventParams) => invoke('manage-events', {
     action: 'create',
     ...event,
+    server_id,
   }),
 
-  updateEvent: (id: string, updates: EventParams) => invoke('manage-events', {
+  updateEvent: (id: string, { server_id, ...updates }: EventParams) => invoke('manage-events', {
     action: 'update',
     id,
     ...updates,
+    server_id,
   }),
 
-  deleteEvent: (id: string) => invoke('manage-events', {
+  deleteEvent: (id: string, server_id?: string) => invoke('manage-events', {
     action: 'delete',
     id,
+    server_id,
   }),
 
   // Profile (legacy — kept for backward compatibility)
@@ -152,8 +166,8 @@ export const edgeFunctions = {
     }),
 
   // Members
-  getMembers: ({ search, page, pageSize }: MembersParams = {}) =>
-    invoke('get-members', { search, page, pageSize }),
+  getMembers: ({ search, page, pageSize, server_id }: MembersParams = {}) =>
+    invoke('get-members', { search, page, pageSize, server_id }),
 
   // Profile Comments
   listComments: (profile_user_id: string, { page, pageSize }: PaginationParams = {}) =>
@@ -178,104 +192,114 @@ export const edgeFunctions = {
     }),
 
   // Announcements
-  listAnnouncements: ({ page, pageSize }: PaginationParams = {}) =>
+  listAnnouncements: ({ page, pageSize, server_id }: PaginationParams & { server_id?: string } = {}) =>
     invoke('manage-announcements', {
       action: 'list',
       page,
       pageSize,
+      server_id,
     }),
 
-  createAnnouncement: ({ title, content, pinned }: AnnouncementParams) =>
+  createAnnouncement: ({ title, content, pinned, server_id }: AnnouncementParams) =>
     invoke('manage-announcements', {
       action: 'create',
       title,
       content,
       pinned,
+      server_id,
     }),
 
-  updateAnnouncement: (id: string, { title, content, pinned }: AnnouncementParams) =>
+  updateAnnouncement: (id: string, { title, content, pinned, server_id }: AnnouncementParams) =>
     invoke('manage-announcements', {
       action: 'update',
       id,
       title,
       content,
       pinned,
+      server_id,
     }),
 
-  deleteAnnouncement: (id: string) =>
+  deleteAnnouncement: (id: string, server_id?: string) =>
     invoke('manage-announcements', {
       action: 'delete',
       id,
+      server_id,
     }),
 
   // Stats
-  getStats: () => invoke('get-stats'),
+  getStats: (server_id?: string) => invoke('get-stats', { server_id }),
 
   // Admin
-  getUsers: () => invoke('manage-users', { action: 'list' }),
+  getUsers: (server_id?: string) => invoke('manage-users', { action: 'list', server_id }),
 
-  updateUserRole: (userId: string, role: string) => invoke('manage-users', {
+  updateUserRole: (userId: string, role: string, server_id?: string) => invoke('manage-users', {
     action: 'update-role',
     user_id: userId,
     role,
+    server_id,
   }),
 
   // Admin - User Actions
-  banUser: (userId: string, reason: string) => invoke('manage-users', {
+  banUser: (userId: string, reason: string, server_id?: string) => invoke('manage-users', {
     action: 'ban',
     user_id: userId,
     reason,
+    server_id,
   }),
 
-  unbanUser: (userId: string) => invoke('manage-users', {
+  unbanUser: (userId: string, server_id?: string) => invoke('manage-users', {
     action: 'unban',
     user_id: userId,
+    server_id,
   }),
 
-  kickUser: (userId: string, reason: string) => invoke('manage-users', {
+  kickUser: (userId: string, reason: string, server_id?: string) => invoke('manage-users', {
     action: 'kick',
     user_id: userId,
     reason,
+    server_id,
   }),
 
-  timeoutUser: (userId: string, durationMinutes: number, reason: string) => invoke('manage-users', {
+  timeoutUser: (userId: string, durationMinutes: number, reason: string, server_id?: string) => invoke('manage-users', {
     action: 'timeout',
     user_id: userId,
     duration_minutes: durationMinutes,
     reason,
+    server_id,
   }),
 
-  getAuditLog: ({ page, pageSize, actionFilter, targetType }: AuditLogParams = {}) =>
+  getAuditLog: ({ page, pageSize, actionFilter, targetType, server_id }: AuditLogParams = {}) =>
     invoke('manage-users', {
       action: 'audit-log',
       page,
       pageSize,
       action_filter: actionFilter,
       target_type: targetType,
+      server_id,
     }),
 
   // Admin - Roles
-  listRoles: () => invoke('manage-roles', { action: 'list' }),
+  listRoles: (server_id?: string) => invoke('manage-roles', { action: 'list', server_id }),
 
-  createRole: ({ name, color, permissions, position }: RoleParams) =>
-    invoke('manage-roles', { action: 'create', name, color, permissions, position }),
+  createRole: ({ name, color, permissions, position, server_id }: RoleParams) =>
+    invoke('manage-roles', { action: 'create', name, color, permissions, position, server_id }),
 
-  updateRole: (id: string, { name, color, permissions, position }: RoleParams) =>
-    invoke('manage-roles', { action: 'update', id, name, color, permissions, position }),
+  updateRole: (id: string, { name, color, permissions, position, server_id }: RoleParams) =>
+    invoke('manage-roles', { action: 'update', id, name, color, permissions, position, server_id }),
 
-  deleteRole: (id: string) => invoke('manage-roles', { action: 'delete', id }),
+  deleteRole: (id: string, server_id?: string) => invoke('manage-roles', { action: 'delete', id, server_id }),
 
   // Admin - Tickets
-  listTickets: ({ page, pageSize, status }: TicketParams = {}) =>
-    invoke('manage-tickets', { action: 'list', page, pageSize, status }),
+  listTickets: ({ page, pageSize, status, server_id }: TicketParams = {}) =>
+    invoke('manage-tickets', { action: 'list', page, pageSize, status, server_id }),
 
-  createTicket: ({ title, content, category, priority }: TicketCreateParams) =>
-    invoke('manage-tickets', { action: 'create', title, content, category, priority }),
+  createTicket: ({ title, content, category, priority, server_id }: TicketCreateParams) =>
+    invoke('manage-tickets', { action: 'create', title, content, category, priority, server_id }),
 
   updateTicket: (id: string, { status, priority, assigned_to }: TicketUpdateParams) =>
     invoke('manage-tickets', { action: 'update', id, status, priority, assigned_to }),
 
-  deleteTicket: (id: string) => invoke('manage-tickets', { action: 'delete', id }),
+  deleteTicket: (id: string, server_id?: string) => invoke('manage-tickets', { action: 'delete', id, server_id }),
 
   replyTicket: (ticketId: string, content: string) =>
     invoke('manage-tickets', { action: 'reply', ticket_id: ticketId, content }),
@@ -284,24 +308,24 @@ export const edgeFunctions = {
     invoke('manage-tickets', { action: 'replies', ticket_id: ticketId }),
 
   // Admin - Overview
-  getAdminOverview: () => invoke('admin-overview', {}),
+  getAdminOverview: (server_id?: string) => invoke('admin-overview', { server_id }),
 
   // Admin - Settings
-  listSettings: () => invoke('admin-settings', { action: 'list' }),
+  listSettings: (server_id?: string) => invoke('admin-settings', { action: 'list', server_id }),
 
-  getSetting: (key: string) => invoke('admin-settings', { action: 'get', key }),
+  getSetting: (key: string, server_id?: string) => invoke('admin-settings', { action: 'get', key, server_id }),
 
-  updateSetting: (key: string, value: unknown) => invoke('admin-settings', { action: 'update', key, value }),
+  updateSetting: (key: string, value: unknown, server_id?: string) => invoke('admin-settings', { action: 'update', key, value, server_id }),
 
-  batchUpdateSettings: (settings: Record<string, unknown>) =>
-    invoke('admin-settings', { action: 'batch-update', settings }),
+  batchUpdateSettings: (settings: Record<string, unknown>, server_id?: string) =>
+    invoke('admin-settings', { action: 'batch-update', settings, server_id }),
 
   // Todos
-  listTodos: ({ page, pageSize }: PaginationParams = {}) =>
-    invoke('manage-todos', { action: 'list', page, pageSize }),
+  listTodos: ({ page, pageSize, server_id }: PaginationParams & { server_id?: string } = {}) =>
+    invoke('manage-todos', { action: 'list', page, pageSize, server_id }),
 
-  createTodo: ({ title, is_public }: TodoCreateParams) =>
-    invoke('manage-todos', { action: 'create', title, is_public }),
+  createTodo: ({ title, is_public, server_id }: TodoCreateParams) =>
+    invoke('manage-todos', { action: 'create', title, is_public, server_id }),
 
   updateTodo: (id: string, { title, completed }: TodoUpdateParams = {}) =>
     invoke('manage-todos', { action: 'update', id, title, completed }),
@@ -316,11 +340,11 @@ export const edgeFunctions = {
     invoke('manage-todos', { action: 'unclaim', id }),
 
   // Games
-  listGameInvites: ({ page, pageSize }: PaginationParams = {}) =>
-    invoke('manage-games', { action: 'list-invites', page, pageSize }),
+  listGameInvites: ({ page, pageSize, server_id }: PaginationParams & { server_id?: string } = {}) =>
+    invoke('manage-games', { action: 'list-invites', page, pageSize, server_id }),
 
-  createGameInvite: ({ game_type, title, description, max_players }: GameInviteParams) =>
-    invoke('manage-games', { action: 'create-invite', game_type, title, description, max_players }),
+  createGameInvite: ({ game_type, title, description, max_players, server_id }: GameInviteParams) =>
+    invoke('manage-games', { action: 'create-invite', game_type, title, description, max_players, server_id }),
 
   joinGameInvite: (id: string) =>
     invoke('manage-games', { action: 'join-invite', id }),
@@ -334,31 +358,31 @@ export const edgeFunctions = {
   submitGameScore: (score: number) =>
     invoke('manage-games', { action: 'submit-score', score }),
 
-  getGameLeaderboard: () =>
-    invoke('manage-games', { action: 'leaderboard' }),
+  getGameLeaderboard: (server_id?: string) =>
+    invoke('manage-games', { action: 'leaderboard', server_id }),
 
   // Feedbacks
-  listFeedbacks: ({ page, pageSize, category }: FeedbackParams = {}) =>
-    invoke('manage-feedbacks', { action: 'list', page, pageSize, category }),
+  listFeedbacks: ({ page, pageSize, category, server_id }: FeedbackParams = {}) =>
+    invoke('manage-feedbacks', { action: 'list', page, pageSize, category, server_id }),
 
-  createFeedback: ({ category, title, content }: FeedbackCreateParams) =>
-    invoke('manage-feedbacks', { action: 'create', category, title, content }),
+  createFeedback: ({ category, title, content, server_id }: FeedbackCreateParams) =>
+    invoke('manage-feedbacks', { action: 'create', category, title, content, server_id }),
 
   voteFeedback: (feedback_id: string) =>
     invoke('manage-feedbacks', { action: 'vote', feedback_id }),
 
-  updateFeedbackStatus: (id: string, status: string) =>
-    invoke('manage-feedbacks', { action: 'update-status', id, status }),
+  updateFeedbackStatus: (id: string, status: string, server_id?: string) =>
+    invoke('manage-feedbacks', { action: 'update-status', id, status, server_id }),
 
-  deleteFeedback: (id: string) =>
-    invoke('manage-feedbacks', { action: 'delete', id }),
+  deleteFeedback: (id: string, server_id?: string) =>
+    invoke('manage-feedbacks', { action: 'delete', id, server_id }),
 
   // Levels
   getMyLevel: () =>
     invoke('manage-levels', { action: 'get' }),
 
-  getLevelLeaderboard: () =>
-    invoke('manage-levels', { action: 'leaderboard' }),
+  getLevelLeaderboard: (server_id?: string) =>
+    invoke('manage-levels', { action: 'leaderboard', server_id }),
 
   grantBadge: (user_id: string, badge: string) =>
     invoke('manage-levels', { action: 'grant-badge', user_id, badge }),
@@ -372,4 +396,16 @@ export const edgeFunctions = {
 
   getEventRegistrations: (event_id: string) =>
     invoke('manage-events', { action: 'registrations', event_id }),
+
+  // Servers
+  listServers: () => invoke('manage-servers', { action: 'list' }),
+
+  getServerSettings: (server_id: string) =>
+    invoke('manage-servers', { action: 'get-settings', server_id }),
+
+  updateServerSettings: (server_id: string, settings: Record<string, unknown>) =>
+    invoke('manage-servers', { action: 'update-settings', server_id, settings }),
+
+  getServerRole: (server_id: string) =>
+    invoke('manage-servers', { action: 'get-role', server_id }),
 }

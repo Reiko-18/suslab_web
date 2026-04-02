@@ -9,6 +9,7 @@ import Avatar from './ui/Avatar'
 import Menu from './ui/Menu'
 import ThemeColorPicker from './ThemeColorPicker'
 import LanguageSelector from './LanguageSelector'
+import ServerSelector from './ServerSelector'
 
 interface TopAppBarProps {
   title: string
@@ -73,6 +74,8 @@ export default function TopAppBar({ title, onMenuClick }: TopAppBarProps) {
       >
         <Icon name="menu" size={24} />
       </button>
+
+      <ServerSelector />
 
       <h1
         css={css`
