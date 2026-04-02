@@ -33,7 +33,7 @@ export default function Events() {
     try {
       setLoading(true)
       const data = await edgeFunctions.getEvents(serverId)
-      setEvents(data ?? [])
+      setEvents(Array.isArray(data) ? data : [])
     } catch (err: any) {
       setError(err.message)
     } finally {
