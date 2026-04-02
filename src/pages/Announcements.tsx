@@ -33,7 +33,7 @@ export default function Announcements() {
   const loadAnnouncements = useCallback(async () => {
     setLoading(true)
     try {
-      const data = await edgeFunctions.listAnnouncements({ pageSize: 50, server_id: serverId })
+      const data = await edgeFunctions.listAnnouncements({ pageSize: 50, server_id: serverId }) as { announcements?: any[] }
       setAnnouncements(data.announcements ?? [])
     } catch (err) {
       console.error('Failed to load announcements:', err)

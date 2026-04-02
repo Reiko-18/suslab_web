@@ -50,7 +50,7 @@ export default function AuditLogTable({ compact = false, initialData = null }: A
         pageSize: compact ? 5 : 20,
         actionFilter: filter || undefined,
       })
-      setLogs(data ?? [])
+      setLogs(Array.isArray(data) ? data : [])
     } catch {
       setLogs([])
     } finally {

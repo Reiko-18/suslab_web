@@ -34,7 +34,7 @@ export default function Feedback() {
       setLoading(true)
       const params: Record<string, any> = { pageSize: 50, server_id: serverId }
       if (category !== 'all') params.category = category
-      const data = await edgeFunctions.listFeedbacks(params)
+      const data = await edgeFunctions.listFeedbacks(params) as { feedbacks?: any[] }
       setFeedbacks(data.feedbacks ?? [])
     } catch (err: any) {
       setSnack({ severity: 'error', message: err.message })
@@ -125,7 +125,7 @@ export default function Feedback() {
             <FeedbackCard
               key={fb.id}
               feedback={fb}
-              userId={user?.id}
+              userId={user?.id ?? ''}
               isModerator={isModerator}
               onVote={handleVote}
               onStatusChange={handleStatusChange}

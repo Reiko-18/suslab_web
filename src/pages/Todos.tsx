@@ -25,7 +25,7 @@ export default function Todos() {
   const loadTodos = useCallback(async () => {
     try {
       setLoading(true)
-      const data = await edgeFunctions.listTodos({ pageSize: 100 })
+      const data = await edgeFunctions.listTodos({ pageSize: 100 }) as { todos?: any[] }
       setTodos(data.todos ?? [])
     } catch (err: any) {
       setSnack({ severity: 'error', message: err.message })

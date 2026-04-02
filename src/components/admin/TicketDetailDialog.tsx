@@ -65,7 +65,7 @@ export default function TicketDetailDialog({ open, onClose, ticket, onUpdate }: 
       setPriority(ticket.priority)
       setLoadingReplies(true)
       edgeFunctions.getTicketReplies(ticket.id)
-        .then((data) => setReplies(data ?? []))
+        .then((data) => setReplies(Array.isArray(data) ? data : []))
         .catch(() => setReplies([]))
         .finally(() => setLoadingReplies(false))
     }
@@ -75,7 +75,7 @@ export default function TicketDetailDialog({ open, onClose, ticket, onUpdate }: 
     if (!replyText.trim() || !ticket) return
     setSending(true)
     try {
-      const reply = await edgeFunctions.replyTicket(ticket.id, replyText.trim())
+      const reply = await edgeFunctions.replyTicket(ticket.id, replyText.trim()) as TicketReply
       setReplies((prev) => [...prev, reply])
       setReplyText('')
     } catch {

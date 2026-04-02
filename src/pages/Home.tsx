@@ -42,13 +42,16 @@ export default function Home() {
 
   useEffect(() => {
     edgeFunctions.listAnnouncements({ page: 1, pageSize: 5, server_id: serverId })
-      .then((data: { announcements?: Announcement[] }) => setAnnouncements(data.announcements ?? []))
+      .then((data: unknown) => {
+        const d = data as { announcements?: Announcement[] }
+        setAnnouncements(d.announcements ?? [])
+      })
       .catch((err: unknown) => console.error('Failed to load announcements:', err))
       .finally(() => setLoadingAnn(false))
 
     edgeFunctions.getEvents(serverId)
-      .then((data: EventItem[] | { events?: EventItem[] }) => {
-        const items = Array.isArray(data) ? data : (data.events ?? [])
+      .then((data: unknown) => {
+        const items = Array.isArray(data) ? data as EventItem[] : ((data as { events?: EventItem[] }).events ?? [])
         setEvents(items)
       })
       .catch((err: unknown) => console.error('Failed to load events:', err))

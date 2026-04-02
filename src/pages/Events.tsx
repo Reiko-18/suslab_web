@@ -86,7 +86,7 @@ export default function Events() {
   const handleOpenLeaderboard = async () => {
     try {
       const data = await edgeFunctions.getLevelLeaderboard()
-      setLeaderboard(data ?? [])
+      setLeaderboard(Array.isArray(data) ? data : [])
       setShowLeaderboard(true)
     } catch (err: any) {
       setSnack({ severity: 'error', message: err.message })

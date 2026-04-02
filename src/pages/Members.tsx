@@ -20,7 +20,7 @@ export default function Members() {
   const loadMembers = useCallback(async (searchTerm: string) => {
     setLoading(true)
     try {
-      const data = await edgeFunctions.getMembers({ search: searchTerm || undefined })
+      const data = await edgeFunctions.getMembers({ search: searchTerm || undefined }) as { members?: any[] }
       setMembers(data.members ?? [])
     } catch (err) {
       console.error('Failed to load members:', err)

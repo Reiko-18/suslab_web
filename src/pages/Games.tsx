@@ -35,8 +35,9 @@ export default function Games() {
   const loadLeaderboard = useCallback(async () => {
     try {
       const data = await edgeFunctions.getGameLeaderboard()
-      setLeaderboard(data ?? [])
-      const myEntry = (data ?? []).find((e: any) => e.user_id === user?.id)
+      const list = Array.isArray(data) ? data : []
+      setLeaderboard(list)
+      const myEntry = list.find((e: any) => e.user_id === user?.id)
       if (myEntry) setBestScore(myEntry.score)
     } catch { /* ignore */ }
   }, [user?.id])
@@ -44,7 +45,7 @@ export default function Games() {
   const loadInvites = useCallback(async () => {
     try {
       setInvitesLoading(true)
-      const data = await edgeFunctions.listGameInvites({ pageSize: 50 })
+      const data = await edgeFunctions.listGameInvites({ pageSize: 50 }) as { invites?: any[] }
       setInvites(data.invites ?? [])
     } catch (err: any) {
       setSnack({ severity: 'error', message: err.message })
@@ -64,7 +65,7 @@ export default function Games() {
   const handleSubmitScore = async () => {
     if (lastGameScore == null) return
     try {
-      const result = await edgeFunctions.submitGameScore(lastGameScore)
+      const result = await edgeFunctions.submitGameScore(lastGameScore) as { saved?: boolean }
       if (result.saved) {
         setSnack({ severity: 'success', message: t('games.scoreSubmitted') })
         setBestScore(Math.max(bestScore, lastGameScore))
@@ -137,7 +138,7 @@ export default function Games() {
           <GameBoard2048
             bestScore={bestScore}
             onGameOver={handleGameOver}
-            onScoreUpdate={null}
+            onScoreUpdate={undefined}
           />
 
           {lastGameScore != null && !scoreSubmitted && (
@@ -185,7 +186,7 @@ export default function Games() {
                 <GameInviteCard
                   key={invite.id}
                   invite={invite}
-                  userId={user?.id}
+                  userId={user?.id ?? ''}
                   onJoin={handleJoin}
                   onLeave={handleLeave}
                   onClose={handleCloseInvite}

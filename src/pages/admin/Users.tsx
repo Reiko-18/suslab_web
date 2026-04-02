@@ -53,14 +53,14 @@ export default function AdminUsers() {
     durationMinutes?: number
   }) {
     if (actionType === 'ban') {
-      await edgeFunctions.banUser(userId, reason, serverId)
+      await edgeFunctions.banUser(userId, reason ?? '', serverId)
       setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, is_banned: true, ban_reason: reason } : u)))
       setNotice(t('admin.users.actions.banned'))
     } else if (actionType === 'kick') {
-      await edgeFunctions.kickUser(userId, reason, serverId)
+      await edgeFunctions.kickUser(userId, reason ?? '', serverId)
       setNotice(t('admin.users.actions.kicked'))
     } else if (actionType === 'timeout') {
-      const result = await edgeFunctions.timeoutUser(userId, durationMinutes, reason, serverId)
+      const result = await edgeFunctions.timeoutUser(userId, durationMinutes ?? 0, reason ?? '', serverId) as { timeout_until?: string }
       setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, timeout_until: result.timeout_until } : u)))
       setNotice(t('admin.users.actions.timedOut'))
     }
