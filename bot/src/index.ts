@@ -5,6 +5,7 @@ import { registerGuildMemberAdd } from './listeners/guildMemberAdd.js'
 import { registerGuildMemberRemove } from './listeners/guildMemberRemove.js'
 import { registerCommandHandler } from './commands/handler.js'
 import { registerMessageCreate } from './listeners/messageCreate.js'
+import { startActionQueueWorker } from './workers/actionQueue.js'
 
 const client = new Client({
   intents: [
@@ -29,6 +30,8 @@ client.once(Events.ClientReady, async (c) => {
   console.log(`Bot ready as ${c.user.tag}`)
   console.log(`Serving ${c.guilds.cache.size} guilds`)
   await fullSync(client)
+  startActionQueueWorker(client)
+  console.log('All systems operational')
 })
 
 process.on('SIGINT', () => {
