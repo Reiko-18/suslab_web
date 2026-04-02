@@ -1,10 +1,11 @@
 services:
-  - type: worker
+  - type: web
     name: suslab-discord-bot
     runtime: node
     buildCommand: npm install && npm run build
     startCommand: npm start
     rootDir: bot
+    plan: free
     envVars:
       - key: DISCORD_BOT_TOKEN
         sync: false

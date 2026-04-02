@@ -1,3 +1,4 @@
+import http from 'node:http'
 import { Client, GatewayIntentBits, Events } from 'discord.js'
 import { config } from './config.js'
 import { fullSync } from './services/guildSync.js'
@@ -44,6 +45,22 @@ process.on('SIGTERM', () => {
   console.log('Shutting down...')
   client.destroy()
   process.exit(0)
+})
+
+// Health check HTTP server (keeps Render free Web Service alive)
+const PORT = parseInt(process.env.PORT ?? '3001', 10)
+const server = http.createServer((_req, res) => {
+  const isReady = client.isReady()
+  res.writeHead(isReady ? 200 : 503, { 'Content-Type': 'application/json' })
+  res.end(JSON.stringify({
+    status: isReady ? 'ok' : 'starting',
+    uptime: process.uptime(),
+    guilds: client.guilds?.cache.size ?? 0,
+  }))
+})
+
+server.listen(PORT, () => {
+  console.log(`Health check server listening on port ${PORT}`)
 })
 
 client.login(config.discord.token)
