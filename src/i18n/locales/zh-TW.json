@@ -323,5 +323,26 @@
   "admin.audit.details": "詳情",
   "admin.audit.empty": "目前沒有稽核日誌",
   "admin.audit.prev": "上一頁",
-  "admin.audit.next": "下一頁"
+  "admin.audit.next": "下一頁",
+
+  "nav.select_server": "選擇伺服器",
+  "profile.visibility.public": "公開",
+  "profile.visibility.members_only": "僅限成員",
+  "profile.visibility.private": "私人",
+  "profile.visibility.custom": "自訂",
+  "profile.visibility.preset": "預設",
+  "settings.server": "伺服器",
+  "settings.ticket_channels": "工單頻道",
+  "settings.role_mapping": "角色對應",
+  "settings.notifications": "通知",
+  "settings.webhook_url": "Webhook 網址",
+  "settings.notify_new_ticket": "新工單通知",
+  "settings.notify_new_feedback": "新回饋通知",
+  "settings.notify_new_user": "新使用者通知",
+  "settings.notify_ticket_status": "工單狀態變更通知",
+  "settings.access": "存取",
+  "settings.add_channel": "新增頻道",
+  "settings.add_mapping": "新增對應",
+  "settings.discord_role_id": "Discord 角色 ID",
+  "settings.dashboard_role": "儀表板角色"
 }

@@ -323,5 +323,26 @@
   "admin.audit.details": "Details",
   "admin.audit.empty": "No audit logs",
   "admin.audit.prev": "Previous",
-  "admin.audit.next": "Next"
+  "admin.audit.next": "Next",
+
+  "nav.select_server": "Select Server",
+  "profile.visibility.public": "Public",
+  "profile.visibility.members_only": "Members Only",
+  "profile.visibility.private": "Private",
+  "profile.visibility.custom": "Custom",
+  "profile.visibility.preset": "Preset",
+  "settings.server": "Server",
+  "settings.ticket_channels": "Ticket Channels",
+  "settings.role_mapping": "Role Mapping",
+  "settings.notifications": "Notifications",
+  "settings.webhook_url": "Webhook URL",
+  "settings.notify_new_ticket": "Notify on new ticket",
+  "settings.notify_new_feedback": "Notify on new feedback",
+  "settings.notify_new_user": "Notify on new user",
+  "settings.notify_ticket_status": "Notify on ticket status change",
+  "settings.access": "Access",
+  "settings.add_channel": "Add Channel",
+  "settings.add_mapping": "Add Mapping",
+  "settings.discord_role_id": "Discord Role ID",
+  "settings.dashboard_role": "Dashboard Role"
 }

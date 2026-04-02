@@ -323,5 +323,26 @@
   "admin.audit.details": "詳細",
   "admin.audit.empty": "監査ログはありません",
   "admin.audit.prev": "前へ",
-  "admin.audit.next": "次へ"
+  "admin.audit.next": "次へ",
+
+  "nav.select_server": "サーバーを選択",
+  "profile.visibility.public": "公開",
+  "profile.visibility.members_only": "メンバーのみ",
+  "profile.visibility.private": "非公開",
+  "profile.visibility.custom": "カスタム",
+  "profile.visibility.preset": "プリセット",
+  "settings.server": "サーバー",
+  "settings.ticket_channels": "チケットチャンネル",
+  "settings.role_mapping": "ロールマッピング",
+  "settings.notifications": "通知",
+  "settings.webhook_url": "Webhook URL",
+  "settings.notify_new_ticket": "新規チケット通知",
+  "settings.notify_new_feedback": "新規フィードバック通知",
+  "settings.notify_new_user": "新規ユーザー通知",
+  "settings.notify_ticket_status": "チケットステータス変更通知",
+  "settings.access": "アクセス",
+  "settings.add_channel": "チャンネルを追加",
+  "settings.add_mapping": "マッピングを追加",
+  "settings.discord_role_id": "Discord ロール ID",
+  "settings.dashboard_role": "ダッシュボードロール"
 }

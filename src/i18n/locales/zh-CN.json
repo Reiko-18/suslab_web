@@ -323,5 +323,26 @@
   "admin.audit.details": "详情",
   "admin.audit.empty": "暂无审计日志",
   "admin.audit.prev": "上一页",
-  "admin.audit.next": "下一页"
+  "admin.audit.next": "下一页",
+
+  "nav.select_server": "选择服务器",
+  "profile.visibility.public": "公开",
+  "profile.visibility.members_only": "仅限成员",
+  "profile.visibility.private": "私密",
+  "profile.visibility.custom": "自定义",
+  "profile.visibility.preset": "预设",
+  "settings.server": "服务器",
+  "settings.ticket_channels": "工单频道",
+  "settings.role_mapping": "角色映射",
+  "settings.notifications": "通知",
+  "settings.webhook_url": "Webhook 地址",
+  "settings.notify_new_ticket": "新工单通知",
+  "settings.notify_new_feedback": "新反馈通知",
+  "settings.notify_new_user": "新用户通知",
+  "settings.notify_ticket_status": "工单状态变更通知",
+  "settings.access": "访问",
+  "settings.add_channel": "添加频道",
+  "settings.add_mapping": "添加映射",
+  "settings.discord_role_id": "Discord 角色 ID",
+  "settings.dashboard_role": "仪表板角色"
 }
