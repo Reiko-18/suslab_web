@@ -4,7 +4,7 @@
 -- recreating them so it won't fail on "already exists".
 -- Run this ENTIRE script in the Supabase SQL Editor (one shot)
 -- ================================================================
--- Order: 001 → 001b → 002 → 003 → 004 → 005 → 006 → 007 → 008 → 009 → 010
+-- Order: 001 → 001b → 002 → 003 → 004 → 005 → 006 → 007 → 008 → 009 → 010 → 018 → 019 → 020
 
 -- ============================================
 -- 001: user_roles table, triggers, JWT hook
@@ -897,8 +897,175 @@ INSERT INTO public.system_settings (key, value, description) VALUES
 ON CONFLICT (key) DO NOTHING;
 
 
+-- ============================================
+-- 018: servers + server_members tables for multi-server support
+-- ============================================
+
+CREATE TABLE IF NOT EXISTS public.servers (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  discord_guild_id TEXT NOT NULL UNIQUE,
+  name TEXT NOT NULL,
+  icon_url TEXT,
+  owner_id TEXT,
+  settings JSONB NOT NULL DEFAULT '{
+    "ticket_channels": [],
+    "notification_webhook_url": "",
+    "notify_new_ticket": true,
+    "notify_new_feedback": true,
+    "notify_new_user": true,
+    "notify_ticket_status_change": true,
+    "allowed_roles": [],
+    "role_mapping": {}
+  }',
+  is_active BOOLEAN NOT NULL DEFAULT true,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+DROP TRIGGER IF EXISTS on_servers_updated ON public.servers;
+CREATE TRIGGER on_servers_updated
+  BEFORE UPDATE ON public.servers
+  FOR EACH ROW EXECUTE PROCEDURE public.handle_updated_at();
+
+ALTER TABLE public.servers ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "servers_select_member" ON public.servers;
+CREATE POLICY "servers_select_member" ON public.servers
+  FOR SELECT TO authenticated USING (
+    EXISTS (
+      SELECT 1 FROM public.server_members sm
+      WHERE sm.server_id = id AND sm.user_id = auth.uid()
+    )
+    OR (SELECT (auth.jwt() -> 'app_metadata' ->> 'role')) = 'admin'
+  );
+
+CREATE TABLE IF NOT EXISTS public.server_members (
+  server_id UUID NOT NULL REFERENCES public.servers(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  discord_roles TEXT[] NOT NULL DEFAULT '{}',
+  joined_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  PRIMARY KEY (server_id, user_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_server_members_user ON public.server_members (user_id);
+CREATE INDEX IF NOT EXISTS idx_server_members_server ON public.server_members (server_id);
+
+ALTER TABLE public.server_members ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "server_members_select_own_server" ON public.server_members;
+CREATE POLICY "server_members_select_own_server" ON public.server_members
+  FOR SELECT TO authenticated USING (
+    user_id = auth.uid()
+    OR EXISTS (
+      SELECT 1 FROM public.server_members my
+      WHERE my.server_id = server_id AND my.user_id = auth.uid()
+    )
+  );
+
+
+-- ============================================
+-- 019: Add server_id to existing server-scoped tables
+-- ============================================
+
+ALTER TABLE public.user_roles
+  ADD COLUMN IF NOT EXISTS server_id UUID REFERENCES public.servers(id) ON DELETE CASCADE;
+
+ALTER TABLE public.user_roles
+  DROP CONSTRAINT IF EXISTS user_roles_user_id_unique;
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_user_roles_user_server
+  ON public.user_roles (user_id, server_id)
+  WHERE server_id IS NOT NULL;
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_user_roles_user_global
+  ON public.user_roles (user_id)
+  WHERE server_id IS NULL;
+
+ALTER TABLE public.tickets
+  ADD COLUMN IF NOT EXISTS server_id UUID REFERENCES public.servers(id) ON DELETE CASCADE;
+CREATE INDEX IF NOT EXISTS idx_tickets_server ON public.tickets (server_id);
+
+ALTER TABLE public.feedbacks
+  ADD COLUMN IF NOT EXISTS server_id UUID REFERENCES public.servers(id) ON DELETE CASCADE;
+CREATE INDEX IF NOT EXISTS idx_feedbacks_server ON public.feedbacks (server_id);
+
+ALTER TABLE public.announcements
+  ADD COLUMN IF NOT EXISTS server_id UUID REFERENCES public.servers(id) ON DELETE CASCADE;
+CREATE INDEX IF NOT EXISTS idx_announcements_server ON public.announcements (server_id);
+
+ALTER TABLE public.events
+  ADD COLUMN IF NOT EXISTS server_id UUID REFERENCES public.servers(id) ON DELETE CASCADE;
+CREATE INDEX IF NOT EXISTS idx_events_server ON public.events (server_id);
+
+ALTER TABLE public.discord_roles
+  ADD COLUMN IF NOT EXISTS server_id UUID REFERENCES public.servers(id) ON DELETE CASCADE;
+CREATE INDEX IF NOT EXISTS idx_discord_roles_server ON public.discord_roles (server_id);
+
+ALTER TABLE public.admin_audit_logs
+  ADD COLUMN IF NOT EXISTS server_id UUID REFERENCES public.servers(id) ON DELETE CASCADE;
+CREATE INDEX IF NOT EXISTS idx_audit_server ON public.admin_audit_logs (server_id);
+
+ALTER TABLE public.pending_bot_actions
+  ADD COLUMN IF NOT EXISTS server_id UUID REFERENCES public.servers(id) ON DELETE CASCADE;
+CREATE INDEX IF NOT EXISTS idx_pending_server ON public.pending_bot_actions (server_id);
+
+ALTER TABLE public.tickets
+  ADD COLUMN IF NOT EXISTS discord_message_id TEXT,
+  ADD COLUMN IF NOT EXISTS discord_thread_id TEXT;
+
+
+-- ============================================
+-- 020: Backfill function to migrate existing data to multi-server schema
+-- ============================================
+
+CREATE OR REPLACE FUNCTION public.backfill_server_data(target_server_id UUID)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = ''
+AS $$
+DECLARE
+  counts JSONB := '{}';
+  affected INT;
+BEGIN
+  UPDATE public.user_roles SET server_id = target_server_id WHERE server_id IS NULL;
+  GET DIAGNOSTICS affected = ROW_COUNT;
+  counts := counts || jsonb_build_object('user_roles', affected);
+
+  UPDATE public.tickets SET server_id = target_server_id WHERE server_id IS NULL;
+  GET DIAGNOSTICS affected = ROW_COUNT;
+  counts := counts || jsonb_build_object('tickets', affected);
+
+  UPDATE public.feedbacks SET server_id = target_server_id WHERE server_id IS NULL;
+  GET DIAGNOSTICS affected = ROW_COUNT;
+  counts := counts || jsonb_build_object('feedbacks', affected);
+
+  UPDATE public.announcements SET server_id = target_server_id WHERE server_id IS NULL;
+  GET DIAGNOSTICS affected = ROW_COUNT;
+  counts := counts || jsonb_build_object('announcements', affected);
+
+  UPDATE public.events SET server_id = target_server_id WHERE server_id IS NULL;
+  GET DIAGNOSTICS affected = ROW_COUNT;
+  counts := counts || jsonb_build_object('events', affected);
+
+  UPDATE public.discord_roles SET server_id = target_server_id WHERE server_id IS NULL;
+  GET DIAGNOSTICS affected = ROW_COUNT;
+  counts := counts || jsonb_build_object('discord_roles', affected);
+
+  UPDATE public.admin_audit_logs SET server_id = target_server_id WHERE server_id IS NULL;
+  GET DIAGNOSTICS affected = ROW_COUNT;
+  counts := counts || jsonb_build_object('admin_audit_logs', affected);
+
+  UPDATE public.pending_bot_actions SET server_id = target_server_id WHERE server_id IS NULL;
+  GET DIAGNOSTICS affected = ROW_COUNT;
+  counts := counts || jsonb_build_object('pending_bot_actions', affected);
+
+  RETURN counts;
+END;
+$$;
+
+
 -- ================================================================
--- DONE! All tables (001–015), triggers, functions, indexes, RLS,
+-- DONE! All tables (001–020), triggers, functions, indexes, RLS,
 -- and backfills have been created. This script is idempotent —
 -- safe to run multiple times.
 -- ================================================================
