@@ -1,6 +1,7 @@
 import http from 'node:http'
 import { Client, GatewayIntentBits, Events } from 'discord.js'
 import { config } from './config.js'
+import { initI18n } from './i18n/index.js'
 import { fullSync } from './services/guildSync.js'
 import { registerGuildMemberAdd } from './listeners/guildMemberAdd.js'
 import { registerGuildMemberRemove } from './listeners/guildMemberRemove.js'
@@ -8,6 +9,8 @@ import { registerCommandHandler } from './commands/handler.js'
 import { registerMessageCreate } from './listeners/messageCreate.js'
 import { startActionQueueWorker } from './workers/actionQueue.js'
 import { registerCommands } from './commands/register.js'
+
+await initI18n()
 
 const client = new Client({
   intents: [
