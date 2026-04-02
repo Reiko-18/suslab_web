@@ -62,6 +62,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       provider: 'discord',
       options: {
         redirectTo: `${window.location.origin}/auth/callback`,
+        scopes: 'identify guilds guilds.members.read',
       },
     })
     if (error) console.error('Discord login error:', error.message)

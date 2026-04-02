@@ -296,6 +296,9 @@ export const edgeFunctions = {
   batchUpdateSettings: (settings: Record<string, unknown>) =>
     invoke('admin-settings', { action: 'batch-update', settings }),
 
+  processDiscordActions: (limit = 20, guild_id?: string) =>
+    invoke('process-discord-actions', { limit, guild_id }),
+
   // Todos
   listTodos: ({ page, pageSize }: PaginationParams = {}) =>
     invoke('manage-todos', { action: 'list', page, pageSize }),

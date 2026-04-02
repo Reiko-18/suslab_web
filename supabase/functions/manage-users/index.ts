@@ -10,6 +10,71 @@ function serviceClient() {
   )
 }
 
+async function resolveDiscordUserId(
+  client: ReturnType<typeof createClient>,
+  userId: string,
+): Promise<string | null> {
+  const { data, error } = await client
+    .from('member_profiles')
+    .select('discord_user_id')
+    .eq('user_id', userId)
+    .maybeSingle()
+
+  if (error) throw error
+  return data?.discord_user_id ?? null
+}
+
+async function resolveTargetGuildIds(
+  client: ReturnType<typeof createClient>,
+  userId: string,
+  requestedGuildId?: string,
+): Promise<string[]> {
+  if (requestedGuildId) return [requestedGuildId]
+
+  const { data, error } = await client
+    .from('discord_guild_memberships')
+    .select('guild_id')
+    .eq('user_id', userId)
+
+  if (error) throw error
+
+  const guildIds = (data ?? []).map((row: { guild_id: string }) => row.guild_id)
+  if (guildIds.length) return guildIds
+
+  const { data: fallback, error: fallbackError } = await client
+    .from('discord_guilds')
+    .select('guild_id')
+    .eq('bot_enabled', true)
+    .order('created_at', { ascending: true })
+    .limit(1)
+    .maybeSingle()
+
+  if (fallbackError) throw fallbackError
+  return fallback?.guild_id ? [fallback.guild_id] : []
+}
+
+async function queueGuildActions(
+  client: ReturnType<typeof createClient>,
+  actionType: string,
+  guildIds: string[],
+  payloadFactory: (guildId: string) => Record<string, unknown>,
+  createdBy: string,
+  discordUserId: string | null,
+) {
+  if (!guildIds.length) return
+
+  const rows = guildIds.map((guildId) => ({
+    action_type: actionType,
+    guild_id: guildId,
+    discord_user_id: discordUserId,
+    payload: payloadFactory(guildId),
+    created_by: createdBy,
+  }))
+
+  const { error } = await client.from('pending_bot_actions').insert(rows)
+  if (error) throw error
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
@@ -47,6 +112,7 @@ Deno.serve(async (req: Request) => {
         is_banned: u.user_metadata?.is_banned === true,
         ban_reason: (u.user_metadata?.ban_reason as string) ?? null,
         timeout_until: (u.user_metadata?.timeout_until as string) ?? null,
+        discord_user_id: (u.user_metadata?.provider_id as string) ?? null,
       }))
 
       return jsonResponse(userList)
@@ -61,6 +127,8 @@ Deno.serve(async (req: Request) => {
         return errorResponse('Invalid role. Must be admin, moderator, or member', 400)
       }
       if (user_id === user.id) return errorResponse('Cannot change your own role', 400)
+      const guildIds = await resolveTargetGuildIds(sc, user_id, body.guild_id)
+      const discordUserId = await resolveDiscordUserId(sc, user_id)
 
       const { data, error } = await sc
         .from('user_roles')
@@ -90,11 +158,14 @@ Deno.serve(async (req: Request) => {
       })
 
       // Queue bot action for Discord role sync
-      await sc.from('pending_bot_actions').insert({
-        action_type: 'sync_role',
-        payload: { user_id, new_role: newRole },
-        created_by: user.id,
-      })
+      await queueGuildActions(
+        sc,
+        'sync_role',
+        guildIds,
+        (guildId) => ({ guild_id: guildId, user_id, discord_user_id: discordUserId, new_role: newRole }),
+        user.id,
+        discordUserId,
+      )
 
       return jsonResponse({ ...data, notice: 'Role updated. User must re-login.' })
     }
@@ -103,6 +174,8 @@ Deno.serve(async (req: Request) => {
       const { user_id, reason } = body
       if (!user_id) return errorResponse('Missing user_id', 400)
       if (user_id === user.id) return errorResponse('Cannot ban yourself', 400)
+      const guildIds = await resolveTargetGuildIds(sc, user_id, body.guild_id)
+      const discordUserId = await resolveDiscordUserId(sc, user_id)
 
       // Update user metadata to mark as banned
       const { error } = await sc.auth.admin.updateUserById(user_id, {
@@ -123,11 +196,14 @@ Deno.serve(async (req: Request) => {
         details: { reason },
       })
 
-      await sc.from('pending_bot_actions').insert({
-        action_type: 'ban_user',
-        payload: { user_id, reason },
-        created_by: user.id,
-      })
+      await queueGuildActions(
+        sc,
+        'ban_user',
+        guildIds,
+        (guildId) => ({ guild_id: guildId, user_id, discord_user_id: discordUserId, reason }),
+        user.id,
+        discordUserId,
+      )
 
       return jsonResponse({ success: true, action: 'banned' })
     }
@@ -135,6 +211,8 @@ Deno.serve(async (req: Request) => {
     if (action === 'unban') {
       const { user_id } = body
       if (!user_id) return errorResponse('Missing user_id', 400)
+      const guildIds = await resolveTargetGuildIds(sc, user_id, body.guild_id)
+      const discordUserId = await resolveDiscordUserId(sc, user_id)
 
       const { error } = await sc.auth.admin.updateUserById(user_id, {
         user_metadata: { is_banned: false, ban_reason: null },
@@ -154,11 +232,14 @@ Deno.serve(async (req: Request) => {
         details: {},
       })
 
-      await sc.from('pending_bot_actions').insert({
-        action_type: 'unban_user',
-        payload: { user_id },
-        created_by: user.id,
-      })
+      await queueGuildActions(
+        sc,
+        'unban_user',
+        guildIds,
+        (guildId) => ({ guild_id: guildId, user_id, discord_user_id: discordUserId }),
+        user.id,
+        discordUserId,
+      )
 
       return jsonResponse({ success: true, action: 'unbanned' })
     }
@@ -167,6 +248,8 @@ Deno.serve(async (req: Request) => {
       const { user_id, reason } = body
       if (!user_id) return errorResponse('Missing user_id', 400)
       if (user_id === user.id) return errorResponse('Cannot kick yourself', 400)
+      const guildIds = await resolveTargetGuildIds(sc, user_id, body.guild_id)
+      const discordUserId = await resolveDiscordUserId(sc, user_id)
 
       const { data: { user: targetUser } } = await sc.auth.admin.getUserById(user_id)
       const targetName = (targetUser?.user_metadata?.full_name ?? targetUser?.user_metadata?.user_name ?? 'Unknown') as string
@@ -181,11 +264,14 @@ Deno.serve(async (req: Request) => {
         details: { reason },
       })
 
-      await sc.from('pending_bot_actions').insert({
-        action_type: 'kick_user',
-        payload: { user_id, reason },
-        created_by: user.id,
-      })
+      await queueGuildActions(
+        sc,
+        'kick_user',
+        guildIds,
+        (guildId) => ({ guild_id: guildId, user_id, discord_user_id: discordUserId, reason }),
+        user.id,
+        discordUserId,
+      )
 
       return jsonResponse({ success: true, action: 'kick_queued' })
     }
@@ -195,6 +281,8 @@ Deno.serve(async (req: Request) => {
       if (!user_id) return errorResponse('Missing user_id', 400)
       if (!duration_minutes) return errorResponse('Missing duration_minutes', 400)
       if (user_id === user.id) return errorResponse('Cannot timeout yourself', 400)
+      const guildIds = await resolveTargetGuildIds(sc, user_id, body.guild_id)
+      const discordUserId = await resolveDiscordUserId(sc, user_id)
 
       const timeoutUntil = new Date(Date.now() + duration_minutes * 60 * 1000).toISOString()
 
@@ -216,11 +304,21 @@ Deno.serve(async (req: Request) => {
         details: { duration_minutes, timeout_until: timeoutUntil, reason },
       })
 
-      await sc.from('pending_bot_actions').insert({
-        action_type: 'timeout_user',
-        payload: { user_id, duration_minutes, reason },
-        created_by: user.id,
-      })
+      await queueGuildActions(
+        sc,
+        'timeout_user',
+        guildIds,
+        (guildId) => ({
+          guild_id: guildId,
+          user_id,
+          discord_user_id: discordUserId,
+          duration_minutes,
+          reason,
+          timeout_until: timeoutUntil,
+        }),
+        user.id,
+        discordUserId,
+      )
 
       return jsonResponse({ success: true, action: 'timed_out', timeout_until: timeoutUntil })
     }

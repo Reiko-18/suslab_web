@@ -1,6 +1,12 @@
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { corsHeaders } from '../_shared/cors.ts'
 import { verifyAuth, errorResponse, jsonResponse } from '../_shared/auth.ts'
+import {
+  getDiscordUserProfile,
+  listDiscordUserGuilds,
+  syncDiscordMembershipDetails,
+  upsertDiscordGuildsForUser,
+} from '../_shared/discord.ts'
 
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
@@ -42,6 +48,10 @@ Deno.serve(async (req: Request) => {
         social_links: profile.social_links,
         visibility: profile.visibility,
         discord_flags: profile.discord_flags ?? 0,
+        discord_user_id: profile.discord_user_id ?? null,
+        discord_username: profile.discord_username ?? null,
+        discord_global_name: profile.discord_global_name ?? null,
+        discord_avatar: profile.discord_avatar ?? null,
       })
     }
 
@@ -124,32 +134,49 @@ Deno.serve(async (req: Request) => {
       const { provider_token } = body
       if (!provider_token) return errorResponse('Missing provider_token', 400)
 
-      // Call Discord API to get full user profile including public_flags
-      const discordRes = await fetch('https://discord.com/api/v10/users/@me', {
-        headers: { Authorization: `Bearer ${provider_token}` },
-      })
-
-      if (!discordRes.ok) {
-        return errorResponse(`Discord API error: ${discordRes.status}`, 502)
-      }
-
-      const discordUser = await discordRes.json()
+      const discordUser = await getDiscordUserProfile(provider_token)
+      const guilds = await listDiscordUserGuilds(provider_token).catch(() => [])
       const publicFlags = discordUser.public_flags ?? 0
       const premiumType = discordUser.premium_type ?? 0
       const avatar = discordUser.avatar ?? ''
+      const displayName = discordUser.global_name ?? discordUser.username ?? null
+
+      const serviceClient = createClient(
+        Deno.env.get('SUPABASE_URL') ?? '',
+        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+      )
 
       // Store flags in member_profiles
       const { error: updateErr } = await supabaseClient
         .from('member_profiles')
-        .update({ discord_flags: publicFlags })
+        .update({
+          discord_flags: publicFlags,
+          discord_user_id: discordUser.id,
+          discord_username: discordUser.username,
+          discord_global_name: displayName,
+          discord_avatar: avatar || null,
+          discord_locale: discordUser.locale ?? null,
+        })
         .eq('user_id', user.id)
 
       if (updateErr) return errorResponse(updateErr.message, 500)
 
+      await upsertDiscordGuildsForUser(serviceClient, user.id, discordUser.id, guilds)
+      await syncDiscordMembershipDetails(serviceClient, user.id, discordUser.id, guilds.map((guild) => guild.id))
+
       return jsonResponse({
+        discord_user_id: discordUser.id,
+        username: discordUser.username,
+        global_name: displayName,
         public_flags: publicFlags,
         premium_type: premiumType,
         avatar,
+        guilds: guilds.map((guild) => ({
+          id: guild.id,
+          name: guild.name,
+          icon: guild.icon,
+          owner: guild.owner ?? false,
+        })),
         synced: true,
       })
     }
