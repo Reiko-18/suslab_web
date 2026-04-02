@@ -49,6 +49,8 @@ process.on('SIGTERM', () => {
 
 // Health check HTTP server (keeps Render free Web Service alive)
 const PORT = parseInt(process.env.PORT ?? '3001', 10)
+const RENDER_URL = process.env.RENDER_EXTERNAL_URL ?? ''
+
 const server = http.createServer((_req, res) => {
   const isReady = client.isReady()
   res.writeHead(isReady ? 200 : 503, { 'Content-Type': 'application/json' })
@@ -61,6 +63,15 @@ const server = http.createServer((_req, res) => {
 
 server.listen(PORT, () => {
   console.log(`Health check server listening on port ${PORT}`)
+
+  // Self-ping every 14 minutes to prevent Render free tier from sleeping
+  if (RENDER_URL) {
+    const INTERVAL = 14 * 60 * 1000
+    setInterval(() => {
+      fetch(RENDER_URL).catch(() => {})
+    }, INTERVAL)
+    console.log(`Self-ping enabled: ${RENDER_URL} every 14 minutes`)
+  }
 })
 
 client.login(config.discord.token)
